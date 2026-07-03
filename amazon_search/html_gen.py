@@ -275,14 +275,16 @@ def generate_html(
 <title>{html.escape(query)}</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-html,body{{height:100%;background:#f5f5f5}}
-body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a1a;line-height:1.5;-webkit-font-smoothing:antialiased}}
+html,body{{height:100%;background:#f4f2ee}}
+body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1c1a17;line-height:1.55;-webkit-font-smoothing:antialiased}}
+.page{{max-width:1180px;margin:0 auto}}
 
-.header{{background:#232f3e;color:#fff;padding:10px 16px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;gap:12px}}
-.header h1{{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-.header .sub{{font-size:11px;color:#aaa;margin-top:2px}}
-.btn-filter{{background:#0066c0;color:#fff;border:none;padding:8px 12px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.2s,transform 0.1s}}
-.btn-filter:active{{background:#004494;transform:scale(0.95)}}
+.header{{background:linear-gradient(135deg,#1a2436,#232f3e);color:#fff;padding:16px 20px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;box-shadow:0 2px 10px rgba(0,0,0,.15)}}
+.header .eyebrow{{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7dd3fc;font-weight:700;margin-bottom:4px}}
+.header h1{{font-size:16px;font-weight:700;line-height:1.35;max-width:70ch}}
+.header .sub{{font-size:11.5px;color:#9fb0c0;margin-top:4px}}
+.btn-filter{{background:#e47911;color:#fff;border:none;padding:9px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.2s,transform 0.1s;box-shadow:0 2px 6px rgba(228,121,17,.35)}}
+.btn-filter:active{{background:#c96b00;transform:scale(0.95)}}
 
 .filter-chips{{background:#fff;padding:8px 16px;border-bottom:1px solid #e0e0e0;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}}
 .chip{{background:#e3f2fd;color:#0066c0;padding:6px 10px;border-radius:16px;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;cursor:pointer;border:1px solid #90caf9;transition:all 0.2s}}
@@ -295,81 +297,87 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 .sort-ctrl{{background:#fff;border:1px solid #ccc;padding:6px 10px;border-radius:4px;font-size:13px;cursor:pointer;transition:border-color 0.2s}}
 .sort-ctrl:active{{border-color:#0066c0}}
 
-.summary{{background:#fffbe6;border-left:3px solid #ffc107;padding:12px 16px;margin:12px 16px 0;border-radius:4px;font-size:13px;line-height:1.5;color:#666}}
+.summary{{background:#fff7e0;border-left:4px solid #f5a623;padding:14px 18px;margin:16px 16px 0;border-radius:6px;font-size:13.5px;line-height:1.55;color:#5c4b1e}}
 
-.grid{{display:flex;flex-direction:column;gap:12px;padding:12px 16px;padding-bottom:80px}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:16px;padding-bottom:80px}}
 
-.card{{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1);overflow:hidden;transition:box-shadow 0.2s}}
-.card:active{{box-shadow:0 2px 8px rgba(0,0,0,0.15);animation:cardPulse 0.3s ease}}
+.card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
+.card:hover{{box-shadow:0 6px 18px rgba(20,20,10,.12);transform:translateY(-1px)}}
+.card:active{{animation:cardPulse 0.3s ease}}
 @keyframes cardPulse{{0%{{transform:scale(1)}}50%{{transform:scale(1.01)}}100%{{transform:scale(1)}}}}
 
-.card-link{{display:flex;gap:12px;padding:12px;text-decoration:none;color:inherit;cursor:pointer;transition:background 0.2s}}
-.card-link:active{{background:#f9f9f9}}
+.card-link{{display:flex;flex-direction:column;gap:0;text-decoration:none;color:inherit;cursor:pointer;height:100%}}
 
-.card-img{{flex-shrink:0;width:100px;height:90px;background:#f8f8f8;border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden}}
-.card-img img{{max-width:100%;max-height:100%;object-fit:contain}}
+.card-img{{flex-shrink:0;width:100%;height:150px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+.card-img img{{max-width:88%;max-height:88%;object-fit:contain}}
 .no-img{{font-size:2rem;color:#ccc}}
 
-.card-info{{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}}
+.card-info{{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px}}
 
-.card-title{{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
+.card-title{{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}}
 
 .card-rating{{font-size:12px;color:#666;display:flex;gap:4px;align-items:center}}
-.card-rating strong{{color:#f5a623;font-size:13px}}
-.confidence{{color:#999;font-size:10px;letter-spacing:1px}}
+.card-rating strong{{color:#e08a2e;font-size:13px}}
+.confidence{{color:#b8b2a5;font-size:10px;letter-spacing:1px}}
 .reviews{{color:#999;font-size:11px}}
 
-.card-price{{font-size:18px;font-weight:700;color:#d32f2f}}
+.card-price{{font-size:19px;font-weight:800;color:#c0392b;letter-spacing:-.01em}}
 
-.badge-alert{{background:#d32f2f;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
-.badge-prime{{background:#007bff;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
-.badge-dedup{{display:inline-block;background:#16a34a;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
+.badge-alert{{background:#d32f2f;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
+.badge-prime{{background:#0066c0;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
+.badge-dedup{{display:inline-block;background:#16a34a;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
 
 .fit-chips{{display:flex;flex-wrap:wrap;gap:4px}}
-.fit-chip{{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}}
-.fit-yes{{background:#e6f7ea;color:#16a34a}}
-.fit-no{{background:#f5f5f5;color:#999}}
+.fit-chip{{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}}
+.fit-yes{{background:rgba(22,163,74,.12);color:#16a34a}}
+.fit-no{{background:rgba(0,0,0,.04);color:#aaa}}
 
-.video-line{{font-size:11px;font-weight:600;padding:3px 0}}
+.video-line{{font-size:11px;font-weight:600;padding:2px 0}}
 .video-ok{{color:#16a34a}}
 .video-warn{{color:#c9781f}}
 
-.section{{background:#fff;margin:12px 16px;padding:14px 16px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1)}}
-.section h2{{font-size:15px;font-weight:700;margin-bottom:4px}}
-.section-sub{{font-size:11.5px;color:#888;margin-bottom:10px}}
+.section{{
+  background:rgba(255,255,255,.72); backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%);
+  margin:14px 16px; padding:18px 20px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.6); box-shadow:0 4px 20px rgba(30,20,5,.06);
+}}
+.section h2{{font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.01em}}
+.section-sub{{font-size:12px;color:#8a8577;margin-bottom:12px;line-height:1.5}}
 
-.fam-row{{border-top:1px solid #f0f0f0;padding:10px 0}}
-.fam-row:first-of-type{{border-top:none}}
-.fam-spread{{font-size:12px;font-weight:700;color:#16a34a;margin-bottom:6px}}
-.fam-items{{display:flex;gap:8px;overflow-x:auto}}
-.fam-item{{flex-shrink:0;width:64px;text-align:center}}
-.fam-item img{{width:64px;height:64px;object-fit:contain;background:#f8f8f8;border-radius:4px}}
-.fam-price{{font-size:11px;font-weight:600;color:#d32f2f;margin-top:2px}}
+.fam-row{{border-top:1px solid rgba(0,0,0,.06);padding:12px 0}}
+.fam-row:first-of-type{{border-top:none;padding-top:2px}}
+.fam-spread{{font-size:12.5px;font-weight:800;color:#16a34a;margin-bottom:8px;display:inline-block;background:rgba(22,163,74,.1);padding:3px 10px;border-radius:20px}}
+.fam-items{{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}}
+.fam-item{{flex-shrink:0;width:68px;text-align:center}}
+.fam-item img{{width:68px;height:68px;object-fit:contain;background:#faf8f5;border-radius:8px;border:1px solid rgba(0,0,0,.05)}}
+.fam-price{{font-size:11.5px;font-weight:700;color:#c0392b;margin-top:4px}}
 
 .price-chart{{width:100%;height:auto}}
 
-.video-block{{border-top:1px solid #f0f0f0;padding:8px 0}}
-.video-block summary{{cursor:pointer;font-size:13px;font-weight:600;color:#0066c0}}
-.video-block ul{{margin:8px 0 0 16px;font-size:12px;line-height:1.6}}
+.video-block{{border-top:1px solid rgba(0,0,0,.06);padding:10px 0}}
+.video-block:first-of-type{{border-top:none}}
+.video-block summary{{cursor:pointer;font-size:13.5px;font-weight:700;color:#0066c0}}
+.video-block ul{{margin:8px 0 0 16px;font-size:12px;line-height:1.65}}
 .claim-pos{{color:#16a34a}}
 .claim-neg{{color:#d32f2f}}
 .claim-neutral{{color:#555}}
 
 .excluded-section{{cursor:pointer}}
-.excluded-section summary{{font-size:13px;font-weight:600;color:#888}}
-.excluded-table{{width:100%;margin-top:8px;font-size:11.5px;border-collapse:collapse}}
-.excluded-table td{{padding:4px 6px;border-bottom:1px solid #f0f0f0}}
+.excluded-section summary{{font-size:13.5px;font-weight:700;color:#8a8577}}
+.excluded-table{{width:100%;margin-top:10px;font-size:12px;border-collapse:collapse}}
+.excluded-table td{{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,.06)}}
 
-.bench-grid{{display:flex;flex-direction:column;gap:8px}}
-.bench-card{{border:1px dashed #ccc;border-radius:6px;padding:10px}}
-.bench-title{{font-size:13px;font-weight:600}}
-.bench-note{{font-size:11.5px;color:#666;margin-top:2px}}
-.bench-flag{{font-size:10.5px;color:#c9781f;font-weight:600;margin-top:4px}}
+.bench-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}}
+.bench-card{{border:1.5px dashed rgba(0,0,0,.15);border-radius:10px;padding:12px;background:rgba(0,0,0,.015)}}
+.bench-title{{font-size:13.5px;font-weight:700}}
+.bench-note{{font-size:12px;color:#666;margin-top:3px}}
+.bench-flag{{font-size:10.5px;color:#c9781f;font-weight:700;margin-top:6px}}
 
-.footer-disclosure{{padding:16px;text-align:center;font-size:11px;color:#999;line-height:1.5}}
+.footer-disclosure{{padding:20px 16px 28px;text-align:center;font-size:11.5px;color:#a39d8f;line-height:1.6;max-width:60ch;margin:0 auto}}
 
-.qv-chips{{display:flex;flex-wrap:wrap;gap:6px}}
-.qv-chip{{background:#f0f4fa;color:#0066c0;padding:5px 10px;border-radius:14px;font-size:11.5px;text-decoration:none;border:1px solid #d5e2f0}}
+.qv-chips{{display:flex;flex-wrap:wrap;gap:7px}}
+.qv-chip{{background:rgba(0,102,192,.08);color:#0066c0;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid rgba(0,102,192,.15);transition:background .15s}}
+.qv-chip:hover{{background:rgba(0,102,192,.15)}}
 
 .specs{{font-size:11px;margin-top:4px}}
 .specs summary{{color:#0066c0;cursor:pointer;padding:4px 0;font-weight:500;user-select:none}}
@@ -420,19 +428,25 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 
 .result-count{{font-size:12px;color:#999;padding:0 16px;margin-bottom:8px}}
 
-@media (max-width:320px){{
-.card-img{{width:80px;height:70px}}
-.card-title{{font-size:13px}}
-.card-price{{font-size:16px}}
+@media (max-width:420px){{
+.grid{{grid-template-columns:1fr;padding:12px}}
+.section{{margin:10px 12px;padding:14px 16px}}
+.header{{padding:12px 14px}}
+.header h1{{font-size:14px}}
 }}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>{html.escape(query[:40])}</h1>
+  <div>
+    <div class="eyebrow">amazon-search report</div>
+    <h1>{html.escape(query)}</h1>
+  </div>
   <button class="btn-filter" onclick="openDrawer()">Filtri</button>
 </div>
+
+<div class="page">
 
 <div class="filter-chips" id="activeChips"></div>
 
@@ -461,6 +475,8 @@ Nessun prodotto trovato<br><small>Prova a rimuovere i filtri</small>
 {sections_after_grid}
 
 {footer_html}
+
+</div>
 
 <div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
