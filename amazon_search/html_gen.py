@@ -132,21 +132,24 @@ def _family_card(fam: dict) -> str:
     identical = not fam.get("diff_image", False)
 
     if identical:
-        # exact same photo file: one true overlapping stack + a vertical price list
-        stack_imgs = "".join(
-            f'<img src="{html.escape(items[i]["thumbnail"] or "")}" alt="" loading="lazy" style="--i:{i}">'
-            for i in range(min(3, len(items)))
+        # exact same photo file: it's literally one photo, so show it ONCE — no point
+        # spending screen space repeating an identical image per listing. Cheapest price
+        # is the headline number; the rest is a compact list, not more images.
+        cheapest_it = items[0]
+        img_html = (f'<img src="{html.escape(cheapest_it["thumbnail"] or "")}" alt="" loading="lazy">'
+                    if cheapest_it["thumbnail"] else '<div class="no-img">■</div>')
+        best_price = f'€{cheapest_it["price"]:.2f}' if cheapest_it["price"] is not None else "?"
+        other_prices = ", ".join(
+            f'€{it["price"]:.2f}' if it["price"] is not None else "?" for it in items[1:]
         )
-        more_badge = f'<div class="fam-more">+{len(items)-3}</div>' if len(items) > 3 else ""
-        price_list = "".join(
-            f'<li>€{it["price"]:.2f}</li>' if it["price"] is not None else "<li>?</li>"
-            for it in items
-        )
+        others_html = f'<div class="fam-others">altri: {other_prices}</div>' if other_prices else ""
         body = f"""
-        <div class="fam-stack">{stack_imgs}{more_badge}</div>
-        <ul class="fam-pricelist">{price_list}</ul>"""
+        <div class="fam-single">{img_html}</div>
+        <div class="fam-best-price">{best_price}</div>
+        {others_html}"""
     else:
-        # similar but not byte-identical photos: distinct thumbnails, tightly clustered
+        # similar but not byte-identical photos: small thumbnails clustered inside one
+        # fixed-size rectangle (wraps/scrolls, never grows the card) with each price.
         thumbs = "".join(
             f'<div class="fam-sim-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="lazy">'
             f'<div class="fam-sim-price">{("€" + format(it["price"], ".2f")) if it["price"] is not None else "?"}</div></div>'
@@ -446,27 +449,21 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .fam-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}}
 .fam-card{{text-align:center}}
-.fam-stack{{position:relative;height:84px;margin-bottom:10px}}
-.fam-stack img{{
-  position:absolute; top:0; left:50%; width:74px;height:74px;object-fit:contain;
-  background:#faf8f5;border-radius:10px;border:1px solid rgba(0,0,0,.06);
-  box-shadow:0 4px 10px rgba(20,15,5,.14);
-  transform:translateX(calc(-50% + var(--i)*14px)) rotate(calc(var(--i)*4deg - 4deg));
-}}
-.fam-more{{
-  position:absolute; right:4px; bottom:0; background:#1c1a17; color:#fff; font-size:10.5px;
-  font-weight:700; padding:2px 7px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.2);
-}}
 .fam-spread{{font-size:12px;font-weight:800;color:#16a34a;display:inline-block;background:rgba(22,163,74,.1);padding:3px 10px;border-radius:20px;margin-bottom:10px}}
 .fam-count{{font-size:11px;color:#8a8577;margin-top:8px}}
 
-.fam-identical .fam-stack{{margin-bottom:6px}}
-.fam-pricelist{{list-style:none;font-size:12.5px;font-weight:700;color:#c0392b;display:flex;flex-direction:column;gap:2px}}
+.fam-single{{width:76px;height:76px;margin:0 auto 8px;background:#faf8f5;border-radius:10px;border:1px solid rgba(0,0,0,.06);box-shadow:0 3px 8px rgba(20,15,5,.1);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+.fam-single img{{max-width:88%;max-height:88%;object-fit:contain}}
+.fam-best-price{{font-size:15px;font-weight:800;color:#c0392b}}
+.fam-others{{font-size:10.5px;color:#a39d8f;margin-top:3px}}
 
-.fam-sim-cluster{{display:flex;justify-content:center;gap:4px;flex-wrap:wrap}}
-.fam-sim-item{{width:60px;text-align:center}}
-.fam-sim-item img{{width:56px;height:56px;object-fit:contain;background:#faf8f5;border-radius:8px;border:1px solid rgba(0,0,0,.06)}}
-.fam-sim-price{{font-size:10.5px;font-weight:700;color:#c0392b;margin-top:3px}}
+.fam-sim-cluster{{
+  display:flex;justify-content:center;gap:4px;flex-wrap:wrap;
+  max-width:100%;max-height:150px;overflow-y:auto;padding:2px;
+}}
+.fam-sim-item{{width:52px;text-align:center;flex-shrink:0}}
+.fam-sim-item img{{width:48px;height:48px;object-fit:contain;background:#faf8f5;border-radius:7px;border:1px solid rgba(0,0,0,.06)}}
+.fam-sim-price{{font-size:10px;font-weight:700;color:#c0392b;margin-top:2px}}
 
 .price-chart{{width:100%;height:auto}}
 
