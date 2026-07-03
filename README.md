@@ -1,12 +1,18 @@
 # amazon-search
 
-**Deterministic Amazon product search + report engine.** Searches (SerpAPI), fetches technical
-specs, ranks by fit-for-budget, and renders a self-contained HTML report — no manual curation,
-same query in → same shape out.
+**Stop scrolling through 40 tabs of Amazon listings.** One command searches, pulls the real
+technical specs, ranks by fit-for-budget, and hands you back a single report — same query in,
+same shape out, every time. No manual curation, no spreadsheet.
 
 ```bash
-amazon-search "subwoofer 200W" --max-price 120 --min-stars 4 --specs
+amazon-search "wireless earbuds" --max-price 40 --min-stars 4 --specs
 ```
+
+![amazon-search report: three wireless earbuds ranked by budget fit, with driver/battery/weight specs and a Prime badge](docs/banner.png)
+
+*Illustrative report (sample data) — the real output looks exactly like this: a summary line,
+badges for what actually matters (fit, Prime, low review count), specs pulled automatically for
+the top candidates.*
 
 ## What it does
 
