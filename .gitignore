@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.amazon_search_cache/
+imagecache_out/
+out/
+queries.txt
+STATO_NIGHT.md
+web_benchmark/
+*.log
+.env
+build_sleep_board.py
+build_sleep_dossier.py
+heatmap_eyetrack.html
+test_buttons.html
+test_subwoofer_mock.py
+bass_quality.py
