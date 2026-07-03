@@ -108,13 +108,28 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         specs_html = f'<details class="specs"><summary>Specifiche</summary><table>{rows}</table></details>'
 
     fam_ring = ' card-grouped' if getattr(p, "family_id", None) is not None else ''
+    siblings = getattr(p, "sibling_prices", None)
+    img_area = f'<div class="card-img">{thumb_html}</div>'
+    sibling_html = ""
+    if siblings:
+        # real stacked-photo look (offset copies + shadow), same visual idea as the
+        # dedicated families section, instead of a text line — it's the same photo
+        # file repeated, so stacking IS the honest way to show "N listings, 1 photo".
+        stack_copies = "".join(
+            f'<img src="{thumb}" alt="" loading="lazy" style="--i:{i}">'
+            for i in range(min(3, len(siblings) + 1))
+        )
+        img_area = f'<div class="card-img card-img-stack">{stack_copies}</div>'
+        prices_txt = ", ".join(f"€{s:.2f}" for s in siblings)
+        sibling_html = f'<div class="sibling-note">stessa foto anche a: {prices_txt}</div>'
     return f"""
     <div class="card{fam_ring}" data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
-        <div class="card-img">{thumb_html}</div>
+        {img_area}
         <div class="card-info">
             <div class="card-title">{title_esc}</div>
             <div class="card-rating">{stars_str} <span class="confidence">{review_confidence}</span> <span class="reviews">({reviews_count})</span></div>
             <div class="card-price">{price_esc}</div>
+            {sibling_html}
             {badge_html}
             {dedup_badge_html}
             {fit_html}
@@ -337,6 +352,33 @@ def _cluster_by_family(products: list) -> list:
     return flat
 
 
+def _collapse_identical_siblings(products: list, families: list[dict]) -> list:
+    """Identical-photo family members are literally the same product listing —
+    showing 3 full cards for one photo wastes catalog space and is exactly what
+    was flagged as confusing. Keep only the cheapest of each identical-photo
+    family in the main grid (tagged with the sibling prices); the rest are
+    still fully visible in the dedicated families section above, nothing is lost."""
+    identical_fids = {i for i, f in enumerate(families) if not f.get("diff_image", False)}
+    if not identical_fids:
+        return products
+    by_fid: dict[int, list] = {}
+    for p in products:
+        fid = getattr(p, "family_id", None)
+        if fid in identical_fids:
+            by_fid.setdefault(fid, []).append(p)
+
+    drop: set[str] = set()
+    for fid, members in by_fid.items():
+        if len(members) < 2:
+            continue
+        members.sort(key=lambda p: p.price if p.price is not None else 9e9)
+        cheapest = members[0]
+        cheapest.sibling_prices = [m.price for m in members[1:] if m.price is not None]
+        for m in members[1:]:
+            drop.add(m.asin)
+    return [p for p in products if p.asin not in drop]
+
+
 def generate_html(
     products: list,
     query: str,
@@ -421,6 +463,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
 .card-grouped{{box-shadow:0 0 0 2px rgba(22,163,74,.35),0 1px 3px rgba(20,20,10,.08)}}
+.sibling-note{{font-size:10.5px;color:#16a34a;font-weight:600}}
 .card:hover{{box-shadow:0 6px 18px rgba(20,20,10,.12);transform:translateY(-1px)}}
 .card:active{{animation:cardPulse 0.3s ease}}
 @keyframes cardPulse{{0%{{transform:scale(1)}}50%{{transform:scale(1.01)}}100%{{transform:scale(1)}}}}
@@ -430,6 +473,14 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .card-img{{flex-shrink:0;width:100%;height:150px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
 .card-img img{{max-width:88%;max-height:88%;object-fit:contain}}
 .no-img{{font-size:2rem;color:#ccc}}
+
+.card-img-stack{{position:relative;overflow:visible}}
+.card-img-stack img{{
+  position:absolute; top:50%; left:50%; width:64%; max-width:none; height:auto;
+  box-shadow:0 4px 10px rgba(20,15,5,.16); border-radius:8px; border:1px solid rgba(0,0,0,.06);
+  background:#fff;
+  transform:translate(calc(-50% + var(--i)*10px), calc(-50% + var(--i)*6px)) rotate(calc(var(--i)*3deg - 3deg));
+}}
 
 .card-info{{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px}}
 
@@ -792,6 +843,8 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
     n_pulled = sum(1 for p in result.products if getattr(p, "source_kind", "organic") == "manual_pull")
     domain = result.filters.get("domain", "IT")
 
+    catalog_products = _collapse_identical_siblings(result.products, result.families)
+
     sections_before = "".join([
         _families_section(result.families),
         _price_chart(result.products),
@@ -811,7 +864,7 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
     )
 
     return generate_html(
-        result.products,
+        catalog_products,
         result.query,
         summary=result.ai_summary,
         quota_info=result.quota_info,

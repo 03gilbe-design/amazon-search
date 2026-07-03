@@ -57,14 +57,23 @@ _STOPWORDS = {
 
 
 def _dominant_color(image_path: str) -> tuple[int, int, int] | None:
-    """Average RGB of a downscaled thumbnail — cheap, not a real palette extraction,
-    but enough to tell "this is a black strap" from "this is a white/beige brace" apart."""
+    """Average RGB of the FOREGROUND only — Amazon product photos are almost always shot
+    on a near-white background, so a plain full-image average is mostly measuring "how
+    much white border does this photo have", not the product's actual color. That's the
+    real cause of false-positive clusters (two unrelated products both photographed on
+    white look "similar" by color alone). Fix: drop near-white/near-gray pixels (low
+    saturation, high brightness) before averaging, so only the actual product color counts."""
     try:
         from PIL import Image
-        im = Image.open(image_path).convert("RGB").resize((24, 24))
+        im = Image.open(image_path).convert("RGB").resize((32, 32))
         pixels = list(im.getdata())
-        n = len(pixels)
-        return (sum(p[0] for p in pixels) // n, sum(p[1] for p in pixels) // n, sum(p[2] for p in pixels) // n)
+        fg = [(r, g, b) for r, g, b in pixels
+              if not (r > 235 and g > 235 and b > 235)  # near-white background
+              and max(r, g, b) - min(r, g, b) > 8]        # near-gray/washed-out
+        if len(fg) < 10:  # too little foreground survived, fall back to full average
+            fg = pixels
+        n = len(fg)
+        return (sum(p[0] for p in fg) // n, sum(p[1] for p in fg) // n, sum(p[2] for p in fg) // n)
     except Exception:
         return None
 
@@ -74,9 +83,18 @@ def _color_distance(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
 
 
 def _unique_title_words(title: str) -> set[str]:
+    """Single words AND adjacent word-pairs/triplets (bigrams/trigrams) — a shared
+    phrase like "anti bruxismo" is a much stronger category signal than either word
+    alone, since generic words that pass the stopword/frequency filter individually
+    can still combine into something specific."""
     import re
-    return {w for w in re.findall(r"[a-z0-9]+", (title or "").lower())
-            if len(w) >= 4 and w not in _STOPWORDS}
+    toks = [w for w in re.findall(r"[a-z0-9]+", (title or "").lower())
+            if len(w) >= 4 and w not in _STOPWORDS]
+    out = set(toks)
+    for n in (2, 3):
+        for i in range(len(toks) - n + 1):
+            out.add(" ".join(toks[i:i + n]))
+    return out
 
 
 def visual_cluster(products: list, images: dict[str, str], *,
@@ -117,6 +135,14 @@ def visual_cluster(products: list, images: dict[str, str], *,
     max_docs = max(1, int(max_word_ratio * len(products)))
     words = {a: {w for w in ws if doc_freq[w] <= max_docs} for a, ws in raw_words.items()}
 
+    def _pair_match(a: str, b: str) -> bool:
+        return (_color_distance(colors[a], colors[b]) <= color_threshold
+                and len(words[a] & words[b]) >= min_shared_words)
+
+    # complete-linkage: a candidate joins a group only if it matches EVERY member
+    # already in it, not just the seed. Single-linkage (match-the-seed-only) chains
+    # A-B-C together when A-C don't actually belong together, which is exactly the
+    # kind of noise a "buoni margini, non merged" grouping is supposed to avoid.
     ids = [p.asin for p in products if p.asin in colors]
     seen: set[str] = set()
     clusters: list[list[str]] = []
@@ -128,8 +154,7 @@ def visual_cluster(products: list, images: dict[str, str], *,
         for b in ids[i + 1:]:
             if b in seen:
                 continue
-            if (_color_distance(colors[a], colors[b]) <= color_threshold
-                    and len(words[a] & words[b]) >= min_shared_words):
+            if all(_pair_match(b, g) for g in group):
                 group.append(b)
                 seen.add(b)
         if len(group) > 1:
@@ -137,9 +162,10 @@ def visual_cluster(products: list, images: dict[str, str], *,
 
     assignment: dict[str, str] = {}
     for i, group in enumerate(clusters):
-        # label the cluster with its most common shared discriminative word
+        # label with the longest shared phrase (a bigram/trigram reads better than
+        # a lone word, e.g. "anti bruxismo" over just "bruxismo")
         common = set.intersection(*(words[a] for a in group)) if len(group) > 1 else set()
-        label = f"Simili: {sorted(common)[0]}" if common else f"Gruppo visivo {i+1}"
+        label = f"Simili: {max(common, key=len)}" if common else f"Gruppo visivo {i+1}"
         for a in group:
             assignment[a] = label
     return assignment
