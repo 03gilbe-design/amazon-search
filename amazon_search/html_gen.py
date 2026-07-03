@@ -46,6 +46,13 @@ def _badge(product) -> str:
     return ""
 
 
+def _dedup_badge(product) -> str:
+    note = getattr(product, "dedup_note", None)
+    if not note:
+        return ""
+    return f'<span class="badge-dedup">{html.escape(note)}</span>'
+
+
 def _card(p, idx: int) -> str:
     """Card: image LEFT + info RIGHT. Minimal, no redundancy."""
     title_esc = html.escape(p.title[:70])
@@ -55,6 +62,7 @@ def _card(p, idx: int) -> str:
     reviews_count = p.reviews if p.reviews else 0
     review_confidence = "●●●" if reviews_count > 100 else "●●" if reviews_count > 10 else "●"
     badge_html = _badge(p)
+    dedup_badge_html = _dedup_badge(p)
     thumb = html.escape(p.thumbnail or "")
     price_data = str(p.price or 9999)
     stars_data = str(p.stars or 0)
@@ -80,6 +88,7 @@ def _card(p, idx: int) -> str:
             <div class="card-rating">{stars_str} <span class="confidence">{review_confidence}</span> <span class="reviews">({reviews_count})</span></div>
             <div class="card-price">{price_esc}</div>
             {badge_html}
+            {dedup_badge_html}
             {specs_html}
             <a href="{link_esc}" target="_blank" class="btn-cta">Vedi su Amazon</a>
         </div>
@@ -162,6 +171,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 
 .badge-alert{{background:#d32f2f;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
 .badge-prime{{background:#007bff;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
+.badge-dedup{{display:inline-block;background:#16a34a;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
 
 .specs{{font-size:11px;margin-top:4px}}
 .specs summary{{color:#0066c0;cursor:pointer;padding:4px 0;font-weight:500;user-select:none}}

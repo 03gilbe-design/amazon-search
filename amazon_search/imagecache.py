@@ -64,6 +64,28 @@ def image_urls(asin: str, domain: str = "it", n: int = 3,
     return []
 
 
+def local_path(asin: str, domain: str = "it", *, timeout: float = 20.0) -> str:
+    """Download the primary product photo to a real file on disk and return its
+    path (empty string on failure). For dedup.py's pHash comparison, which
+    needs a local file, not a data: URI."""
+    import hashlib
+    urls = image_urls(asin, domain=domain, n=1)
+    if not urls:
+        return ""
+    fp = _CACHE / f"{hashlib.md5(urls[0].encode()).hexdigest()[:16]}.jpg"
+    if fp.exists() and fp.stat().st_size > 0:
+        return str(fp)
+    try:
+        r = httpx.get(urls[0], timeout=timeout, follow_redirects=True, headers=_UA)
+        if r.status_code == 200 and len(r.content) > 200:
+            _CACHE.mkdir(exist_ok=True)
+            fp.write_bytes(r.content)
+            return str(fp)
+    except Exception:
+        pass
+    return ""
+
+
 def data_uri(url: str, *, timeout: float = 20.0) -> str:
     """Scarica un'immagine e la restituisce come data: URI base64 (per HTML/PDF self-contained)."""
     if not url:

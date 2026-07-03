@@ -38,6 +38,7 @@ class AmazonProduct:
     source: str  # "serpapi" | "searchapi"
     bullets: list[str] = field(default_factory=list)
     specs: dict[str, str] = field(default_factory=dict)
+    dedup_note: str | None = None  # set by --dedup: "same item also seen for €X less"
 
 
 def _parse_price(item: dict) -> tuple[float | None, str]:

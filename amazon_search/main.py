@@ -30,6 +30,8 @@ def _open_browser(path: Path) -> None:
 @click.option("--min-stars", type=float, default=None, help="Stelle minime (es: 4.0)")
 @click.option("--results", type=int, default=15, show_default=True, help="N. risultati da cercare")
 @click.option("--specs", is_flag=True, help="Fetch specifiche tecniche top 3 (costa crediti Canopy)")
+@click.option("--dedup", is_flag=True, help="Rileva stesso prodotto rivenduto a prezzi diversi (pHash foto, N download extra)")
+@click.option("--montage", "make_montage", is_flag=True, help="Salva griglia numerata thumbnail (out/montage.png) per revisione visiva")
 @click.option("--no-llm", is_flag=True, help="Salta AI ranking e comparazione")
 @click.option("--no-open", is_flag=True, help="Non aprire il browser")
 @click.option("--domain", default="IT", show_default=True, help="Marketplace Amazon (es: IT, DE, UK)")
@@ -39,7 +41,7 @@ def _open_browser(path: Path) -> None:
 @click.option("--test", is_flag=True, help="Esegui test suite (3 ricerche predefinite)")
 @click.option("--log-summary", is_flag=True, help="Mostra riassunto log ed esci")
 @click.option("--clear-log", is_flag=True, help="Svuota log ed esci")
-def main(query, max_price, budget, min_stars, results, specs, no_llm, no_open, domain, show_quota, show_cache, clear_cache, test, log_summary, clear_log):
+def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage, no_llm, no_open, domain, show_quota, show_cache, clear_cache, test, log_summary, clear_log):
     """Cerca prodotti su Amazon e apre i risultati nel browser."""
     from amazon_search import quota as q
 
@@ -131,6 +133,45 @@ def main(query, max_price, budget, min_stars, results, specs, no_llm, no_open, d
                     p.bullets = d.get("bullets", [])
                     p.specs = d.get("specs", {})
                     p.in_stock = d.get("in_stock", p.in_stock)
+
+    # Rebrand/same-mold detection: same product photo, different price/brand
+    if (dedup or make_montage) and len(products) > 1:
+        from amazon_search import imagecache, dedup as dedup_mod
+
+        with console.status("[bold]Scaricando immagini per il confronto...[/bold]"):
+            paths = {}
+            for p in products:
+                if not p.asin:
+                    continue
+                fp = imagecache.local_path(p.asin, domain=domain.lower())
+                if fp:
+                    paths[p.asin] = fp
+
+        if dedup and len(paths) > 1:
+            families = dedup_mod.phash_families(paths, threshold=8)
+            price_by_asin = {p.asin: p.price for p in products}
+            n_families = 0
+            for fam in families:
+                spread = dedup_mod.price_spread(fam["items"], price_by_asin)
+                if spread is None or spread <= 2:
+                    continue  # below noise threshold, not worth flagging
+                n_families += 1
+                cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
+                for p in products:
+                    if p.asin in fam["items"] and p.asin != cheapest:
+                        p.dedup_note = f"Same item also seen for €{spread:.2f} less"
+            console.print(f"[dim]dedup: {len(families)} famiglie foto-simile trovate, "
+                          f"{n_families} con differenza di prezzo rilevante[/dim]")
+
+        if make_montage and paths:
+            from amazon_search.montage import build_montage
+            out_dir = Path.home() / "amazon_search_reports"
+            out_dir.mkdir(exist_ok=True)
+            price_lookup = {p.asin: p.price for p in products}
+            items = [{"image": fp, "label": f"€{price_lookup.get(a) or '?'}"}
+                     for a, fp in paths.items()]
+            montage_path = build_montage(items, out_dir / "montage.png", cols=5)
+            console.print(f"[dim]montage salvato: {montage_path}[/dim]")
 
     # AI ranking (reorder products best-first)
     if not no_llm and len(products) > 1:
