@@ -191,3 +191,45 @@ def extract_claims(out_dir: str, *, products: list[str], attributes: list[str],
             processed.add(vid)
             _save(processed_path, sorted(processed))
     return new
+
+
+def load_claims(out_dir: str) -> list[dict]:
+    """Read every claim written by extract_claims() so far."""
+    path = os.path.join(out_dir, "claims.jsonl")
+    if not os.path.exists(path):
+        return []
+    claims = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    claims.append(json.loads(line))
+                except Exception:
+                    continue
+    return claims
+
+
+def coverage(claims: list[dict]) -> dict[str, dict]:
+    """Per product: how many DISTINCT videos mention it (not claim count — one chatty
+    video shouldn't outweigh five short ones) and the actual video ids, for report links.
+
+    Concentration is itself a signal: a handful of products absorbing almost all serious
+    review coverage is real information, not noise. A product backed by a single video is
+    a flag to look closer (could be new, could be sponsored) — not proof of anything either
+    way, so callers should show it as a prompt to check, never as an auto-exclusion."""
+    by_product: dict[str, dict] = {}
+    for c in claims:
+        product = c.get("product")
+        if not product or product == "generic":
+            continue
+        entry = by_product.setdefault(product, {"videos": set(), "titles": {}})
+        entry["videos"].add(c["video"])
+        entry["titles"][c["video"]] = c.get("title", "")
+    return {
+        product: {
+            "video_count": len(info["videos"]),
+            "videos": [{"id": v, "title": info["titles"][v]} for v in info["videos"]],
+        }
+        for product, info in by_product.items()
+    }

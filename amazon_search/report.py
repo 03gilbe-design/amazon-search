@@ -34,19 +34,16 @@ except Exception:  # specs opzionale
 def collect(query: str, *, n: int = 12, domain: str = "IT",
             specs: bool = False, specs_top: int = 6, images: bool = False,
             images_top: int = 0) -> list[dict]:
-    """Cerca + (opz.) arricchisce con specs Canopy e immagini. Ritorna lista dict."""
-    s = AmazonSearcher()
-    prods = s.search(query, max_results=n, domain=domain)
-    items = [asdict(p) for p in prods]
+    """Cerca + (opz.) arricchisce con specs Canopy e immagini. Ritorna lista dict.
 
-    if specs and fetch_specs:
-        asins = [it["asin"] for it in items[:specs_top] if it.get("asin")]
-        smap = fetch_specs(asins, domain=domain) if asins else {}
-        for it in items:
-            d = smap.get(it.get("asin"), {})
-            it["specs"] = d.get("specs") or {}
-            if d.get("bullets"):
-                it["bullets"] = d["bullets"]
+    Thin wrapper over pipeline.run() — kept for existing callers (night_runner.py)
+    that only need the flat dict list, not the full SearchResult. `images_top`/`images`
+    keep their old two-thumbnail behavior (pipeline.py's --dedup path downloads a
+    single photo for pHash, a different use case)."""
+    from amazon_search import pipeline
+
+    result = pipeline.run(query, n=n, domain=domain, specs=specs, rank=False)
+    items = [asdict(p) for p in result.products]
 
     if images:
         topN = images_top or len(items)

@@ -53,7 +53,32 @@ def _dedup_badge(product) -> str:
     return f'<span class="badge-dedup">{html.escape(note)}</span>'
 
 
-def _card(p, idx: int) -> str:
+def _fit_chips(p) -> str:
+    hits = getattr(p, "feature_fit_hits", None)
+    if not hits:
+        return ""
+    chips = "".join(
+        f'<span class="fit-chip {"fit-yes" if ok else "fit-no"}">{"✓" if ok else "✗"} {html.escape(name)}</span>'
+        for name, ok in hits.items()
+    )
+    return f'<div class="fit-chips">{chips}</div>'
+
+
+def _video_line(p, video_coverage: dict) -> str:
+    if not video_coverage:
+        return ""
+    cov = video_coverage.get(p.title) or next(
+        (v for k, v in video_coverage.items() if k.lower() in p.title.lower()
+         or p.title.lower() in k.lower()), None)
+    if not cov:
+        return ""
+    n = cov["video_count"]
+    if n >= 2:
+        return f'<div class="video-line video-ok">Confermato da {n} recensioni indipendenti</div>'
+    return '<div class="video-line video-warn">Solo 1 video, verifica sponsorizzazione</div>'
+
+
+def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
     """Card: image LEFT + info RIGHT. Minimal, no redundancy."""
     title_esc = html.escape(p.title[:70])
     price_esc = html.escape(p.price_str or "—")
@@ -63,6 +88,8 @@ def _card(p, idx: int) -> str:
     review_confidence = "●●●" if reviews_count > 100 else "●●" if reviews_count > 10 else "●"
     badge_html = _badge(p)
     dedup_badge_html = _dedup_badge(p)
+    fit_html = _fit_chips(p)
+    video_html = _video_line(p, video_coverage or {})
     thumb = html.escape(p.thumbnail or "")
     price_data = str(p.price or 9999)
     stars_data = str(p.stars or 0)
@@ -89,9 +116,115 @@ def _card(p, idx: int) -> str:
             <div class="card-price">{price_esc}</div>
             {badge_html}
             {dedup_badge_html}
+            {fit_html}
+            {video_html}
             {specs_html}
             <a href="{link_esc}" target="_blank" class="btn-cta">Vedi su Amazon</a>
         </div>
+    </div>"""
+
+
+def _families_section(families: list[dict]) -> str:
+    if not families:
+        return ""
+    rows = []
+    for fam in families:
+        spread = fam.get("spread")
+        spread_txt = f"differenza €{spread:.2f}" if spread is not None else "differenza non nota (manca prezzo)"
+        thumbs = "".join(
+            f'<div class="fam-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="lazy">'
+            f'<div class="fam-price">{html.escape(str(it["price"]) if it["price"] else "?")} €</div></div>'
+            for it in fam["items"]
+        )
+        rows.append(f'<div class="fam-row"><div class="fam-spread">{spread_txt}</div><div class="fam-items">{thumbs}</div></div>')
+    return f"""
+    <div class="section">
+        <h2>Stesso prodotto, prezzi diversi</h2>
+        <p class="section-sub">Foto quasi identiche trovate in {len(families)} gruppi — spesso è lo stesso oggetto rietichettato.</p>
+        {"".join(rows)}
+    </div>"""
+
+
+def _price_chart(products: list) -> str:
+    pts = [(p.price, p.stars, p.title) for p in products if p.price is not None and p.stars is not None]
+    if len(pts) < 2:
+        return ""
+    prices = [p for p, _, _ in pts]
+    pmin, pmax = min(prices), max(prices)
+    prange = (pmax - pmin) or 1
+    w, h, pad = 600, 160, 24
+    dots = []
+    for price, stars, title in pts:
+        x = pad + (price - pmin) / prange * (w - 2 * pad)
+        y = h - pad - (stars / 5) * (h - 2 * pad)
+        dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="#0066c0" fill-opacity="0.65">'
+                     f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★</title></circle>')
+    return f"""
+    <div class="section">
+        <h2>Prezzo vs valutazione</h2>
+        <p class="section-sub">Ogni punto è un prodotto — outlier isolati sono spesso rumore (poche recensioni, prezzo anomalo).</p>
+        <svg viewBox="0 0 {w} {h}" class="price-chart">
+            <line x1="{pad}" y1="{h-pad}" x2="{w-pad}" y2="{h-pad}" stroke="#ddd"/>
+            <line x1="{pad}" y1="{pad}" x2="{pad}" y2="{h-pad}" stroke="#ddd"/>
+            <text x="{pad}" y="{h-6}" font-size="10" fill="#999">€{pmin:.0f}</text>
+            <text x="{w-pad-24}" y="{h-6}" font-size="10" fill="#999">€{pmax:.0f}</text>
+            <text x="2" y="{pad+4}" font-size="10" fill="#999">5★</text>
+            <text x="2" y="{h-pad}" font-size="10" fill="#999">0★</text>
+            {"".join(dots)}
+        </svg>
+    </div>"""
+
+
+def _video_section(video_claims: list[dict]) -> str:
+    if not video_claims:
+        return ""
+    by_product: dict[str, list] = {}
+    for c in video_claims:
+        by_product.setdefault(c.get("product", "?"), []).append(c)
+    blocks = []
+    for product, claims in by_product.items():
+        items = "".join(
+            f'<li class="claim claim-{html.escape(c.get("sentiment","neutral"))}">'
+            f'{html.escape(c.get("claim",""))} — '
+            f'<a href="https://www.youtube.com/watch?v={html.escape(c.get("video",""))}" target="_blank">{html.escape(c.get("title","video")[:40])}</a></li>'
+            for c in claims[:6]
+        )
+        blocks.append(f'<details class="video-block"><summary>{html.escape(product)} ({len(claims)} claim)</summary><ul>{items}</ul></details>')
+    return f"""
+    <div class="section">
+        <h2>Cosa dicono le recensioni video</h2>
+        {"".join(blocks)}
+    </div>"""
+
+
+def _excluded_section(excluded: list[dict]) -> str:
+    if not excluded:
+        return ""
+    rows = "".join(
+        f'<tr><td>{html.escape(e["title"][:60])}</td><td>{html.escape(e["reason"])}</td></tr>'
+        for e in excluded
+    )
+    return f"""
+    <details class="section excluded-section">
+        <summary>{len(excluded)} esclusi (negative sampling) — motivo</summary>
+        <table class="excluded-table">{rows}</table>
+    </details>"""
+
+
+def _benchmarks_section(benchmarks: list[dict]) -> str:
+    if not benchmarks:
+        return ""
+    cards = "".join(
+        f'<div class="bench-card"><div class="bench-title">{html.escape(b.get("title",""))}</div>'
+        f'<div class="bench-note">{html.escape(b.get("note",""))}</div>'
+        f'<div class="bench-flag">non acquistabile su questo marketplace</div></div>'
+        for b in benchmarks
+    )
+    return f"""
+    <div class="section">
+        <h2>Benchmark esterni</h2>
+        <p class="section-sub">Prodotti seri di riferimento, non in vendita qui — solo confronto.</p>
+        <div class="bench-grid">{cards}</div>
     </div>"""
 
 
@@ -102,13 +235,17 @@ def generate_html(
     summary: str = "",
     quota_info: str = "",
     output_dir: Path = OUTPUT_DIR,
+    sections_before_grid: str = "",
+    sections_after_grid: str = "",
+    footer_html: str = "",
+    video_coverage: dict | None = None,
 ) -> Path:
     ts = datetime.now().strftime("%Y%m%d_%H%M")
     filename = f"amazon_{_slug(query)}_{ts}.html"
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / filename
 
-    cards_html = "\n".join(_card(p, i) for i, p in enumerate(products))
+    cards_html = "\n".join(_card(p, i, video_coverage=video_coverage) for i, p in enumerate(products))
     n = len(products)
 
     summary_html = ""
@@ -172,6 +309,49 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 .badge-alert{{background:#d32f2f;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
 .badge-prime{{background:#007bff;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
 .badge-dedup{{display:inline-block;background:#16a34a;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}}
+
+.fit-chips{{display:flex;flex-wrap:wrap;gap:4px}}
+.fit-chip{{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}}
+.fit-yes{{background:#e6f7ea;color:#16a34a}}
+.fit-no{{background:#f5f5f5;color:#999}}
+
+.video-line{{font-size:11px;font-weight:600;padding:3px 0}}
+.video-ok{{color:#16a34a}}
+.video-warn{{color:#c9781f}}
+
+.section{{background:#fff;margin:12px 16px;padding:14px 16px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1)}}
+.section h2{{font-size:15px;font-weight:700;margin-bottom:4px}}
+.section-sub{{font-size:11.5px;color:#888;margin-bottom:10px}}
+
+.fam-row{{border-top:1px solid #f0f0f0;padding:10px 0}}
+.fam-row:first-of-type{{border-top:none}}
+.fam-spread{{font-size:12px;font-weight:700;color:#16a34a;margin-bottom:6px}}
+.fam-items{{display:flex;gap:8px;overflow-x:auto}}
+.fam-item{{flex-shrink:0;width:64px;text-align:center}}
+.fam-item img{{width:64px;height:64px;object-fit:contain;background:#f8f8f8;border-radius:4px}}
+.fam-price{{font-size:11px;font-weight:600;color:#d32f2f;margin-top:2px}}
+
+.price-chart{{width:100%;height:auto}}
+
+.video-block{{border-top:1px solid #f0f0f0;padding:8px 0}}
+.video-block summary{{cursor:pointer;font-size:13px;font-weight:600;color:#0066c0}}
+.video-block ul{{margin:8px 0 0 16px;font-size:12px;line-height:1.6}}
+.claim-pos{{color:#16a34a}}
+.claim-neg{{color:#d32f2f}}
+.claim-neutral{{color:#555}}
+
+.excluded-section{{cursor:pointer}}
+.excluded-section summary{{font-size:13px;font-weight:600;color:#888}}
+.excluded-table{{width:100%;margin-top:8px;font-size:11.5px;border-collapse:collapse}}
+.excluded-table td{{padding:4px 6px;border-bottom:1px solid #f0f0f0}}
+
+.bench-grid{{display:flex;flex-direction:column;gap:8px}}
+.bench-card{{border:1px dashed #ccc;border-radius:6px;padding:10px}}
+.bench-title{{font-size:13px;font-weight:600}}
+.bench-note{{font-size:11.5px;color:#666;margin-top:2px}}
+.bench-flag{{font-size:10.5px;color:#c9781f;font-weight:600;margin-top:4px}}
+
+.footer-disclosure{{padding:16px;text-align:center;font-size:11px;color:#999;line-height:1.5}}
 
 .specs{{font-size:11px;margin-top:4px}}
 .specs summary{{color:#0066c0;cursor:pointer;padding:4px 0;font-weight:500;user-select:none}}
@@ -250,6 +430,8 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 
 {summary_html}
 
+{sections_before_grid}
+
 <div class="grid" id="grid">
 {cards_html}
 </div>
@@ -257,6 +439,10 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 <div class="no-results hidden" id="noResults">
 Nessun prodotto trovato<br><small>Prova a rimuovere i filtri</small>
 </div>
+
+{sections_after_grid}
+
+{footer_html}
 
 <div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -408,3 +594,41 @@ document.getElementById('overlay').addEventListener('click',e=>{{if(e.target===d
 
     out_path.write_text(html_content, encoding="utf-8")
     return out_path
+
+
+def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
+    """Single entry point for a pipeline.SearchResult -> one HTML report with every
+    section the pipeline computed (families, price chart, video claims, exclusions,
+    benchmarks). This is what the CLI calls; generate_html() stays as the lower-level
+    card-list builder other code can still use directly."""
+    n = len(result.products)
+    n_pulled = sum(1 for p in result.products if getattr(p, "source_kind", "organic") == "manual_pull")
+    domain = result.filters.get("domain", "IT")
+
+    sections_before = "".join([
+        _families_section(result.families),
+        _price_chart(result.products),
+    ])
+    sections_after = "".join([
+        _video_section(result.video_claims),
+        _excluded_section(result.excluded),
+        _benchmarks_section(result.external_benchmarks),
+    ])
+    footer = (
+        f'<div class="footer-disclosure">Questo report copre {n} risultati dalla ricerca '
+        f'Amazon.{html.escape(str(domain))}'
+        + (f" + {n_pulled} pull manuali" if n_pulled else "")
+        + '. Il prodotto migliore in assoluto potrebbe non essere in questo pool.</div>'
+    )
+
+    return generate_html(
+        result.products,
+        result.query,
+        summary=result.ai_summary,
+        quota_info=result.quota_info,
+        output_dir=output_dir,
+        sections_before_grid=sections_before,
+        sections_after_grid=sections_after,
+        footer_html=footer,
+        video_coverage=result.video_coverage,
+    )

@@ -1,0 +1,179 @@
+# -*- coding: utf-8 -*-
+"""The one search pipeline. Both the CLI (main.py) and library callers (report.py, night_runner)
+go through here — nothing else independently re-implements search+enrich.
+
+Execution order matters and is deliberate, not arbitrary:
+  1. organic search
+  2. negative-sampling exclusion (BEFORE spending quota on items we already know are junk)
+  3. manual ASIN pulls merged in — these bypass step 2 on purpose: a candidate a human chose
+     deliberately shouldn't be auto-excluded by a keyword false positive
+  4. specs (Canopy) — only on survivors + pulls
+  5. dedup (pHash) — needs images, downloaded after specs so we don't fetch images for
+     items that just got excluded
+  6. video claims (opt-in, slow/costly — never run unless explicitly requested)
+  7. feature-fit scoring (benefits from specs bullets if step 4 ran; works on title alone
+     otherwise, with a flag so the report can say so)
+  8. AI budget-rank — a SEPARATE ordering signal from feature-fit, never blended into one score
+"""
+from __future__ import annotations
+from dataclasses import dataclass, field
+
+from amazon_search.searcher import AmazonProduct, AmazonSearcher
+
+
+@dataclass
+class SearchResult:
+    query: str
+    filters: dict
+    products: list  # list[AmazonProduct], survivors + pulls, in final (possibly AI-ranked) order
+    families: list[dict] = field(default_factory=list)          # dedup.phash_families() output
+    video_claims: list[dict] = field(default_factory=list)      # video_review claims, [] if not run
+    video_coverage: dict = field(default_factory=dict)          # video_review.coverage() output
+    excluded: list[dict] = field(default_factory=list)          # negative-sampling audit trail
+    external_benchmarks: list[dict] = field(default_factory=list)
+    feature_fit_ready: bool = False   # True only if criteria AND specs both ran (stronger match)
+    quota_info: str = ""
+    ai_summary: str = ""
+
+
+def run(query: str, *,
+        max_price: float | None = None,
+        min_stars: float | None = None,
+        n: int = 15,
+        domain: str = "IT",
+        specs: bool = False,
+        dedup: bool = False,
+        videos: bool = False,
+        video_out_dir: str = "",
+        rank: bool = True,
+        budget: float | None = None,
+        criteria: dict[str, list[str]] | None = None,
+        junk_patterns: dict[str, list[str]] | None = None,
+        pull_asins: list[str] | None = None,
+        external_benchmarks: list[dict] | None = None) -> SearchResult:
+    """Run the full pipeline once, returning everything computed — the report renders
+    from this single object, nothing is a side file."""
+    from amazon_search import scoring
+
+    searcher = AmazonSearcher()
+    products = searcher.search(query, max_results=n, max_price=max_price,
+                                min_stars=min_stars, domain=domain)
+
+    # 2. negative sampling — before any paid enrichment
+    excluded: list[dict] = []
+    if junk_patterns:
+        survivors = []
+        for p in products:
+            reason = scoring.exclusion_reason(p, junk_patterns)
+            if reason:
+                excluded.append({"asin": p.asin, "title": p.title, "reason": reason})
+            else:
+                survivors.append(p)
+        products = survivors
+
+    # 3. manual pulls — bypass exclusion by design, tagged source
+    for p in products:
+        if not hasattr(p, "source_kind"):
+            p.source_kind = "organic"
+    if pull_asins:
+        from amazon_search.specs import fetch_specs as _fs
+        pulled_specs = _fs(pull_asins, domain=domain) if specs else {}
+        known = {p.asin for p in products}
+        for asin in pull_asins:
+            if asin in known:
+                continue
+            d = pulled_specs.get(asin, {})
+            products.append(AmazonProduct(
+                title=d.get("title", asin), asin=asin, brand=None, price=None,
+                price_str="?", stars=None, reviews=None, thumbnail=None,
+                link=f"https://www.amazon.{domain.lower()}/dp/{asin}", prime=False,
+                in_stock=d.get("in_stock", True), source="manual",
+                bullets=d.get("bullets", []), specs=d.get("specs", {}),
+            ))
+            products[-1].source_kind = "manual_pull"
+
+    # 4. specs
+    feature_fit_ready = False
+    if specs:
+        top_asins = [p.asin for p in products[:6] if p.asin]
+        if top_asins:
+            from amazon_search.specs import fetch_specs
+            specs_data = fetch_specs(top_asins, domain=domain)
+            for p in products:
+                if p.asin in specs_data:
+                    d = specs_data[p.asin]
+                    p.bullets = d.get("bullets", [])
+                    p.specs = d.get("specs", {})
+                    p.in_stock = d.get("in_stock", p.in_stock)
+        feature_fit_ready = True
+
+    # 5. dedup
+    families: list[dict] = []
+    if dedup and len(products) > 1:
+        from amazon_search import imagecache
+        from amazon_search import dedup as dedup_mod
+
+        paths = {}
+        for p in products:
+            if p.asin:
+                fp = imagecache.local_path(p.asin, domain=domain.lower())
+                if fp:
+                    paths[p.asin] = fp
+        if len(paths) > 1:
+            raw_families = dedup_mod.phash_families(paths, threshold=8)
+            price_by_asin = {p.asin: p.price for p in products}
+            title_by_asin = {p.asin: p.title for p in products}
+            thumb_by_asin = {p.asin: p.thumbnail for p in products}
+            for fam in raw_families:
+                spread = dedup_mod.price_spread(fam["items"], price_by_asin)
+                cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
+                if spread is not None and spread > 2:
+                    for p in products:
+                        if p.asin in fam["items"] and p.asin != cheapest:
+                            p.dedup_note = f"Same item also seen for €{spread:.2f} less"
+                families.append({
+                    "spread": spread,
+                    "items": [{"asin": a, "price": price_by_asin.get(a),
+                               "title": title_by_asin.get(a) or "",
+                               "thumbnail": thumb_by_asin.get(a) or ""}
+                              for a in fam["items"]],
+                })
+
+    # 6. video claims — opt-in, slow, never automatic
+    video_claims: list[dict] = []
+    video_coverage: dict = {}
+    if videos and video_out_dir:
+        from amazon_search import video_review as vr
+        video_claims = vr.load_claims(video_out_dir)
+        video_coverage = vr.coverage(video_claims)
+
+    # 7. feature-fit scoring
+    if criteria:
+        for p in products:
+            score, hits = scoring.feature_fit_score(p, criteria)
+            p.feature_fit_score = score
+            p.feature_fit_hits = hits
+
+    # 8. AI budget-rank (separate signal, own field, never overwrites feature-fit)
+    ai_summary = ""
+    if rank and len(products) > 1:
+        from amazon_search.llm import ai_rank, compare_products
+        products = ai_rank(products, query, budget=budget or max_price)
+        ai_summary = compare_products(products, query)
+
+    from amazon_search import quota as q
+    quota_info = f"serpapi {q.remaining('serpapi')} | canopy {q.remaining('canopy')} | searchapi {q.remaining('searchapi')}"
+
+    return SearchResult(
+        query=query,
+        filters={"max_price": max_price, "min_stars": min_stars, "domain": domain, "n": n},
+        products=products,
+        families=families,
+        video_claims=video_claims,
+        video_coverage=video_coverage,
+        excluded=excluded,
+        external_benchmarks=external_benchmarks or [],
+        feature_fit_ready=feature_fit_ready,
+        quota_info=quota_info,
+        ai_summary=ai_summary,
+    )

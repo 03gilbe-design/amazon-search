@@ -3,6 +3,7 @@
 
 Usage:
   amazon-search "subwoofer 200W" --max-price 120 --min-stars 4 --specs
+  amazon-search "collare cervicale" --dedup --criteria "regolabile,traspirante" --junk "cuscino"
   amazon-search --quota
 """
 import subprocess
@@ -23,15 +24,25 @@ def _open_browser(path: Path) -> None:
         pass  # termux-open not available, just print path
 
 
+def _parse_kv_list(raw: str | None) -> list[str]:
+    """"a,b,c" -> ["a","b","c"], "" / None -> []"""
+    if not raw:
+        return []
+    return [s.strip() for s in raw.split(",") if s.strip()]
+
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("query", required=False, default=None)
 @click.option("--max-price", type=float, default=None, help="Prezzo massimo in €")
 @click.option("--budget", type=float, default=None, help="Budget (usato da AI per ranking)")
 @click.option("--min-stars", type=float, default=None, help="Stelle minime (es: 4.0)")
 @click.option("--results", type=int, default=15, show_default=True, help="N. risultati da cercare")
-@click.option("--specs", is_flag=True, help="Fetch specifiche tecniche top 3 (costa crediti Canopy)")
+@click.option("--specs", is_flag=True, help="Fetch specifiche tecniche top 6 (costa crediti Canopy)")
 @click.option("--dedup", is_flag=True, help="Rileva stesso prodotto rivenduto a prezzi diversi (pHash foto, N download extra)")
-@click.option("--montage", "make_montage", is_flag=True, help="Salva griglia numerata thumbnail (out/montage.png) per revisione visiva")
+@click.option("--montage", "make_montage", is_flag=True, help="Salva griglia numerata thumbnail per revisione visiva, IN PIÙ al report")
+@click.option("--criteria", default=None, help="Criteri feature-fit, es: 'regolabile,traspirante,sostiene mento' (match su titolo+specs, più forte con --specs)")
+@click.option("--junk", "junk", default=None, help="Categorie da escludere (negative sampling), es: 'cuscino,pillow' — esclusi mostrati in report, non nascosti")
+@click.option("--pull-asin", "pull_asins", default=None, help="ASIN specifici da includere sempre (comma-separated), bypassano il filtro --junk")
 @click.option("--no-llm", is_flag=True, help="Salta AI ranking e comparazione")
 @click.option("--no-open", is_flag=True, help="Non aprire il browser")
 @click.option("--domain", default="IT", show_default=True, help="Marketplace Amazon (es: IT, DE, UK)")
@@ -41,10 +52,11 @@ def _open_browser(path: Path) -> None:
 @click.option("--test", is_flag=True, help="Esegui test suite (3 ricerche predefinite)")
 @click.option("--log-summary", is_flag=True, help="Mostra riassunto log ed esci")
 @click.option("--clear-log", is_flag=True, help="Svuota log ed esci")
-def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage, no_llm, no_open, domain, show_quota, show_cache, clear_cache, test, log_summary, clear_log):
+def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage,
+         criteria, junk, pull_asins, no_llm, no_open, domain, show_quota, show_cache,
+         clear_cache, test, log_summary, clear_log):
     """Cerca prodotti su Amazon e apre i risultati nel browser."""
     from amazon_search import quota as q
-
     from amazon_search import cache
 
     if show_quota:
@@ -98,92 +110,50 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
         console.print("[red]Specifica una query. Es: amazon-search \"subwoofer 200W\"[/red]")
         sys.exit(1)
 
-    from amazon_search.searcher import AmazonSearcher
-    from amazon_search.specs import fetch_specs
-    from amazon_search.llm import compare_products, ai_rank
-    from amazon_search.html_gen import generate_html
+    from amazon_search import pipeline
+    from amazon_search.html_gen import generate_report
+
+    criteria_list = _parse_kv_list(criteria)
+    junk_list = _parse_kv_list(junk)
+    pull_list = _parse_kv_list(pull_asins)
 
     with console.status(f"[bold green]Cercando '{query}' su Amazon.{domain}...[/bold green]"):
         try:
-            searcher = AmazonSearcher()
-            products = searcher.search(
+            result = pipeline.run(
                 query,
-                max_results=results,
-                max_price=max_price,
-                min_stars=min_stars,
-                domain=domain,
+                max_price=max_price, min_stars=min_stars, n=results, domain=domain,
+                specs=specs, dedup=dedup, rank=not no_llm, budget=budget,
+                criteria={c: [c] for c in criteria_list} if criteria_list else None,
+                junk_patterns={j: [j] for j in junk_list} if junk_list else None,
+                pull_asins=pull_list or None,
             )
         except Exception as e:
             console.print(f"[red]Errore ricerca: {e}[/red]")
             sys.exit(1)
 
-    if not products:
+    if not result.products:
         console.print("[yellow]0 prodotti trovati. Prova una query diversa o rimuovi i filtri.[/yellow]")
         return
 
-    # Fetch specs for top 3 if requested
-    if specs:
-        top_asins = [p.asin for p in products[:3] if p.asin]
-        if top_asins:
-            with console.status("[bold]Fetch specifiche tecniche (Canopy)...[/bold]"):
-                specs_data = fetch_specs(top_asins, domain=domain)
-            for p in products:
-                if p.asin in specs_data:
-                    d = specs_data[p.asin]
-                    p.bullets = d.get("bullets", [])
-                    p.specs = d.get("specs", {})
-                    p.in_stock = d.get("in_stock", p.in_stock)
+    if result.excluded:
+        console.print(f"[dim]negative sampling: {len(result.excluded)} esclusi (vedi report per i motivi)[/dim]")
+    if result.families:
+        n_flagged = sum(1 for f in result.families if f["spread"] and f["spread"] > 2)
+        console.print(f"[dim]dedup: {len(result.families)} famiglie foto-simile, {n_flagged} con differenza di prezzo rilevante[/dim]")
 
-    # Rebrand/same-mold detection: same product photo, different price/brand
-    if (dedup or make_montage) and len(products) > 1:
-        from amazon_search import imagecache, dedup as dedup_mod
-
-        with console.status("[bold]Scaricando immagini per il confronto...[/bold]"):
-            paths = {}
-            for p in products:
-                if not p.asin:
-                    continue
-                fp = imagecache.local_path(p.asin, domain=domain.lower())
-                if fp:
-                    paths[p.asin] = fp
-
-        if dedup and len(paths) > 1:
-            families = dedup_mod.phash_families(paths, threshold=8)
-            price_by_asin = {p.asin: p.price for p in products}
-            n_families = 0
-            for fam in families:
-                spread = dedup_mod.price_spread(fam["items"], price_by_asin)
-                if spread is None or spread <= 2:
-                    continue  # below noise threshold, not worth flagging
-                n_families += 1
-                cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
-                for p in products:
-                    if p.asin in fam["items"] and p.asin != cheapest:
-                        p.dedup_note = f"Same item also seen for €{spread:.2f} less"
-            console.print(f"[dim]dedup: {len(families)} famiglie foto-simile trovate, "
-                          f"{n_families} con differenza di prezzo rilevante[/dim]")
-
-        if make_montage and paths:
-            from amazon_search.montage import build_montage
+    if make_montage:
+        from amazon_search import imagecache
+        from amazon_search.montage import build_montage
+        paths = {p.asin: imagecache.local_path(p.asin, domain=domain.lower())
+                 for p in result.products if p.asin}
+        paths = {a: fp for a, fp in paths.items() if fp}
+        if paths:
             out_dir = Path.home() / "amazon_search_reports"
             out_dir.mkdir(exist_ok=True)
-            price_lookup = {p.asin: p.price for p in products}
-            items = [{"image": fp, "label": f"€{price_lookup.get(a) or '?'}"}
-                     for a, fp in paths.items()]
+            price_lookup = {p.asin: p.price for p in result.products}
+            items = [{"image": fp, "label": f"€{price_lookup.get(a) or '?'}"} for a, fp in paths.items()]
             montage_path = build_montage(items, out_dir / "montage.png", cols=5)
             console.print(f"[dim]montage salvato: {montage_path}[/dim]")
-
-    # AI ranking (reorder products best-first)
-    if not no_llm and len(products) > 1:
-        effective_budget = budget or max_price
-        with console.status("[bold]AI ranking prodotti...[/bold]"):
-            products = ai_rank(products, query, budget=effective_budget)
-
-    # LLM comparison summary
-    summary = ""
-    if not no_llm and len(products) > 1:
-        with console.status("[bold]AI analisi...[/bold]"):
-            summary = compare_products(products, query)
 
     # Print quick table
     table = Table(title=f"Amazon.{domain} — {query}", show_header=True, header_style="bold cyan")
@@ -194,7 +164,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
     table.add_column("Reviews", justify="right", style="dim")
     table.add_column("Prime", justify="center")
 
-    for i, p in enumerate(products, 1):
+    for i, p in enumerate(result.products, 1):
         from amazon_search.html_gen import _stars
         table.add_row(
             str(i),
@@ -207,19 +177,11 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
 
     console.print(table)
 
-    if summary:
-        console.print(f"\n[bold yellow]🤖 AI:[/bold yellow] {summary}\n")
+    if result.ai_summary:
+        console.print(f"\n[bold yellow]🤖 AI:[/bold yellow] {result.ai_summary}\n")
 
-    from amazon_search import quota as q
-    quota_info = f"serpapi {q.remaining('serpapi')} | canopy {q.remaining('canopy')} | searchapi {q.remaining('searchapi')}"
-    # Generate HTML
     with console.status("[bold]Generando HTML...[/bold]"):
-        html_path = generate_html(
-            products,
-            query,
-            summary=summary,
-            quota_info=quota_info,
-        )
+        html_path = generate_report(result)
 
     console.print(f"\n[green]✓ HTML salvato:[/green] {html_path}")
     console.print(f"[dim]{q.status_line()}[/dim]")
