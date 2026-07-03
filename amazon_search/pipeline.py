@@ -52,7 +52,8 @@ def run(query: str, *,
         junk_patterns: dict[str, list[str]] | None = None,
         pull_asins: list[str] | None = None,
         external_benchmarks: list[dict] | None = None,
-        suggest_queries: bool = False) -> SearchResult:
+        suggest_queries: bool = False,
+        categories: dict[str, list[str]] | None = None) -> SearchResult:
     """Run the full pipeline once, returning everything computed — the report renders
     from this single object, nothing is a side file."""
     from amazon_search import scoring
@@ -126,15 +127,19 @@ def run(query: str, *,
             price_by_asin = {p.asin: p.price for p in products}
             title_by_asin = {p.asin: p.title for p in products}
             thumb_by_asin = {p.asin: p.thumbnail for p in products}
-            for fam in raw_families:
+            for fam_ix, fam in enumerate(raw_families):
                 spread = dedup_mod.price_spread(fam["items"], price_by_asin)
                 cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
                 if spread is not None and spread > 2:
                     for p in products:
                         if p.asin in fam["items"] and p.asin != cheapest:
                             p.dedup_note = f"Same item also seen for €{spread:.2f} less"
+                for p in products:
+                    if p.asin in fam["items"]:
+                        p.family_id = fam_ix  # so the report can cluster same-family cards together
                 families.append({
                     "spread": spread,
+                    "diff_image": fam.get("diff_image", False),
                     "items": [{"asin": a, "price": price_by_asin.get(a),
                                "title": title_by_asin.get(a) or "",
                                "thumbnail": thumb_by_asin.get(a) or ""}
@@ -155,6 +160,11 @@ def run(query: str, *,
             score, hits = scoring.feature_fit_score(p, criteria)
             p.feature_fit_score = score
             p.feature_fit_hits = hits
+
+    # sub-category bucketing (deterministic half of "sub-categories by eye")
+    if categories:
+        for p in products:
+            p.category = scoring.categorize(p, categories)
 
     # 8. AI budget-rank (separate signal, own field, never overwrites feature-fit)
     ai_summary = ""

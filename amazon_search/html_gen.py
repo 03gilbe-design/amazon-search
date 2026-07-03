@@ -107,8 +107,9 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         )
         specs_html = f'<details class="specs"><summary>Specifiche</summary><table>{rows}</table></details>'
 
+    fam_ring = ' card-grouped' if getattr(p, "family_id", None) is not None else ''
     return f"""
-    <div class="card" data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
+    <div class="card{fam_ring}" data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
         <div class="card-img">{thumb_html}</div>
         <div class="card-info">
             <div class="card-title">{title_esc}</div>
@@ -124,25 +125,78 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
     </div>"""
 
 
-def _families_section(families: list[dict]) -> str:
-    if not families:
-        return ""
-    rows = []
-    for fam in families:
-        spread = fam.get("spread")
-        spread_txt = f"differenza €{spread:.2f}" if spread is not None else "differenza non nota (manca prezzo)"
-        thumbs = "".join(
-            f'<div class="fam-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="lazy">'
-            f'<div class="fam-price">{html.escape(str(it["price"]) if it["price"] else "?")} €</div></div>'
-            for it in fam["items"]
+def _family_card(fam: dict) -> str:
+    spread = fam.get("spread")
+    spread_txt = f"€{spread:.2f} di differenza" if spread is not None else "differenza non nota"
+    items = sorted(fam["items"], key=lambda it: it["price"] if it["price"] is not None else 9e9)
+    identical = not fam.get("diff_image", False)
+
+    if identical:
+        # exact same photo file: one true overlapping stack + a vertical price list
+        stack_imgs = "".join(
+            f'<img src="{html.escape(items[i]["thumbnail"] or "")}" alt="" loading="lazy" style="--i:{i}">'
+            for i in range(min(3, len(items)))
         )
-        rows.append(f'<div class="fam-row"><div class="fam-spread">{spread_txt}</div><div class="fam-items">{thumbs}</div></div>')
+        more_badge = f'<div class="fam-more">+{len(items)-3}</div>' if len(items) > 3 else ""
+        price_list = "".join(
+            f'<li>€{it["price"]:.2f}</li>' if it["price"] is not None else "<li>?</li>"
+            for it in items
+        )
+        body = f"""
+        <div class="fam-stack">{stack_imgs}{more_badge}</div>
+        <ul class="fam-pricelist">{price_list}</ul>"""
+    else:
+        # similar but not byte-identical photos: distinct thumbnails, tightly clustered
+        thumbs = "".join(
+            f'<div class="fam-sim-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="lazy">'
+            f'<div class="fam-sim-price">{("€" + format(it["price"], ".2f")) if it["price"] is not None else "?"}</div></div>'
+            for it in items
+        )
+        body = f'<div class="fam-sim-cluster">{thumbs}</div>'
+
+    return f"""
+    <div class="fam-card {'fam-identical' if identical else 'fam-similar'}">
+        <div class="fam-spread">{spread_txt}</div>
+        {body}
+        <div class="fam-count">{len(items)} listati{' — foto identica' if identical else ' — foto simili'}</div>
+    </div>"""
+
+
+def _families_section(families: list[dict]) -> str:
+    """Only families with a REAL price gap (>€2) — this is the section that answers
+    "same item, pick the cheaper one". Near-zero-spread families aren't shown here:
+    zero savings isn't a finding, and it's exactly the case where a false-positive
+    photo match (pHash says "same" but it's actually two different products that
+    happen to look alike, e.g. a dog vs. a cat photo) would go unnoticed if presented
+    with the same confidence as a genuine result."""
+    real_gap = [f for f in families if f.get("spread") is not None and f["spread"] > 2]
+    if not real_gap:
+        return ""
+    cards = "".join(_family_card(f) for f in real_gap)
     return f"""
     <div class="section">
         <h2>Stesso prodotto, prezzi diversi</h2>
-        <p class="section-sub">Foto quasi identiche trovate in {len(families)} gruppi — spesso è lo stesso oggetto rietichettato.</p>
-        {"".join(rows)}
+        <p class="section-sub">Foto quasi identiche con un vero risparmio in {len(real_gap)} gruppi — spesso è lo stesso oggetto rietichettato. Foto identica = stesso file, impilate; foto simile = stesso oggetto ma scatti diversi, affiancate.</p>
+        <div class="fam-grid">{cards}</div>
     </div>"""
+
+
+def _possible_duplicates_section(families: list[dict]) -> str:
+    """Zero/near-zero spread families: same photo, ~same price, no arbitrage value —
+    but ALSO no independent confirmation these are truly the same product (could be a
+    genuine duplicate listing, or a pHash false-positive). Shown separately, collapsed,
+    with an explicit "verify before trusting" framing rather than presented as fact."""
+    flat = [f for f in families if f.get("spread") is None or f["spread"] <= 2]
+    if not flat:
+        return ""
+    cards = "".join(_family_card(f) for f in flat)
+    return f"""
+    <details class="section dup-section">
+        <summary>{len(flat)} possibili doppioni (stesso prezzo — verifica a occhio)</summary>
+        <p class="section-sub">Nessuna differenza di prezzo rilevante, quindi nessun vantaggio a saperlo — ma occhio: un pHash può anche
+        raggruppare due prodotti DIVERSI che sembrano solo simili nella foto (es. un cane scambiato per un gatto). Non dare per scontato che sia lo stesso oggetto senza guardare.</p>
+        <div class="fam-grid">{cards}</div>
+    </details>"""
 
 
 def _price_chart(products: list) -> str:
@@ -243,6 +297,29 @@ def _benchmarks_section(benchmarks: list[dict]) -> str:
     </div>"""
 
 
+def _cluster_by_family(products: list) -> list:
+    """Reorder so pHash-family siblings sit next to each other in the main grid,
+    instead of scattered across the page — same idea as the dedicated families
+    section, applied to the catalog itself. Products with no family_id keep their
+    original relative order; the first product of each family determines where
+    that cluster is inserted."""
+    seen_families: dict[int, list] = {}
+    order: list = []
+    for p in products:
+        fid = getattr(p, "family_id", None)
+        if fid is None:
+            order.append(p)
+        elif fid not in seen_families:
+            seen_families[fid] = [p]
+            order.append(seen_families[fid])  # placeholder for the whole cluster
+        else:
+            seen_families[fid].append(p)
+    flat: list = []
+    for item in order:
+        flat.extend(item) if isinstance(item, list) else flat.append(item)
+    return flat
+
+
 def generate_html(
     products: list,
     query: str,
@@ -260,7 +337,26 @@ def generate_html(
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / filename
 
-    cards_html = "\n".join(_card(p, i, video_coverage=video_coverage) for i, p in enumerate(products))
+    products = _cluster_by_family(products)
+    categories = [getattr(p, "category", None) for p in products]
+    if any(categories):
+        seen_order: list[str] = []
+        for c in categories:
+            c = c or "Altro"
+            if c not in seen_order:
+                seen_order.append(c)
+        blocks = []
+        idx = 0
+        for cat in seen_order:
+            cat_products = [p for p in products if (getattr(p, "category", None) or "Altro") == cat]
+            cat_cards = "\n".join(_card(p, idx + i, video_coverage=video_coverage) for i, p in enumerate(cat_products))
+            idx += len(cat_products)
+            blocks.append(f'<h3 class="cat-title">{html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')
+        cards_html = "\n".join(blocks)
+        grid_wrap_class = ""  # each category already has its own .grid
+    else:
+        cards_html = "\n".join(_card(p, i, video_coverage=video_coverage) for i, p in enumerate(products))
+        grid_wrap_class = "grid"
     n = len(products)
 
     summary_html = ""
@@ -300,8 +396,12 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .summary{{background:#fff7e0;border-left:4px solid #f5a623;padding:14px 18px;margin:16px 16px 0;border-radius:6px;font-size:13.5px;line-height:1.55;color:#5c4b1e}}
 
 .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:16px;padding-bottom:80px}}
+.cat-title{{font-size:15px;font-weight:800;color:#1c1a17;margin:22px 16px 4px;letter-spacing:-.01em}}
+.cat-title:first-of-type{{margin-top:16px}}
+.cat-count{{font-weight:500;color:#a39d8f;font-size:12.5px}}
 
 .card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
+.card-grouped{{box-shadow:0 0 0 2px rgba(22,163,74,.35),0 1px 3px rgba(20,20,10,.08)}}
 .card:hover{{box-shadow:0 6px 18px rgba(20,20,10,.12);transform:translateY(-1px)}}
 .card:active{{animation:cardPulse 0.3s ease}}
 @keyframes cardPulse{{0%{{transform:scale(1)}}50%{{transform:scale(1.01)}}100%{{transform:scale(1)}}}}
@@ -344,13 +444,29 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .section h2{{font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.01em}}
 .section-sub{{font-size:12px;color:#8a8577;margin-bottom:12px;line-height:1.5}}
 
-.fam-row{{border-top:1px solid rgba(0,0,0,.06);padding:12px 0}}
-.fam-row:first-of-type{{border-top:none;padding-top:2px}}
-.fam-spread{{font-size:12.5px;font-weight:800;color:#16a34a;margin-bottom:8px;display:inline-block;background:rgba(22,163,74,.1);padding:3px 10px;border-radius:20px}}
-.fam-items{{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}}
-.fam-item{{flex-shrink:0;width:68px;text-align:center}}
-.fam-item img{{width:68px;height:68px;object-fit:contain;background:#faf8f5;border-radius:8px;border:1px solid rgba(0,0,0,.05)}}
-.fam-price{{font-size:11.5px;font-weight:700;color:#c0392b;margin-top:4px}}
+.fam-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}}
+.fam-card{{text-align:center}}
+.fam-stack{{position:relative;height:84px;margin-bottom:10px}}
+.fam-stack img{{
+  position:absolute; top:0; left:50%; width:74px;height:74px;object-fit:contain;
+  background:#faf8f5;border-radius:10px;border:1px solid rgba(0,0,0,.06);
+  box-shadow:0 4px 10px rgba(20,15,5,.14);
+  transform:translateX(calc(-50% + var(--i)*14px)) rotate(calc(var(--i)*4deg - 4deg));
+}}
+.fam-more{{
+  position:absolute; right:4px; bottom:0; background:#1c1a17; color:#fff; font-size:10.5px;
+  font-weight:700; padding:2px 7px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.2);
+}}
+.fam-spread{{font-size:12px;font-weight:800;color:#16a34a;display:inline-block;background:rgba(22,163,74,.1);padding:3px 10px;border-radius:20px;margin-bottom:10px}}
+.fam-count{{font-size:11px;color:#8a8577;margin-top:8px}}
+
+.fam-identical .fam-stack{{margin-bottom:6px}}
+.fam-pricelist{{list-style:none;font-size:12.5px;font-weight:700;color:#c0392b;display:flex;flex-direction:column;gap:2px}}
+
+.fam-sim-cluster{{display:flex;justify-content:center;gap:4px;flex-wrap:wrap}}
+.fam-sim-item{{width:60px;text-align:center}}
+.fam-sim-item img{{width:56px;height:56px;object-fit:contain;background:#faf8f5;border-radius:8px;border:1px solid rgba(0,0,0,.06)}}
+.fam-sim-price{{font-size:10.5px;font-weight:700;color:#c0392b;margin-top:3px}}
 
 .price-chart{{width:100%;height:auto}}
 
@@ -361,6 +477,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .claim-pos{{color:#16a34a}}
 .claim-neg{{color:#d32f2f}}
 .claim-neutral{{color:#555}}
+
+.dup-section{{background:rgba(255,255,255,.45);cursor:pointer}}
+.dup-section summary{{font-size:13.5px;font-weight:700;color:#8a8577}}
+.dup-section .fam-grid{{margin-top:12px}}
 
 .excluded-section{{cursor:pointer}}
 .excluded-section summary{{font-size:13.5px;font-weight:700;color:#8a8577}}
@@ -464,7 +584,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 {sections_before_grid}
 
-<div class="grid" id="grid">
+<div class="{grid_wrap_class}" id="grid">
 {cards_html}
 </div>
 
@@ -646,6 +766,7 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
     sections_after = "".join([
         _video_section(result.video_claims),
         _query_variants_section(result.query_variants, result.query),
+        _possible_duplicates_section(result.families),
         _excluded_section(result.excluded),
         _benchmarks_section(result.external_benchmarks),
     ])

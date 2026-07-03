@@ -44,6 +44,7 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--junk", "junk", default=None, help="Categorie da escludere (negative sampling), es: 'cuscino,pillow' — esclusi mostrati in report, non nascosti")
 @click.option("--pull-asin", "pull_asins", default=None, help="ASIN specifici da includere sempre (comma-separated), bypassano il filtro --junk")
 @click.option("--suggest-queries", is_flag=True, help="Suggerisce query alternative (gratis, deterministico + AI se disponibile)")
+@click.option("--categorize", "category_defs", default=None, help="Sotto-categorie per titolo, es: 'Gonfiabile:gonfiabile,inflatable|Rigido:rigido,semirigido' (ordine=priorità, primo match vince)")
 @click.option("--no-llm", is_flag=True, help="Salta AI ranking e comparazione")
 @click.option("--no-open", is_flag=True, help="Non aprire il browser")
 @click.option("--domain", default="IT", show_default=True, help="Marketplace Amazon (es: IT, DE, UK)")
@@ -54,8 +55,8 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--log-summary", is_flag=True, help="Mostra riassunto log ed esci")
 @click.option("--clear-log", is_flag=True, help="Svuota log ed esci")
 def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage,
-         criteria, junk, pull_asins, suggest_queries, no_llm, no_open, domain, show_quota,
-         show_cache, clear_cache, test, log_summary, clear_log):
+         criteria, junk, pull_asins, suggest_queries, category_defs, no_llm, no_open, domain,
+         show_quota, show_cache, clear_cache, test, log_summary, clear_log):
     """Cerca prodotti su Amazon e apre i risultati nel browser."""
     from amazon_search import quota as q
     from amazon_search import cache
@@ -117,6 +118,14 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
     criteria_list = _parse_kv_list(criteria)
     junk_list = _parse_kv_list(junk)
     pull_list = _parse_kv_list(pull_asins)
+    categories = None
+    if category_defs:
+        categories = {}
+        for chunk in category_defs.split("|"):
+            if ":" not in chunk:
+                continue
+            name, kws = chunk.split(":", 1)
+            categories[name.strip()] = _parse_kv_list(kws)
 
     with console.status(f"[bold green]Cercando '{query}' su Amazon.{domain}...[/bold green]"):
         try:
@@ -128,6 +137,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
                 junk_patterns={j: [j] for j in junk_list} if junk_list else None,
                 pull_asins=pull_list or None,
                 suggest_queries=suggest_queries,
+                categories=categories,
             )
         except Exception as e:
             console.print(f"[red]Errore ricerca: {e}[/red]")

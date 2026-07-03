@@ -34,6 +34,22 @@ def feature_fit_score(product, criteria: dict[str, list[str]]) -> tuple[float, d
     return score, hits
 
 
+def categorize(product, categories: dict[str, list[str]], *, default: str = "Altro") -> str:
+    """categories: {"Gonfiabile": ["gonfiabile","inflatable"], "Rigido": ["rigido","semirigido"], ...}
+    ORDER MATTERS — first matching category wins (a title can match several keyword sets;
+    the caller decides priority by list order, same principle as feature-fit: auditable,
+    not a black box). Every product lands in exactly one bucket, `default` catches the rest.
+    This is the deterministic half of "sub-categories by eye" — the photo/vision half still
+    needs a human or montage.py, keyword matching alone can't see what a photo shows."""
+    if not categories:
+        return default
+    text = _haystack(product)
+    for name, keywords in categories.items():
+        if any(kw.lower() in text for kw in keywords):
+            return name
+    return default
+
+
 def exclusion_reason(product, junk_patterns: dict[str, list[str]]) -> str | None:
     """junk_patterns: {"categoria_sbagliata": ["cuscino", "pillow"], ...} — caller-supplied,
     generic. Returns the matched category name, or None if nothing matched (product stays in).
