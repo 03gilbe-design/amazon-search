@@ -353,18 +353,21 @@ def _cluster_by_family(products: list) -> list:
 
 
 def _collapse_identical_siblings(products: list, families: list[dict]) -> list:
-    """Identical-photo family members are literally the same product listing —
-    showing 3 full cards for one photo wastes catalog space and is exactly what
-    was flagged as confusing. Keep only the cheapest of each identical-photo
-    family in the main grid (tagged with the sibling prices); the rest are
-    still fully visible in the dedicated families section above, nothing is lost."""
-    identical_fids = {i for i, f in enumerate(families) if not f.get("diff_image", False)}
-    if not identical_fids:
+    """Every dedup family is the SAME product by photo (identical file, or resized/
+    mirrored/rotated copies of the same shot — dedup.phash_families groups them all at
+    a strict threshold). Showing N full cards for one product wastes catalog space and
+    is exactly what was flagged ("non hai tolto le immagini uguali... kmina semirigido"):
+    the flaw before was collapsing only byte-identical (diff_image=False) families, which
+    left near-identical ones (e.g. 5 KMINA size variants on the same photo) as separate
+    cards. Now collapse ANY family — keep only the cheapest in the main grid (tagged with
+    sibling prices), the rest stay fully visible in the dedicated families section above."""
+    family_fids = set(range(len(families)))
+    if not family_fids:
         return products
     by_fid: dict[int, list] = {}
     for p in products:
         fid = getattr(p, "family_id", None)
-        if fid in identical_fids:
+        if fid in family_fids:
             by_fid.setdefault(fid, []).append(p)
 
     drop: set[str] = set()
