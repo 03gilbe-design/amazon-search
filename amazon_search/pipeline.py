@@ -165,6 +165,19 @@ def run(query: str, *,
     if categories:
         for p in products:
             p.category = scoring.categorize(p, categories)
+        # refine the leftover "Altro" bucket with color+shared-word clustering — catches
+        # real sub-groups the keyword list didn't anticipate (verified live: a real
+        # "bite anti-bruxismo" cluster inside "Altro" that no --categorize keyword hit)
+        leftover = [p for p in products if p.category == "Altro"]
+        if leftover:
+            from amazon_search import imagecache
+            images = {p.asin: imagecache.local_path(p.asin, domain=domain.lower())
+                      for p in leftover if p.asin}
+            images = {a: fp for a, fp in images.items() if fp}
+            assignment = scoring.visual_cluster(leftover, images)
+            for p in leftover:
+                if p.asin in assignment:
+                    p.category = assignment[p.asin]
 
     # 8. AI budget-rank (separate signal, own field, never overwrites feature-fit)
     ai_summary = ""

@@ -50,6 +50,85 @@ def categorize(product, categories: dict[str, list[str]], *, default: str = "Alt
     return default
 
 
+_STOPWORDS = {
+    "collare", "cervicale", "supporto", "collo", "neck", "support", "per", "il", "la", "lo",
+    "con", "da", "di", "del", "della", "delle", "degli", "the", "for", "and", "un", "una",
+}
+
+
+def _dominant_color(image_path: str) -> tuple[int, int, int] | None:
+    """Average RGB of a downscaled thumbnail — cheap, not a real palette extraction,
+    but enough to tell "this is a black strap" from "this is a white/beige brace" apart."""
+    try:
+        from PIL import Image
+        im = Image.open(image_path).convert("RGB").resize((24, 24))
+        pixels = list(im.getdata())
+        n = len(pixels)
+        return (sum(p[0] for p in pixels) // n, sum(p[1] for p in pixels) // n, sum(p[2] for p in pixels) // n)
+    except Exception:
+        return None
+
+
+def _color_distance(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
+    return sum((x - y) ** 2 for x, y in zip(a, b)) ** 0.5
+
+
+def _unique_title_words(title: str) -> set[str]:
+    import re
+    return {w for w in re.findall(r"[a-z0-9]+", (title or "").lower())
+            if len(w) >= 4 and w not in _STOPWORDS}
+
+
+def visual_cluster(products: list, images: dict[str, str], *,
+                    color_threshold: float = 40.0, min_shared_words: int = 1) -> dict[str, str]:
+    """Groups products that keyword categorize() left in the default bucket, using two
+    signals together (neither alone is reliable): similar average image color AND at least
+    one non-generic word shared between titles. Both conditions required — color alone
+    would lump "all black items" together regardless of what they are; shared words alone
+    already IS categorize()'s job and would just re-find the same weak matches.
+
+    images: {product_id: local_image_path} (see imagecache.local_path).
+    Returns {product_id: cluster_label} only for products that got grouped (2+ members) —
+    products that match no one stay out, the caller keeps them in "Altro" rather than
+    inventing a fake category of one."""
+    colors: dict[str, tuple] = {}
+    words: dict[str, set] = {}
+    for p in products:
+        img = images.get(p.asin)
+        if img:
+            c = _dominant_color(img)
+            if c:
+                colors[p.asin] = c
+        words[p.asin] = _unique_title_words(p.title)
+
+    ids = [p.asin for p in products if p.asin in colors]
+    seen: set[str] = set()
+    clusters: list[list[str]] = []
+    for i, a in enumerate(ids):
+        if a in seen:
+            continue
+        group = [a]
+        seen.add(a)
+        for b in ids[i + 1:]:
+            if b in seen:
+                continue
+            if (_color_distance(colors[a], colors[b]) <= color_threshold
+                    and len(words[a] & words[b]) >= min_shared_words):
+                group.append(b)
+                seen.add(b)
+        if len(group) > 1:
+            clusters.append(group)
+
+    assignment: dict[str, str] = {}
+    for i, group in enumerate(clusters):
+        # label the cluster with its most common shared word, for a legible name
+        common = set.intersection(*(words[a] for a in group)) if len(group) > 1 else set()
+        label = f"Simili: {sorted(common)[0]}" if common else f"Gruppo visivo {i+1}"
+        for a in group:
+            assignment[a] = label
+    return assignment
+
+
 def exclusion_reason(product, junk_patterns: dict[str, list[str]]) -> str | None:
     """junk_patterns: {"categoria_sbagliata": ["cuscino", "pillow"], ...} — caller-supplied,
     generic. Returns the matched category name, or None if nothing matched (product stays in).
