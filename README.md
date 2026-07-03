@@ -56,9 +56,19 @@ amazon_search/            the package (import as amazon_search / python -m amazo
   config.py config_search.py configuration
   logger.py                  run logging
   report.py                  report assembly glue
+  dedup.py                   pHash rebrand/same-mold detection across listings
+  montage.py                 numbered thumbnail grid for fast visual classification
+  video_review.py            factual claims mined from real YouTube review transcripts
 scripts/                  standalone PowerShell runners (night batch job)
 docs/                     README images
 ```
+
+`dedup.py`, `montage.py` and `video_review.py` aren't wired into the default
+CLI flow (no `--dedup`/`--videos` flag yet) — they're standalone, tested
+building blocks for the cases where photos/titles lie: recovered and
+generalized from real product research (anti-snoring collars, smart rings)
+where text-only classification measured 53% precision and rebrand families
+hid a >20€ price gap on the identical item.
 
 ## Status
 
