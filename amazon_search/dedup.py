@@ -2,10 +2,11 @@
 """Rebrand/same-mold detection via perceptual image hashing.
 
 Products get relisted under different brands/titles with the *same* stock
-photo (identical or resized) at wildly different prices. Text/title
-similarity misses this entirely; the product photo doesn't lie. Group by
-pHash (Hamming distance <= threshold) to surface these families and their
-price spread — "same mold, pick the cheapest" is often the real answer.
+photo (identical or resized) at different prices. Text/title similarity
+misses this entirely; the product photo doesn't lie. Group by pHash
+(Hamming distance <= threshold) to surface these families and their price
+spread, so "same mold, pick the cheapest" becomes a checkable fact instead
+of a guess.
 
 Needs the `imagehash` package (pip install imagehash). Requires local image
 files (see imagecache.py to fetch them first).

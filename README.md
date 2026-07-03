@@ -67,8 +67,10 @@ docs/                     README images
 CLI flow (no `--dedup`/`--videos` flag yet) — they're standalone, tested
 building blocks for the cases where photos/titles lie: recovered and
 generalized from real product research (anti-snoring collars, smart rings)
-where text-only classification measured 53% precision and rebrand families
-hid a >20€ price gap on the identical item.
+where text-only classification measured 53% precision against a
+manually-labeled set (see `dedup.py`/`montage.py` docstrings for what each
+actually checks — that number is one measured test on one product category,
+not a guarantee).
 
 ## Status
 

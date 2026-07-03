@@ -20,7 +20,7 @@ while _home in sys.path:
     sys.path.remove(_home)
 sys.path.append(_home)  # priorita' minima: non fa ombra a site-packages
 
-from amazon_search.report import _cli  # noqa: E402
+from amazon_search.main import main  # noqa: E402
 
 if __name__ == "__main__":
-    _cli()
+    main()

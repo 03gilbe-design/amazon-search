@@ -2,11 +2,26 @@
 from __future__ import annotations
 
 import html
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 
-OUTPUT_DIR = Path("/storage/emulated/0/Download")
+
+def _default_output_dir() -> Path:
+    """Termux's Download dir on real Termux, a home subfolder everywhere else.
+
+    Checked via a Termux-specific marker (not just path existence — on
+    Windows, Path("/storage/...").mkdir() silently creates a *drive-relative*
+    directory, so an existence check alone can be fooled by a stray leftover
+    folder from a previous run).
+    """
+    if os.name != "nt" and Path("/data/data/com.termux").exists():
+        return Path("/storage/emulated/0/Download")
+    return Path.home() / "amazon_search_reports"
+
+
+OUTPUT_DIR = _default_output_dir()
 
 
 def _slug(text: str) -> str:
