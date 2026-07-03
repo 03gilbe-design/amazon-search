@@ -34,6 +34,7 @@ class SearchResult:
     feature_fit_ready: bool = False   # True only if criteria AND specs both ran (stronger match)
     quota_info: str = ""
     ai_summary: str = ""
+    query_variants: list[str] = field(default_factory=list)  # deterministic + AI, free to generate
 
 
 def run(query: str, *,
@@ -50,7 +51,8 @@ def run(query: str, *,
         criteria: dict[str, list[str]] | None = None,
         junk_patterns: dict[str, list[str]] | None = None,
         pull_asins: list[str] | None = None,
-        external_benchmarks: list[dict] | None = None) -> SearchResult:
+        external_benchmarks: list[dict] | None = None,
+        suggest_queries: bool = False) -> SearchResult:
     """Run the full pipeline once, returning everything computed — the report renders
     from this single object, nothing is a side file."""
     from amazon_search import scoring
@@ -161,6 +163,14 @@ def run(query: str, *,
         products = ai_rank(products, query, budget=budget or max_price)
         ai_summary = compare_products(products, query)
 
+    # query variants — deterministic is free, always try it; AI only on request (costs a call)
+    query_variants: list[str] = []
+    if suggest_queries and products:
+        from amazon_search import query_suggest as qs
+        query_variants = qs.deterministic_variants(query, products)
+        if rank:  # only bother with the paid call if AI is enabled at all this run
+            query_variants += qs.ai_variants(query, products)
+
     from amazon_search import quota as q
     quota_info = f"serpapi {q.remaining('serpapi')} | canopy {q.remaining('canopy')} | searchapi {q.remaining('searchapi')}"
 
@@ -176,4 +186,5 @@ def run(query: str, *,
         feature_fit_ready=feature_fit_ready,
         quota_info=quota_info,
         ai_summary=ai_summary,
+        query_variants=query_variants,
     )

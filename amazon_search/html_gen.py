@@ -211,6 +211,21 @@ def _excluded_section(excluded: list[dict]) -> str:
     </details>"""
 
 
+def _query_variants_section(variants: list[str], current_query: str) -> str:
+    if not variants:
+        return ""
+    chips = "".join(
+        f'<a class="qv-chip" href="?" onclick="return false" title="riesegui la ricerca con questa query">{html.escape(v)}</a>'
+        for v in variants[:10]
+    )
+    return f"""
+    <div class="section">
+        <h2>Query alternative</h2>
+        <p class="section-sub">Termini trovati nei titoli reali (o suggeriti da AI) che "{html.escape(current_query)}" non copre — prova a rilanciare la ricerca con una di queste.</p>
+        <div class="qv-chips">{chips}</div>
+    </div>"""
+
+
 def _benchmarks_section(benchmarks: list[dict]) -> str:
     if not benchmarks:
         return ""
@@ -352,6 +367,9 @@ body{{font-family:-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:#1a1a
 .bench-flag{{font-size:10.5px;color:#c9781f;font-weight:600;margin-top:4px}}
 
 .footer-disclosure{{padding:16px;text-align:center;font-size:11px;color:#999;line-height:1.5}}
+
+.qv-chips{{display:flex;flex-wrap:wrap;gap:6px}}
+.qv-chip{{background:#f0f4fa;color:#0066c0;padding:5px 10px;border-radius:14px;font-size:11.5px;text-decoration:none;border:1px solid #d5e2f0}}
 
 .specs{{font-size:11px;margin-top:4px}}
 .specs summary{{color:#0066c0;cursor:pointer;padding:4px 0;font-weight:500;user-select:none}}
@@ -611,6 +629,7 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
     ])
     sections_after = "".join([
         _video_section(result.video_claims),
+        _query_variants_section(result.query_variants, result.query),
         _excluded_section(result.excluded),
         _benchmarks_section(result.external_benchmarks),
     ])
