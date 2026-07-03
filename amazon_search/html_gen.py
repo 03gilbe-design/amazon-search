@@ -203,32 +203,46 @@ def _possible_duplicates_section(families: list[dict]) -> str:
 
 
 def _price_chart(products: list) -> str:
-    pts = [(p.price, p.stars, p.title) for p in products if p.price is not None and p.stars is not None]
+    pts = [(p.price, p.stars, p.title, p.thumbnail or "") for p in products if p.price is not None and p.stars is not None]
     if len(pts) < 2:
         return ""
-    prices = [p for p, _, _ in pts]
+    prices = [p for p, _, _, _ in pts]
     pmin, pmax = min(prices), max(prices)
     prange = (pmax - pmin) or 1
     w, h, pad = 600, 160, 24
     dots = []
-    for price, stars, title in pts:
+    for price, stars, title, thumb in pts:
         x = pad + (price - pmin) / prange * (w - 2 * pad)
         y = h - pad - (stars / 5) * (h - 2 * pad)
-        dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="#0066c0" fill-opacity="0.65">'
-                     f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★</title></circle>')
+        dots.append(
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="#0066c0" fill-opacity="0.65" class="chart-dot" '
+            f'onclick="showChartPoint(this)" '
+            f'data-title="{html.escape(title)}" data-price="{price:.2f}" data-stars="{stars}" data-thumb="{html.escape(thumb)}">'
+            f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★</title></circle>'
+        )
     return f"""
     <div class="section">
         <h2>Prezzo vs valutazione</h2>
-        <p class="section-sub">Ogni punto è un prodotto — outlier isolati sono spesso rumore (poche recensioni, prezzo anomalo).</p>
-        <svg viewBox="0 0 {w} {h}" class="price-chart">
-            <line x1="{pad}" y1="{h-pad}" x2="{w-pad}" y2="{h-pad}" stroke="#ddd"/>
-            <line x1="{pad}" y1="{pad}" x2="{pad}" y2="{h-pad}" stroke="#ddd"/>
-            <text x="{pad}" y="{h-6}" font-size="10" fill="#999">€{pmin:.0f}</text>
-            <text x="{w-pad-24}" y="{h-6}" font-size="10" fill="#999">€{pmax:.0f}</text>
-            <text x="2" y="{pad+4}" font-size="10" fill="#999">5★</text>
-            <text x="2" y="{h-pad}" font-size="10" fill="#999">0★</text>
-            {"".join(dots)}
-        </svg>
+        <p class="section-sub">Ogni punto è un prodotto, cliccalo per vederlo — outlier isolati sono spesso rumore (poche recensioni, prezzo anomalo).</p>
+        <div class="chart-wrap">
+            <svg viewBox="0 0 {w} {h}" class="price-chart">
+                <line x1="{pad}" y1="{h-pad}" x2="{w-pad}" y2="{h-pad}" stroke="#ddd"/>
+                <line x1="{pad}" y1="{pad}" x2="{pad}" y2="{h-pad}" stroke="#ddd"/>
+                <text x="{pad}" y="{h-6}" font-size="10" fill="#999">€{pmin:.0f}</text>
+                <text x="{w-pad-24}" y="{h-6}" font-size="10" fill="#999">€{pmax:.0f}</text>
+                <text x="2" y="{pad+4}" font-size="10" fill="#999">5★</text>
+                <text x="2" y="{h-pad}" font-size="10" fill="#999">0★</text>
+                {"".join(dots)}
+            </svg>
+            <div class="chart-popup hidden" id="chartPopup">
+                <img id="chartPopupImg" src="" alt="">
+                <div class="chart-popup-info">
+                    <div id="chartPopupTitle" class="chart-popup-title"></div>
+                    <div id="chartPopupPrice" class="chart-popup-price"></div>
+                </div>
+                <button class="chart-popup-close" onclick="document.getElementById('chartPopup').classList.add('hidden')">✕</button>
+            </div>
+        </div>
     </div>"""
 
 
@@ -398,7 +412,9 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .summary{{background:#fff7e0;border-left:4px solid #f5a623;padding:14px 18px;margin:16px 16px 0;border-radius:6px;font-size:13.5px;line-height:1.55;color:#5c4b1e}}
 
-.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:16px;padding-bottom:80px}}
+.grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px;padding-bottom:80px}}
+@media (max-width:1100px){{.grid{{grid-template-columns:repeat(3,1fr)}}}}
+@media (max-width:820px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
 .cat-title{{font-size:15px;font-weight:800;color:#1c1a17;margin:22px 16px 4px;letter-spacing:-.01em}}
 .cat-title:first-of-type{{margin-top:16px}}
 .cat-count{{font-weight:500;color:#a39d8f;font-size:12.5px}}
@@ -466,6 +482,18 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .fam-sim-price{{font-size:10px;font-weight:700;color:#c0392b;margin-top:2px}}
 
 .price-chart{{width:100%;height:auto}}
+.chart-wrap{{position:relative}}
+.chart-dot{{cursor:pointer;transition:r .15s}}
+.chart-dot:hover{{r:8}}
+.chart-popup{{
+  position:absolute; top:8px; right:8px; background:#fff; border-radius:10px;
+  box-shadow:0 8px 24px rgba(20,15,5,.18); padding:10px; display:flex; gap:10px;
+  align-items:center; max-width:280px; border:1px solid rgba(0,0,0,.06);
+}}
+.chart-popup img{{width:48px;height:48px;object-fit:contain;background:#faf8f5;border-radius:6px;flex-shrink:0}}
+.chart-popup-title{{font-size:11.5px;font-weight:600;line-height:1.3;margin-bottom:2px}}
+.chart-popup-price{{font-size:12.5px;font-weight:800;color:#c0392b}}
+.chart-popup-close{{position:absolute;top:2px;right:4px;border:none;background:none;cursor:pointer;color:#999;font-size:11px}}
 
 .video-block{{border-top:1px solid rgba(0,0,0,.06);padding:10px 0}}
 .video-block:first-of-type{{border-top:none}}
@@ -703,10 +731,10 @@ function filterCards(){{
 function updateActiveChips(){{
   const chips=[];
   if(filterState.maxPrice<2000){{
-    chips.push('<div class="chip">€ ≤'+filterState.maxPrice+'<span class="chip-close" onclick="removeFilter(\'price\')">×</span></div>');
+    chips.push('<div class="chip">€ ≤'+filterState.maxPrice+'<span class="chip-close" onclick="removeFilter(&#39;price&#39;)">×</span></div>');
   }}
   if(filterState.minStars>0){{
-    chips.push('<div class="chip">★ '+filterState.minStars+'+<span class="chip-close" onclick="removeFilter(\'stars\')">×</span></div>');
+    chips.push('<div class="chip">★ '+filterState.minStars+'+<span class="chip-close" onclick="removeFilter(&#39;stars&#39;)">×</span></div>');
   }}
   document.getElementById('activeChips').innerHTML=chips.length?chips.join(''):''
 }}
@@ -732,6 +760,14 @@ function sortCards(){{
     return parseInt(a.dataset.idx)-parseInt(b.dataset.idx);
   }});
   sorted.forEach(c=>grid.appendChild(c));
+}}
+
+function showChartPoint(dot){{
+  const popup=document.getElementById('chartPopup');
+  document.getElementById('chartPopupImg').src=dot.dataset.thumb||'';
+  document.getElementById('chartPopupTitle').textContent=dot.dataset.title;
+  document.getElementById('chartPopupPrice').textContent='€'+dot.dataset.price+' · '+dot.dataset.stars+'★';
+  popup.classList.remove('hidden');
 }}
 
 updatePreview();

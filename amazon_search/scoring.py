@@ -80,26 +80,42 @@ def _unique_title_words(title: str) -> set[str]:
 
 
 def visual_cluster(products: list, images: dict[str, str], *,
-                    color_threshold: float = 40.0, min_shared_words: int = 1) -> dict[str, str]:
+                    color_threshold: float = 40.0, min_shared_words: int = 1,
+                    max_word_ratio: float = 0.3) -> dict[str, str]:
     """Groups products that keyword categorize() left in the default bucket, using two
     signals together (neither alone is reliable): similar average image color AND at least
-    one non-generic word shared between titles. Both conditions required — color alone
-    would lump "all black items" together regardless of what they are; shared words alone
-    already IS categorize()'s job and would just re-find the same weak matches.
+    one DISCRIMINATIVE word shared between titles. Both conditions required — color alone
+    would lump "all black items" together regardless of what they are; any-shared-word
+    alone over-merges on words that are common across the whole leftover set (a word
+    appearing in 40% of "Altro" isn't distinctive of a sub-group, it's just common).
+
+    A word only counts as discriminative if it appears in at most `max_word_ratio` of the
+    leftover set — this is what keeps clusters from bleeding into each other ("buoni
+    margini, non merged"): common-but-not-generic words get filtered out the same way
+    stopwords are, just based on measured frequency in THIS batch instead of a fixed list.
 
     images: {product_id: local_image_path} (see imagecache.local_path).
     Returns {product_id: cluster_label} only for products that got grouped (2+ members) —
     products that match no one stay out, the caller keeps them in "Altro" rather than
     inventing a fake category of one."""
+    from collections import Counter
+
     colors: dict[str, tuple] = {}
-    words: dict[str, set] = {}
+    raw_words: dict[str, set] = {}
     for p in products:
         img = images.get(p.asin)
         if img:
             c = _dominant_color(img)
             if c:
                 colors[p.asin] = c
-        words[p.asin] = _unique_title_words(p.title)
+        raw_words[p.asin] = _unique_title_words(p.title)
+
+    # document frequency: how many products (not occurrences) each word appears in
+    doc_freq: Counter = Counter()
+    for ws in raw_words.values():
+        doc_freq.update(ws)
+    max_docs = max(1, int(max_word_ratio * len(products)))
+    words = {a: {w for w in ws if doc_freq[w] <= max_docs} for a, ws in raw_words.items()}
 
     ids = [p.asin for p in products if p.asin in colors]
     seen: set[str] = set()
@@ -121,7 +137,7 @@ def visual_cluster(products: list, images: dict[str, str], *,
 
     assignment: dict[str, str] = {}
     for i, group in enumerate(clusters):
-        # label the cluster with its most common shared word, for a legible name
+        # label the cluster with its most common shared discriminative word
         common = set.intersection(*(words[a] for a in group)) if len(group) > 1 else set()
         label = f"Simili: {sorted(common)[0]}" if common else f"Gruppo visivo {i+1}"
         for a in group:
