@@ -41,6 +41,32 @@ class AmazonProduct:
     dedup_note: str | None = None  # set by --dedup: "same item also seen for €X less"
 
 
+# first word of a listing title that is NOT a brand — generic product/marketing words.
+# Deliberately conservative: a wrong brand is worse than no brand (grouping/filtering lie).
+_NOT_BRAND = {
+    "nuovo", "new", "set", "kit", "mini", "maxi", "smart", "auto", "per", "the",
+    "collare", "cuscino", "supporto", "subwoofer", "custodia", "cover", "cavo",
+    "caricatore", "caricabatterie", "batteria", "lampada", "luce", "led", "wireless",
+    "bluetooth", "portatile", "universale", "professionale", "premium", "original",
+    "originale", "upgrade", "confezione", "pezzi", "paia", "coppia", "adattatore",
+}
+
+
+def guess_brand(title: str) -> str | None:
+    """Best-effort brand from the title's first token. Amazon brands sit first
+    ("VELPEAU Collare...", "JBL BassPro..."); only fills the gap when the API gave
+    none — never overwrites. Returns None unless the token looks brand-like."""
+    tok = (title or "").split()[0] if (title or "").split() else ""
+    tok = tok.strip("®™,.:;-—()[]")
+    if not (2 <= len(tok) <= 20) or not tok[0].isalpha():
+        return None
+    if tok.lower() in _NOT_BRAND:
+        return None
+    if not (tok.isupper() or tok[0].isupper()):
+        return None
+    return tok
+
+
 def _parse_price(item: dict) -> tuple[float | None, str]:
     raw = item.get("price", "")
     extracted = item.get("extracted_price")
@@ -92,7 +118,7 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
             products.append(AmazonProduct(
                 title=item.get("title", ""),
                 asin=asin,
-                brand=None,
+                brand=item.get("brand") or guess_brand(item.get("title", "")),
                 price=price_val,
                 price_str=price_str,
                 stars=item.get("rating"),
@@ -148,7 +174,7 @@ def _searchapi_search(query: str, max_results: int, domain: str) -> list[AmazonP
             products.append(AmazonProduct(
                 title=item.get("title", ""),
                 asin=asin,
-                brand=None,
+                brand=item.get("brand") or guess_brand(item.get("title", "")),
                 price=price_val,
                 price_str=price_str,
                 stars=item.get("rating"),

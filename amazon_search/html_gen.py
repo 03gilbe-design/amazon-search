@@ -57,10 +57,12 @@ def _fit_chips(p) -> str:
     hits = getattr(p, "feature_fit_hits", None)
     if not hits:
         return ""
-    chips = "".join(
-        f'<span class="fit-chip {"fit-yes" if ok else "fit-no"}">{"✓" if ok else "✗"} {html.escape(name)}</span>'
-        for name, ok in hits.items()
-    )
+    def _chip(name, ok):
+        if ok is None:  # criterion unverifiable: only the title was available
+            return f'<span class="fit-chip fit-unk">? {html.escape(name)}</span>'
+        cls, mark = ("fit-yes", "✓") if ok else ("fit-no", "✗")
+        return f'<span class="fit-chip {cls}">{mark} {html.escape(name)}</span>'
+    chips = "".join(_chip(name, ok) for name, ok in hits.items())
     return f'<div class="fit-chips">{chips}</div>'
 
 
@@ -511,6 +513,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .fit-chip{{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}}
 .fit-yes{{background:rgba(22,163,74,.12);color:#16a34a}}
 .fit-no{{background:rgba(0,0,0,.04);color:#aaa}}
+.fit-unk{{background:rgba(201,120,31,.1);color:#c9781f}}
 
 .video-line{{font-size:11px;font-weight:600;padding:2px 0}}
 .video-ok{{color:#16a34a}}

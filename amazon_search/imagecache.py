@@ -24,6 +24,13 @@ _LARGE_RE = re.compile(r'"large":"(https://m\.media-amazon\.com/images/I/[^"]+?\
 _ID_RE = re.compile(r"/I/([^.]+)\.")
 
 
+def _warn(asin: str, what: str) -> None:
+    """One stderr line per failure — silent degradation (missing images quietly
+    breaking dedup/montage downstream) is worse than a noisy log line."""
+    import sys
+    print(f"[imagecache] {asin}: {what}", file=sys.stderr)
+
+
 def _load(path: Path) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -61,6 +68,7 @@ def image_urls(asin: str, domain: str = "it", n: int = 3,
                 return uniq[:n]
         except Exception:
             continue
+    _warn(asin, f"no image urls after {retries} tries (anti-bot or dead page)")
     return []
 
 
@@ -81,8 +89,9 @@ def local_path(asin: str, domain: str = "it", *, timeout: float = 20.0) -> str:
             _CACHE.mkdir(exist_ok=True)
             fp.write_bytes(r.content)
             return str(fp)
-    except Exception:
-        pass
+        _warn(asin, f"image download failed (http {r.status_code}, {len(r.content)}B)")
+    except Exception as e:
+        _warn(asin, f"image download error: {e.__class__.__name__}")
     return ""
 
 
