@@ -78,9 +78,13 @@ def _video_line(p, video_coverage: dict) -> str:
     ch = cov.get("channel_count", 0)
     if cov.get("single_source"):
         return f'<div class="video-line video-warn">{n} video ma UN solo canale — voce singola, non conferma indipendente</div>'
+    if cov.get("all_affiliate"):
+        return f'<div class="video-line video-warn">{n} video, TUTTI con link affiliato in descrizione — coro pagato, non conferma</div>'
     if ch >= 2 or (ch == 0 and n >= 2):
         label = f"{n} video da {ch} canali diversi" if ch else f"{n} recensioni indipendenti"
-        return f'<div class="video-line video-ok">Confermato da {label}</div>'
+        aff = cov.get("affiliate_count", 0)
+        aff_note = f" ({aff} con link affiliato)" if aff else ""
+        return f'<div class="video-line video-ok">Confermato da {label}{aff_note}</div>'
     return '<div class="video-line video-warn">Solo 1 video, verifica sponsorizzazione</div>'
 
 
