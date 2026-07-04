@@ -56,17 +56,19 @@ def search_videos(queries: list[str], out_dir: str, *, target: int = 40,
         try:
             out = subprocess.run(
                 ["yt-dlp", f"ytsearch{per_query}:{q}", "--flat-playlist",
-                 "--print", "%(id)s\t%(title)s", "--no-warnings"],
+                 "--print", "%(id)s\t%(channel)s\t%(title)s", "--no-warnings"],
                 capture_output=True, text=True, timeout=120,
                 encoding="utf-8", errors="replace").stdout
         except Exception:
             continue
         for line in out.splitlines():
-            if "\t" not in line:
+            parts = line.split("\t", 2)
+            if len(parts) != 3:
                 continue
-            vid, title = line.split("\t", 1)
+            vid, channel, title = parts
             if vid and vid not in videos:
-                videos[vid] = {"query": q, "title": title.strip()}
+                videos[vid] = {"query": q, "title": title.strip(),
+                               "channel": channel.strip()}
         _save(videos_path, videos)
     return videos
 
@@ -186,6 +188,7 @@ def extract_claims(out_dir: str, *, products: list[str], attributes: list[str],
                 for c in found:
                     c["video"] = vid
                     c["title"] = videos[vid]["title"]
+                    c["channel"] = videos[vid].get("channel", "")
                     out.write(json.dumps(c, ensure_ascii=False) + "\n")
                     new += 1
             processed.add(vid)
@@ -218,18 +221,32 @@ def coverage(claims: list[dict]) -> dict[str, dict]:
     review coverage is real information, not noise. A product backed by a single video is
     a flag to look closer (could be new, could be sponsored) — not proof of anything either
     way, so callers should show it as a prompt to check, never as an auto-exclusion."""
+    _LISTICLE_RX = re.compile(r"\b(top\s*\d+|best|migliori?|classifica|ranking|vs\.?)\b", re.I)
     by_product: dict[str, dict] = {}
     for c in claims:
         product = c.get("product")
         if not product or product == "generic":
             continue
-        entry = by_product.setdefault(product, {"videos": set(), "titles": {}})
+        entry = by_product.setdefault(product, {"videos": set(), "titles": {},
+                                                 "channels": set(), "dedicated": 0})
+        if c["video"] not in entry["videos"] and not _LISTICLE_RX.search(c.get("title", "")):
+            # a video ABOUT this product, not a "top 10" listicle: listicles copy each
+            # other's product lists, so they confirm popularity, not quality.
+            entry["dedicated"] += 1
         entry["videos"].add(c["video"])
         entry["titles"][c["video"]] = c.get("title", "")
-    return {
-        product: {
-            "video_count": len(info["videos"]),
+        if c.get("channel"):
+            entry["channels"].add(c["channel"])
+    out = {}
+    for product, info in by_product.items():
+        n_vid, n_ch = len(info["videos"]), len(info["channels"])
+        # many videos from ONE channel = one voice repeated, not independent coverage
+        single_source = n_vid >= 2 and n_ch == 1
+        out[product] = {
+            "video_count": n_vid,
+            "channel_count": n_ch,
+            "dedicated_count": info["dedicated"],
+            "single_source": single_source,
             "videos": [{"id": v, "title": info["titles"][v]} for v in info["videos"]],
         }
-        for product, info in by_product.items()
-    }
+    return out
