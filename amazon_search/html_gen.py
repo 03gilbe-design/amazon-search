@@ -144,7 +144,9 @@ def _family_card(fam: dict) -> str:
     spread = fam.get("spread")
     spread_txt = f"€{spread:.2f} di differenza" if spread is not None else "differenza non nota"
     items = sorted(fam["items"], key=lambda it: it["price"] if it["price"] is not None else 9e9)
-    identical = not fam.get("diff_image", False)
+    by_specs = fam.get("match") == "specs"
+    # spec-matched rebrands have genuinely different photos: never collapse to one image
+    identical = not fam.get("diff_image", False) and not by_specs
 
     if identical:
         # exact same photo file: it's literally one photo, so show it ONCE — no point
@@ -172,11 +174,16 @@ def _family_card(fam: dict) -> str:
         )
         body = f'<div class="fam-sim-cluster">{thumbs}</div>'
 
+    if by_specs:
+        shared = ", ".join(fam.get("shared_specs", [])[:4])
+        match_label = f' — misure identiche ({html.escape(shared)})' if shared else ' — misure identiche'
+    else:
+        match_label = ' — foto identica' if identical else ' — foto simili'
     return f"""
     <div class="fam-card {'fam-identical' if identical else 'fam-similar'}">
         <div class="fam-spread">{spread_txt}</div>
         {body}
-        <div class="fam-count">{len(items)} listati{' — foto identica' if identical else ' — foto simili'}</div>
+        <div class="fam-count">{len(items)} listati{match_label}</div>
     </div>"""
 
 

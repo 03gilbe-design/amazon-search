@@ -85,3 +85,87 @@ def price_spread(family_items: list[str], prices: dict[str, float]) -> float | N
     if len(vals) < 2:
         return None
     return max(vals) - min(vals)
+
+
+# --- numeric spec fingerprint: rebrand detection when the photo is DIFFERENT ---
+# pHash only catches relistings that reuse the same stock photo. Rebrands that shot
+# their own photo are invisible to it — but same-mold products quote the same exact
+# measurements in the title ("20.3x7.6 cm", "150kg", "72dB"). Numbers with units are
+# hard to fake accidentally: two listings sharing several of them are the same mold.
+
+import re as _re
+
+_NUM_UNIT_RX = _re.compile(
+    r"(\d+(?:[.,]\d+)?)\s*(x\s*\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?)?\s*"
+    r"(cm|mm|m|kg|g|w|watt|db|v|volt|ah|mah|hz|khz|ohm|Ω|pollici|inch|\"|'')",
+    _re.IGNORECASE)
+
+
+def numeric_fingerprint(title: str) -> frozenset[str]:
+    """Normalized number+unit tokens from a title. '20,3 cm' and '20.3cm' -> same token.
+    Dimension chains (20x30x5 cm) are kept whole — they're the most identifying."""
+    toks = set()
+    for m in _NUM_UNIT_RX.finditer(title or ""):
+        num, dims, unit = m.group(1), m.group(2) or "", m.group(3)
+        tok = (num + dims).replace(",", ".").replace(" ", "").lower()
+        unit = {"watt": "w", "volt": "v", "Ω": "ohm", "''": '"', "pollici": "inch"}.get(unit.lower(), unit.lower())
+        toks.add(f"{tok}{unit}")
+    return frozenset(toks)
+
+
+def spec_families(titles: dict[str, str], *, min_shared: int = 2,
+                  max_pool_ratio: float = 0.5) -> list[dict]:
+    """Group items whose titles share >= min_shared rare numeric tokens.
+
+    titles: {item_id: title}. Tokens present in more than max_pool_ratio of the pool
+    are generic for the query ("12v" on a car-audio search) and are ignored — only
+    discriminative numbers count. Returns [{"items": [...], "shared": [tokens]}],
+    singletons omitted. Greedy like phash_families; meant as a complementary,
+    lower-confidence tier (match="specs") after the photo-based one.
+    """
+    fps = {i: numeric_fingerprint(t) for i, t in titles.items()}
+    n = len(fps)
+    if n < 2:
+        return []
+    # drop tokens too common in this pool to identify anything
+    counts: dict[str, int] = {}
+    for fp in fps.values():
+        for t in fp:
+            counts[t] = counts.get(t, 0) + 1
+    cutoff = max(2, int(n * max_pool_ratio))
+    fps = {i: frozenset(t for t in fp if counts[t] <= cutoff) for i, fp in fps.items()}
+
+    ids = list(fps)
+    seen: set[str] = set()
+    families: list[dict] = []
+    for i, a in enumerate(ids):
+        if a in seen:
+            continue
+        group, shared = [a], set()
+        for b in ids[i + 1:]:
+            if b in seen:
+                continue
+            common = fps[a] & fps[b]
+            if len(common) >= min_shared:
+                group.append(b)
+                seen.add(b)
+                shared |= common
+        if len(group) > 1:
+            seen.add(a)
+            families.append({"items": group, "shared": sorted(shared)})
+    families.sort(key=lambda f: -len(f["shared"]))
+    return families
+
+
+if __name__ == "__main__":  # self-check, no deps needed
+    titles = {
+        "A": "BRANDX Subwoofer Auto Slim 20.3x7.6x33 cm 150W attivo",
+        "B": "NoName Sub sottile per auto 20,3 x 7,6 x 33cm 150 W bass",
+        "C": "JBL BassPro SL2 125W subwoofer compatto",
+        "D": "Collare cervicale regolabile taglia unica",
+    }
+    fams = spec_families(titles)
+    assert len(fams) == 1 and set(fams[0]["items"]) == {"A", "B"}, fams
+    assert numeric_fingerprint("20,3 cm") == numeric_fingerprint("20.3cm")
+    assert spec_families({"A": titles["A"]}) == []
+    print("dedup spec_families self-check: PASS", fams)

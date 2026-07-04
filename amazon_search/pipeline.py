@@ -122,29 +122,44 @@ def run(query: str, *,
                 fp = imagecache.local_path(p.asin, domain=domain.lower())
                 if fp:
                     paths[p.asin] = fp
+        price_by_asin = {p.asin: p.price for p in products}
+        title_by_asin = {p.asin: p.title for p in products}
+        thumb_by_asin = {p.asin: p.thumbnail for p in products}
+        raw_families = []
         if len(paths) > 1:
             raw_families = dedup_mod.phash_families(paths, threshold=8)
-            price_by_asin = {p.asin: p.price for p in products}
-            title_by_asin = {p.asin: p.title for p in products}
-            thumb_by_asin = {p.asin: p.thumbnail for p in products}
-            for fam_ix, fam in enumerate(raw_families):
-                spread = dedup_mod.price_spread(fam["items"], price_by_asin)
-                cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
-                if spread is not None and spread > 2:
-                    for p in products:
-                        if p.asin in fam["items"] and p.asin != cheapest:
-                            p.dedup_note = f"Same item also seen for €{spread:.2f} less"
+        # second tier: same-mold rebrands that shot a DIFFERENT photo — invisible to
+        # pHash, caught by identical measurements in the title (numeric fingerprint).
+        # Only over items not already grouped by photo; lower confidence -> match="specs".
+        in_photo_fam = {a for fam in raw_families for a in fam["items"]}
+        spec_titles = {p.asin: p.title for p in products
+                       if p.asin and p.asin not in in_photo_fam}
+        for fam in dedup_mod.spec_families(spec_titles):
+            fam["match"] = "specs"
+            raw_families.append(fam)
+        for fam_ix, fam in enumerate(raw_families):
+            by_specs = fam.get("match") == "specs"
+            spread = dedup_mod.price_spread(fam["items"], price_by_asin)
+            cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
+            if spread is not None and spread > 2:
+                note = (f"Possibile stesso stampo (misure identiche), visto per €{spread:.2f} meno"
+                        if by_specs else f"Same item also seen for €{spread:.2f} less")
                 for p in products:
-                    if p.asin in fam["items"]:
-                        p.family_id = fam_ix  # so the report can cluster same-family cards together
-                families.append({
-                    "spread": spread,
-                    "diff_image": fam.get("diff_image", False),
-                    "items": [{"asin": a, "price": price_by_asin.get(a),
-                               "title": title_by_asin.get(a) or "",
-                               "thumbnail": thumb_by_asin.get(a) or ""}
-                              for a in fam["items"]],
-                })
+                    if p.asin in fam["items"] and p.asin != cheapest:
+                        p.dedup_note = note
+            for p in products:
+                if p.asin in fam["items"]:
+                    p.family_id = fam_ix  # so the report can cluster same-family cards together
+            families.append({
+                "spread": spread,
+                "diff_image": fam.get("diff_image", False),
+                "match": "specs" if by_specs else "photo",
+                "shared_specs": fam.get("shared", []),
+                "items": [{"asin": a, "price": price_by_asin.get(a),
+                           "title": title_by_asin.get(a) or "",
+                           "thumbnail": thumb_by_asin.get(a) or ""}
+                          for a in fam["items"]],
+            })
 
     # 6. video claims — opt-in, slow, never automatic
     video_claims: list[dict] = []
