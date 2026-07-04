@@ -633,6 +633,22 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .header{{padding:12px 14px}}
 .header h1{{font-size:14px}}
 }}
+
+html[data-theme="dark"],html[data-theme="dark"] body{{background:#1a1a1a;color:#e0e0e0}}
+html[data-theme="dark"] .header{{background:linear-gradient(135deg,#0a0a0a,#151515)}}
+html[data-theme="dark"] .filter-chips,html[data-theme="dark"] .controls,html[data-theme="dark"] .drawer{{background:#2a2a2a;border-color:#444}}
+html[data-theme="dark"] .card,html[data-theme="dark"] .section{{background:#2a2a2a;border-color:#444}}
+html[data-theme="dark"] .card-img,html[data-theme="dark"] .fam-single,html[data-theme="dark"] .fam-sim-item img{{background:#333}}
+html[data-theme="dark"] .card-title,html[data-theme="dark"] .cat-title,html[data-theme="dark"] .drawer-header{{color:#e0e0e0}}
+html[data-theme="dark"] .card-rating,html[data-theme="dark"] .controls,html[data-theme="dark"] .result-count{{color:#b0b0b0}}
+html[data-theme="dark"] .sort-ctrl{{background:#333;border-color:#555;color:#e0e0e0}}
+html[data-theme="dark"] .summary{{background:#332b1f;border-color:#665533;color:#d4af37}}
+html[data-theme="dark"] .chip{{background:#1a3a5a;border-color:#2a5a8a;color:#66b3ff}}
+html[data-theme="dark"] .filter-option:active{{background:#333}}
+html[data-theme="dark"] .drawer-close{{color:#b0b0b0}}
+html[data-theme="dark"] .btn-reset{{background:#444;border-color:#666;color:#e0e0e0}}
+.btn-dark-toggle{{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:13px;transition:all 0.2s}}
+.btn-dark-toggle:active{{background:rgba(255,255,255,0.1);transform:scale(0.95)}}
 </style>
 </head>
 <body>
@@ -642,7 +658,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
     <div class="eyebrow">amazon-search report</div>
     <h1>{html.escape(query)}</h1>
   </div>
-  <button class="btn-filter" onclick="openDrawer()">Filtri</button>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button class="btn-filter" onclick="openDrawer()">Filtri</button>
+    <button class="btn-dark-toggle" onclick="toggleDarkMode()" id="darkToggle">🌙</button>
+  </div>
 </div>
 
 <div class="page">
@@ -823,6 +842,22 @@ function showChartPoint(dot){{
   document.getElementById('chartPopupPrice').textContent='€'+dot.dataset.price+' · '+dot.dataset.stars+'★';
   popup.classList.remove('hidden');
 }}
+
+function toggleDarkMode(){{
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  const newTheme=isDark?'light':'dark';
+  html.setAttribute('data-theme',newTheme);
+  localStorage.setItem('darkMode',newTheme);
+  document.getElementById('darkToggle').textContent=isDark?'🌙':'☀️';
+}}
+(()=>{{
+  const saved=localStorage.getItem('darkMode');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){{
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('darkToggle').textContent='☀️';
+  }}
+}})();
 
 updatePreview();
 document.getElementById('resultCount').textContent={n}+' risultati';
