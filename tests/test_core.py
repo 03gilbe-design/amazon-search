@@ -10,7 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from amazon_search.dedup import numeric_fingerprint, spec_families, price_spread
+from amazon_search.dedup import (numeric_fingerprint, spec_families, price_spread,
+                                 pseudo_brand_score, rebrand_confidence)
 from amazon_search.video_review import coverage, _vtt_to_text
 from amazon_search.enrich import text_ok
 
@@ -62,6 +63,56 @@ class TestSpecFamilies(unittest.TestCase):
         self.assertAlmostEqual(price_spread(["A", "B"], {"A": 12.99, "B": 24.99}), 12.0)
         self.assertIsNone(price_spread(["A", "B"], {"A": 12.99}))
         self.assertIsNone(price_spread(["A"], {"A": 5.0}))
+
+
+class TestCrossCategory(unittest.TestCase):
+    """Le idee devono reggere su categorie DIVERSE, non solo quella su cui sono nate."""
+
+    CATEGORIES = {
+        "subwoofer": ({"A": "BRANDX Subwoofer Slim 20.3x7.6x33 cm 150W",
+                       "B": "NoName Sub 20,3x7,6x33cm 150 W"}, {"A", "B"}),
+        "collare": ({"A": "XKJIYU Collare Cervicale 9.5x14cm 250g",
+                     "B": "Supporto collo memory 9,5 x 14 cm 250 g"}, {"A", "B"}),
+        "sleep_mask": ({"A": "Mascherina 3D 22x9.5cm 30g seta",
+                        "B": "BZDQM Sleep Mask 22 x 9,5 cm, 30 g"}, {"A", "B"}),
+        "smart_ring": ({"A": "Anello smart 2.5g titanio 20mm",
+                        "B": "Ring fitness 20 mm 2,5 g nero"}, {"A", "B"}),
+    }
+
+    def test_fingerprint_matches_in_every_category(self):
+        for name, (titles, expected) in self.CATEGORIES.items():
+            fams = spec_families(titles)
+            self.assertEqual(len(fams), 1, f"categoria {name}: {fams}")
+            self.assertEqual(set(fams[0]["items"]), expected, f"categoria {name}")
+
+    def test_no_false_positive_across_categories(self):
+        # prodotti di categorie diverse nello stesso pool NON devono raggrupparsi
+        pool = {f"{cat}_{k}": t for cat, (ts, _) in self.CATEGORIES.items()
+                for k, t in ts.items()}
+        fams = spec_families(pool)
+        for f in fams:
+            cats = {i.rsplit("_", 1)[0] for i in f["items"]}
+            self.assertEqual(len(cats), 1, f"famiglia cross-categoria spuria: {f}")
+
+
+class TestPseudoBrand(unittest.TestCase):
+    def test_generated_names_flagged(self):
+        for b in ("XKJIYU", "BZDZMQM", "HJKGFD"):
+            self.assertGreaterEqual(pseudo_brand_score(b), 0.5, b)
+
+    def test_real_brands_pass(self):
+        for b in ("VELPEAU", "Philips", "Bose", "Eezyflow", "JBL", "Sony"):
+            self.assertLess(pseudo_brand_score(b), 0.5, b)
+
+    def test_empty_safe(self):
+        self.assertEqual(pseudo_brand_score(""), 0.0)
+        self.assertEqual(pseudo_brand_score(None), 0.0)
+
+    def test_rebrand_confidence_combines(self):
+        hi = rebrand_confidence(["20.3x7.6x33cm", "150w", "250g", "9.5x14cm"], ["XKJIYU"])
+        lo = rebrand_confidence(["150w"], ["Bose"])
+        self.assertGreaterEqual(hi, 0.7)
+        self.assertLess(lo, 0.5)
 
 
 class TestCoverage(unittest.TestCase):

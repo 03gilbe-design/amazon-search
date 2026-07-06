@@ -157,6 +157,57 @@ def spec_families(titles: dict[str, str], *, min_shared: int = 2,
     return families
 
 
+# --- pseudo-brand signal (idea da AmazonBrandFilter, ★54: filtrare per brand noti) ---
+# I rebrand cinesi usano nomi generati per il registro marchi USA: consonanti a caso,
+# tutto maiuscolo ("XKJIYU", "BZDZMQM"). Un nome così + stesso stampo = rebrand quasi certo.
+
+_VOWELS = set("aeiou")
+
+
+def pseudo_brand_score(brand: str) -> float:
+    """0 = brand plausibile, 1 = quasi certamente nome-registro-marchi generato.
+    Euristica pura, niente liste esterne: rapporto vocali, digrammi impronunciabili,
+    tutto-maiuscolo. Da usare come segnale, mai come esclusione automatica."""
+    b = (brand or "").strip()
+    if not b or len(b) < 4:
+        return 0.0
+    letters = [c for c in b.lower() if c.isalpha()]
+    if not letters:
+        return 0.0
+    score = 0.0
+    vowel_ratio = sum(1 for c in letters if c in _VOWELS) / len(letters)
+    if vowel_ratio < 0.2:
+        score += 0.5
+    elif vowel_ratio < 0.3:
+        score += 0.25
+    # lettere rare in inglese/italiano ma comunissime nei nomi generati
+    rare_ratio = sum(1 for c in letters if c in "xkjqz") / len(letters)
+    if rare_ratio >= 0.4:
+        score += 0.4
+    elif rare_ratio >= 0.25:
+        score += 0.2
+    # 3+ consonanti consecutive rare in parole vere (y conta da vocale)
+    run = mx = 0
+    for c in letters:
+        run = run + 1 if c not in _VOWELS and c != "y" else 0
+        mx = max(mx, run)
+    if mx >= 4:
+        score += 0.35
+    elif mx == 3:
+        score += 0.15
+    if b.isupper() and len(b) >= 5:
+        score += 0.15
+    return min(score, 1.0)
+
+
+def rebrand_confidence(shared_tokens: list[str], brands: list[str]) -> float:
+    """Combina i segnali: token numerici condivisi (spec_families) + pseudo-brand.
+    >= 0.7 = mostralo come 'stesso stampo, brand diversi' con fiducia alta."""
+    base = min(len(shared_tokens) / 4.0, 0.7)  # 4+ token condivisi = tetto
+    pseudo = max((pseudo_brand_score(b) for b in brands), default=0.0)
+    return min(base + 0.3 * pseudo, 1.0)
+
+
 if __name__ == "__main__":  # self-check, no deps needed
     titles = {
         "A": "BRANDX Subwoofer Auto Slim 20.3x7.6x33 cm 150W attivo",

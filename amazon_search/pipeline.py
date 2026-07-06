@@ -132,10 +132,18 @@ def run(query: str, *,
         # pHash, caught by identical measurements in the title (numeric fingerprint).
         # Only over items not already grouped by photo; lower confidence -> match="specs".
         in_photo_fam = {a for fam in raw_families for a in fam["items"]}
-        spec_titles = {p.asin: p.title for p in products
-                       if p.asin and p.asin not in in_photo_fam}
+        # titolo + bullet (se --specs li ha portati): più numeri-con-unità nel testo
+        # = fingerprint più discriminante, i rebrand copiano le misure anche lì
+        spec_titles = {p.asin: " ".join([p.title] + (p.bullets or []))
+                       for p in products if p.asin and p.asin not in in_photo_fam}
+        brand_by_asin = {p.asin: p.brand for p in products}
         for fam in dedup_mod.spec_families(spec_titles):
             fam["match"] = "specs"
+            # segnali che collaborano: misure condivise + brand pseudo-generato
+            # (nome da registro marchi tipo "XKJIYU") = fiducia rebrand più alta
+            fam["confidence"] = dedup_mod.rebrand_confidence(
+                fam.get("shared", []),
+                [brand_by_asin.get(a) or "" for a in fam["items"]])
             raw_families.append(fam)
         for fam_ix, fam in enumerate(raw_families):
             by_specs = fam.get("match") == "specs"
@@ -154,6 +162,7 @@ def run(query: str, *,
                 "spread": spread,
                 "diff_image": fam.get("diff_image", False),
                 "match": "specs" if by_specs else "photo",
+                "confidence": fam.get("confidence"),
                 "shared_specs": fam.get("shared", []),
                 "items": [{"asin": a, "price": price_by_asin.get(a),
                            "title": title_by_asin.get(a) or "",
