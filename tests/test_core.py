@@ -150,6 +150,36 @@ class TestCoverage(unittest.TestCase):
         self.assertEqual(cov, {})
 
 
+class TestPhashTransforms(unittest.TestCase):
+    """Foto ridimensionata/specchiata/ruotata dello stesso prodotto = stessa famiglia."""
+
+    def test_transformed_copies_grouped(self):
+        try:
+            from PIL import Image, ImageOps
+            import imagehash  # noqa: F401
+        except ImportError:
+            self.skipTest("PIL/imagehash non installati")
+        from amazon_search.dedup import phash_families
+        import tempfile, os
+        # immagine sintetica asimmetrica (le rotazioni devono cambiare l'hash naive)
+        im = Image.new("RGB", (200, 160), "white")
+        for i in range(0, 120, 12):
+            im.paste((200 - i, 30 + i, 60), (10 + i, 8 + i // 2, 60 + i, 50 + i // 2))
+        tdir = tempfile.mkdtemp()
+        cases = {"orig": im, "small": im.resize((60, 48)), "mirror": ImageOps.mirror(im),
+                 "rot90": im.rotate(90, expand=True), "rot180": im.rotate(180),
+                 "other": Image.new("RGB", (200, 160), (10, 10, 10))}
+        paths = {}
+        for name, img in cases.items():
+            fp = os.path.join(tdir, f"{name}.png")
+            img.save(fp)
+            paths[name] = fp
+        fams = phash_families(paths, threshold=8)
+        self.assertEqual(len(fams), 1, fams)
+        self.assertEqual(set(fams[0]["items"]),
+                         {"orig", "small", "mirror", "rot90", "rot180"}, fams)
+
+
 class TestVttToText(unittest.TestCase):
     def test_strip_and_dedup(self):
         import tempfile, os

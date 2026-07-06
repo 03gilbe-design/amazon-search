@@ -117,7 +117,16 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         )
         specs_html = f'<details class="specs"><summary>Specifiche</summary><table>{rows}</table></details>'
 
-    fam_ring = ' card-grouped' if getattr(p, "family_id", None) is not None else ''
+    fid = getattr(p, "family_id", None)
+    fam_ring, fam_chip, fam_style = '', '', ''
+    if fid is not None:
+        # collegamento visivo: stesso family_id = stesso colore bordo + stesso chip,
+        # così due card lontane nella griglia si riconoscono come lo stesso prodotto
+        hue = (int(fid) * 67) % 360
+        fam_ring = ' card-grouped'
+        fam_style = f' style="--fam-hue:{hue}"'
+        fam_chip = (f'<span class="fam-chip" style="--fam-hue:{hue}">'
+                    f'&#128279; stesso prodotto &middot; gruppo {int(fid) + 1}</span>')
     siblings = getattr(p, "sibling_prices", None)
     img_area = f'<div class="card-img">{thumb_html}</div>'
     sibling_html = ""
@@ -133,12 +142,13 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         prices_txt = ", ".join(f"€{s:.2f}" for s in siblings)
         sibling_html = f'<div class="sibling-note">stessa foto anche a: {prices_txt}</div>'
     return f"""
-    <div class="card{fam_ring}" data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
+    <div class="card{fam_ring}"{fam_style} data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
         {img_area}
         <div class="card-info">
             <div class="card-title">{title_esc}</div>
             <div class="card-rating">{stars_str} <span class="confidence">{review_confidence}</span> <span class="reviews">({reviews_count})</span></div>
             <div class="card-price">{price_esc}</div>
+            {fam_chip}
             {sibling_html}
             {badge_html}
             {dedup_badge_html}
@@ -482,7 +492,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .cat-count{{font-weight:500;color:#a39d8f;font-size:12.5px}}
 
 .card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
-.card-grouped{{box-shadow:0 0 0 2px rgba(22,163,74,.35),0 1px 3px rgba(20,20,10,.08)}}
+.card-grouped{{box-shadow:0 0 0 2px hsla(var(--fam-hue,145),70%,45%,.55),0 1px 3px rgba(20,20,10,.08)}}
+.fam-chip{{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:hsla(var(--fam-hue,145),70%,45%,.15);color:hsl(var(--fam-hue,145),60%,32%);
+  border:1px solid hsla(var(--fam-hue,145),70%,45%,.4);margin:2px 0}}
 .sibling-note{{font-size:10.5px;color:#16a34a;font-weight:600}}
 .card:hover{{box-shadow:0 6px 18px rgba(20,20,10,.12);transform:translateY(-1px)}}
 .card:active{{animation:cardPulse 0.3s ease}}

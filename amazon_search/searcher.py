@@ -91,25 +91,40 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
     }.get(domain.upper(), f"amazon.{domain.lower()}")
 
     try:
-        quota.increment("serpapi")
+        # una pagina SerpAPI = ~15-22 organici = 1 credito; per pool grandi (100+)
+        # si pagina finché servono risultati. Stop a pagina vuota o quota esaurita.
+        raw: list[dict] = []
+        page = 1
         with httpx.Client(timeout=TIMEOUT) as client:
-            resp = client.get(
-                f"{SERPAPI_BASE}/search.json",
-                params={
-                    "engine": "amazon",
-                    "k": query,
-                    "amazon_domain": amazon_domain,
-                    "api_key": key,
-                    "num": max_results,
-                },
-            )
-            resp.raise_for_status()
+            while len(raw) < max_results and page <= 7:
+                if not quota.check("serpapi"):
+                    break
+                quota.increment("serpapi")
+                resp = client.get(
+                    f"{SERPAPI_BASE}/search.json",
+                    params={
+                        "engine": "amazon",
+                        "k": query,
+                        "amazon_domain": amazon_domain,
+                        "api_key": key,
+                        "num": max_results,
+                        "page": page,
+                    },
+                )
+                resp.raise_for_status()
+                batch = resp.json().get("organic_results") or []
+                if not batch:
+                    break
+                raw.extend(batch)
+                page += 1
 
-        data = resp.json()
-        raw = data.get("organic_results") or []
-
+        seen_asins: set[str] = set()
         products = []
         for item in raw[:max_results]:
+            if item.get("asin"):
+                if item["asin"] in seen_asins:
+                    continue
+                seen_asins.add(item["asin"])
             price_val, price_str = _parse_price(item)
             asin = item.get("asin", "")
             link = item.get("link") or (f"https://{amazon_domain}/dp/{asin}" if asin else "#")

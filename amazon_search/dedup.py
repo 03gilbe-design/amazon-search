@@ -37,22 +37,29 @@ def phash_families(images: dict[str, str], *, threshold: int = 8) -> list[dict]:
     import imagehash
     from PIL import Image, ImageOps
 
+    # Misure reali (foto prodotto, soglia 8): resize=0, mirror=0 (con hash specchiato),
+    # rot 3°=2 — coperti. Rot 90/180/270 = dist ~30 con un hash solo, quindi ogni immagine
+    # viene hashata anche ruotata. Crop e inset (prodotto dentro foto più grande) restano
+    # fuori (dist 24-34): li copre il fingerprint numerico del titolo, non il pHash.
+    variants: dict[str, list["imagehash.ImageHash"]] = {}
     hashes: dict[str, "imagehash.ImageHash"] = {}
-    hashes_mirrored: dict[str, "imagehash.ImageHash"] = {}
     for item_id, path in images.items():
         try:
             im = Image.open(path)
             hashes[item_id] = imagehash.phash(im)
-            hashes_mirrored[item_id] = imagehash.phash(ImageOps.mirror(im))
+            variants[item_id] = [
+                hashes[item_id],
+                imagehash.phash(ImageOps.mirror(im)),
+                imagehash.phash(im.rotate(90, expand=True)),
+                imagehash.phash(im.rotate(180)),
+                imagehash.phash(im.rotate(270, expand=True)),
+            ]
         except Exception:
             continue
 
     def _best_distance(a: str, b: str) -> int:
-        return min(
-            hashes[a] - hashes[b],
-            hashes[a] - hashes_mirrored[b],
-            hashes_mirrored[a] - hashes[b],
-        )
+        # tutte le varianti di A contro B com'è: copre ogni trasformazione relativa
+        return min(v - hashes[b] for v in variants[a])
 
     ids = list(hashes)
     seen: set[str] = set()
