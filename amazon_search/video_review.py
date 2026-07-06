@@ -75,7 +75,9 @@ def search_videos(queries: list[str], out_dir: str, *, target: int = 40,
 
 def _vtt_to_text(path: str) -> str:
     seen, out = set(), []
-    for line in open(path, encoding="utf-8", errors="replace"):
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    for line in lines:
         line = line.strip()
         if not line or "-->" in line or line.startswith(("WEBVTT", "Kind:", "Language:")):
             continue
@@ -244,7 +246,7 @@ def coverage(claims: list[dict]) -> dict[str, dict]:
     by_product: dict[str, dict] = {}
     for c in claims:
         product = c.get("product")
-        if not product or product == "generic":
+        if not product or product == "generic" or not c.get("video"):
             continue
         entry = by_product.setdefault(product, {"videos": set(), "titles": {},
                                                  "channels": set(), "dedicated": 0,

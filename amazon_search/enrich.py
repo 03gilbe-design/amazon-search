@@ -113,6 +113,17 @@ def tavily_search(query: str, *, max_results: int = 5, depth: str = "basic") -> 
     return []
 
 
+def text_ok(text: str, *, min_len: int = 500) -> bool:
+    """LESSONS #5: HTTP 200 non basta — PDF binari e garbage passano come 'testo'.
+    Vero testo = abbastanza lungo E in maggioranza caratteri stampabili."""
+    t = (text or "").strip()
+    if len(t) < min_len:
+        return False
+    sample = t[:2000]
+    printable = sum(1 for ch in sample if ch.isprintable() or ch in "\n\t")
+    return printable / len(sample) > 0.9
+
+
 # ---------- Firecrawl (scrape mirato in markdown) ----------
 def firecrawl_scrape(url: str, *, timeout: float = 60.0) -> str:
     for key in _FIRECRAWL or [""]:
@@ -121,7 +132,8 @@ def firecrawl_scrape(url: str, *, timeout: float = 60.0) -> str:
                            headers={"Authorization": f"Bearer {key}"},
                            json={"url": url, "formats": ["markdown"]}, timeout=timeout)
             if r.status_code == 200:
-                return r.json().get("data", {}).get("markdown", "") or ""
+                md = r.json().get("data", {}).get("markdown", "") or ""
+                return md if text_ok(md, min_len=200) else ""
             if r.status_code in (429, 401, 402):
                 continue
         except Exception:

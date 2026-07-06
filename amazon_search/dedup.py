@@ -97,7 +97,7 @@ import re as _re
 
 _NUM_UNIT_RX = _re.compile(
     r"(\d+(?:[.,]\d+)?)\s*(x\s*\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?)?\s*"
-    r"(cm|mm|m|kg|g|w|watt|db|v|volt|ah|mah|hz|khz|ohm|Ω|pollici|inch|\"|'')",
+    r"(cm|mm|m|kg|g|w|watt|db|v|volt|ah|mah|hz|khz|ohm|Ω|pollici|inch|\"|'')(?![a-zà-ù])",
     _re.IGNORECASE)
 
 
@@ -108,7 +108,7 @@ def numeric_fingerprint(title: str) -> frozenset[str]:
     for m in _NUM_UNIT_RX.finditer(title or ""):
         num, dims, unit = m.group(1), m.group(2) or "", m.group(3)
         tok = (num + dims).replace(",", ".").replace(" ", "").lower()
-        unit = {"watt": "w", "volt": "v", "Ω": "ohm", "''": '"', "pollici": "inch"}.get(unit.lower(), unit.lower())
+        unit = {"watt": "w", "volt": "v", "ω": "ohm", "''": '"', "pollici": "inch"}.get(unit.lower(), unit.lower())
         toks.add(f"{tok}{unit}")
     return frozenset(toks)
 
