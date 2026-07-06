@@ -60,12 +60,32 @@ amazon_search/            the package (import as amazon_search / python -m amazo
   report.py                  library-style wrapper over pipeline.run(), used by night_runner.py
   scoring.py                 feature-fit scoring + negative-sampling exclusion (generic)
   query_suggest.py           query variants — deterministic (free) + AI (opt-in, --suggest-queries)
-  dedup.py                   pHash rebrand/same-mold detection across listings
-  montage.py                 numbered thumbnail grid for fast visual classification
+  dedup.py                   rebrand/same-mold detection: pHash photos (incl. mirrored/resized),
+                             numeric title+bullet fingerprint, pseudo-brand signal, confidence
+  montage.py                 numbered thumbnail grid, embedded in the report with --montage
   video_review.py            factual claims + coverage mined from real YouTube review transcripts
+                             (channel diversity, affiliate-link detection in descriptions)
 scripts/                  standalone PowerShell runners (night batch job)
+tests/                    regression tests over the pure-logic core (python -m unittest discover tests)
 docs/                     README images
 ```
+
+## Rebrand detection (the part other tools don't do)
+
+The same physical product gets relisted under many "brands" at different prices. Three
+independent signals catch it, and they collaborate:
+
+1. **Photo pHash** — identical/resized/**mirrored** stock photos group together (cheap:
+   32×32 downscale + 64-bit hashes, milliseconds for a whole pool).
+2. **Numeric fingerprint** — rebrands that shot their own photo still quote the same
+   measurements ("20.3x7.6 cm", "250g") in title and bullets. Shared rare number+unit
+   tokens group them (year-like and unit-less numbers are ignored).
+3. **Pseudo-brand score** — trademark-registry generated names ("XKJIYU": no vowels, rare
+   letters, all caps) raise family confidence; never auto-exclude, always shown for a human eye.
+
+The report shows each family with photos side by side, the price spread ("same item seen for
+€X less"), and — with `--montage` — the whole pool as one numbered image grid where duplicates
+jump out visually.
 
 `--dedup`, `--criteria`, `--junk`, `--pull-asin` are all wired into `pipeline.run()` and show up
 as real sections in the report (same-photo families, feature-fit chips, a collapsed exclusion

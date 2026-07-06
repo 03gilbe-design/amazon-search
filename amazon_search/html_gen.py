@@ -890,7 +890,25 @@ document.getElementById('overlay').addEventListener('click',e=>{{if(e.target===d
     return out_path
 
 
-def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
+def _montage_section(montage_path) -> str:
+    """Embed the numbered-thumbnail montage inline (base64) — one look at the whole
+    pool beats scrolling 15 cards, and duplicates jump out visually."""
+    if not montage_path:
+        return ""
+    try:
+        import base64
+        data = base64.b64encode(Path(montage_path).read_bytes()).decode()
+    except Exception:
+        return ""
+    return (
+        '<details class="section dup-section"><summary>Vista d\'insieme — tutte le foto del pool</summary>'
+        '<p class="section-sub">Griglia numerata con prezzi: i doppioni (stessa foto o stesso stampo) '
+        'si vedono a colpo d\'occhio prima ancora di leggere le card.</p>'
+        f'<img src="data:image/png;base64,{data}" style="max-width:100%;border-radius:8px" '
+        'alt="montage pool prodotti" loading="lazy"></details>')
+
+
+def generate_report(result, *, output_dir: Path = OUTPUT_DIR, montage_path=None) -> Path:
     """Single entry point for a pipeline.SearchResult -> one HTML report with every
     section the pipeline computed (families, price chart, video claims, exclusions,
     benchmarks). This is what the CLI calls; generate_html() stays as the lower-level
@@ -909,6 +927,7 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
         _video_section(result.video_claims),
         _query_variants_section(result.query_variants, result.query),
         _possible_duplicates_section(result.families),
+        _montage_section(montage_path),
         _excluded_section(result.excluded),
         _benchmarks_section(result.external_benchmarks),
     ])

@@ -153,6 +153,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
         n_flagged = sum(1 for f in result.families if f["spread"] and f["spread"] > 2)
         console.print(f"[dim]dedup: {len(result.families)} famiglie foto-simile, {n_flagged} con differenza di prezzo rilevante[/dim]")
 
+    montage_path = None
     if make_montage:
         from amazon_search import imagecache
         from amazon_search.montage import build_montage
@@ -165,7 +166,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
             price_lookup = {p.asin: p.price for p in result.products}
             items = [{"image": fp, "label": f"€{price_lookup.get(a) or '?'}"} for a, fp in paths.items()]
             montage_path = build_montage(items, out_dir / "montage.png", cols=5)
-            console.print(f"[dim]montage salvato: {montage_path}[/dim]")
+            console.print(f"[dim]montage salvato: {montage_path} (embedded nel report)[/dim]")
 
     # Print quick table
     table = Table(title=f"Amazon.{domain} — {query}", show_header=True, header_style="bold cyan")
@@ -193,7 +194,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
         console.print(f"\n[bold yellow]🤖 AI:[/bold yellow] {result.ai_summary}\n")
 
     with console.status("[bold]Generando HTML...[/bold]"):
-        html_path = generate_report(result)
+        html_path = generate_report(result, montage_path=montage_path)
 
     console.print(f"\n[green]✓ HTML salvato:[/green] {html_path}")
     console.print(f"[dim]{q.status_line()}[/dim]")
