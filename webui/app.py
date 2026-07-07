@@ -137,8 +137,27 @@ class _P:
         self.price = d.get("price")
         self.price_str = d.get("price_str")
         self.brand = d.get("brand")
+        self.link = d.get("link") or (f"https://www.amazon.it/dp/{self.asin}" if self.asin else "#")
         self.category = cat
         self.family_id = None
+
+
+# dataset = solo prodotti sonno-correlati: la cache su disco è condivisa con
+# progetti non-sonno (subwoofer auto, occhiaie, smart ring generico...) — quel
+# rumore va escluso esplicitamente, un match debole non basta.
+_SLEEP_INCLUDE = ("sonno", "dormire", "notte", "sleep", "cervical", "collare",
+                  "neck", "russamento", "snor", "cpap", "apnea", "mascherina",
+                  "eye mask", "cuscino", "pillow", "guanciale", "materasso",
+                  "trazione", "anti-russ")
+_SLEEP_EXCLUDE = ("subwoofer", "altoparlante", "cassa acustica", "bluetooth speaker",
+                  "minoxidil", "occhiaie", "eye cream", "crema")
+
+
+def _is_sleep_related(title: str) -> bool:
+    t = (title or "").lower()
+    if any(kw in t for kw in _SLEEP_EXCLUDE):
+        return False
+    return any(kw in t for kw in _SLEEP_INCLUDE)
 
 
 def _build_dataset_job() -> None:
@@ -155,9 +174,20 @@ def _build_dataset_job() -> None:
         if not isinstance(items, list):
             continue
         for it in items:
-            if isinstance(it, dict) and it.get("asin") and it.get("thumbnail"):
+            if (isinstance(it, dict) and it.get("asin") and it.get("thumbnail")
+                    and _is_sleep_related(it.get("title", ""))):
                 seen.setdefault(it["asin"], it)
-    products = [_P(d, lookup.get(a)) for a, d in seen.items()]
+    # dedup: stesso URL foto tra ASIN diversi = stesso listing rivenduto,
+    # tienine uno solo (il primo visto) per non etichettare copie identiche
+    seen_thumbs: set[str] = set()
+    deduped = {}
+    for asin, d in seen.items():
+        th = d.get("thumbnail")
+        if th in seen_thumbs:
+            continue
+        seen_thumbs.add(th)
+        deduped[asin] = d
+    products = [_P(d, lookup.get(a)) for a, d in deduped.items()]
     JOBS["dataset"] = {"status": "done", "log": [], "error": None,
                        "result": _DatasetResult(products), "params": {}}
 
@@ -175,7 +205,7 @@ def categorize(job_id):
     items = [{"asin": p.asin, "title": p.title, "thumbnail": p.thumbnail,
               "price": p.price, "price_str": p.price_str, "brand": p.brand,
               "family_id": getattr(p, "family_id", None),
-              "category": getattr(p, "category", None)}
+              "link": p.link, "category": getattr(p, "category", None)}
              for p in result.products]
     existing = sorted({getattr(p, "category", None) for p in result.products}
                       - {None, ""})
@@ -209,7 +239,8 @@ def export(job_id, fmt):
         return jsonify({"error": "unknown job"}), 404
     result = job["result"]
     rows = [{"asin": p.asin, "title": p.title, "brand": p.brand, "price": p.price,
-             "stars": p.stars, "reviews": p.reviews, "prime": p.prime,
+             "stars": getattr(p, "stars", None), "reviews": getattr(p, "reviews", None),
+             "prime": getattr(p, "prime", None),
              "category": getattr(p, "category", None),
              "family_id": getattr(p, "family_id", None),
              "dedup_note": getattr(p, "dedup_note", None),
