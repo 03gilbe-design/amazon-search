@@ -21,6 +21,7 @@ from flask import Flask, jsonify, render_template, request
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True  # edit a template, refresh, done — no restart
 
 JOBS: dict[str, dict] = {}  # job_id -> {status, log, error, result}
 SETTINGS_PATH = Path.home() / ".amazon_search_ui_settings.json"
@@ -150,7 +151,9 @@ _SLEEP_INCLUDE = ("sonno", "dormire", "notte", "sleep", "cervical", "collare",
                   "eye mask", "cuscino", "pillow", "guanciale", "materasso",
                   "trazione", "anti-russ")
 _SLEEP_EXCLUDE = ("subwoofer", "altoparlante", "cassa acustica", "bluetooth speaker",
-                  "minoxidil", "occhiaie", "eye cream", "crema")
+                  "minoxidil", "occhiaie", "eye cream", "crema",
+                  "tongue", "lingua", "bite", "paradenti", "mouthpiece", "bocchino",
+                  "smart ring", "anello", "smartring", "oura")
 
 
 def _is_sleep_related(title: str) -> bool:
@@ -180,12 +183,15 @@ def _build_dataset_job() -> None:
     # dedup: stesso URL foto tra ASIN diversi = stesso listing rivenduto,
     # tienine uno solo (il primo visto) per non etichettare copie identiche
     seen_thumbs: set[str] = set()
+    seen_titles: set[str] = set()
     deduped = {}
     for asin, d in seen.items():
         th = d.get("thumbnail")
-        if th in seen_thumbs:
+        tkey = " ".join((d.get("title") or "").lower().split())[:90]
+        if th in seen_thumbs or (tkey and tkey in seen_titles):
             continue
         seen_thumbs.add(th)
+        seen_titles.add(tkey)
         deduped[asin] = d
     products = [_P(d, lookup.get(a)) for a, d in deduped.items()]
     JOBS["dataset"] = {"status": "done", "log": [], "error": None,
@@ -207,8 +213,8 @@ def categorize(job_id):
               "family_id": getattr(p, "family_id", None),
               "link": p.link, "category": getattr(p, "category", None)}
              for p in result.products]
-    existing = sorted({getattr(p, "category", None) for p in result.products}
-                      - {None, ""})
+    existing = sorted(({getattr(p, "category", None) for p in result.products}
+                       | set(_load_learned().get("_categories", []))) - {None, ""})
     return render_template("categorize.html", job_id=job_id,
                            query=result.query, existing_cats=existing,
                            products=items)
@@ -223,6 +229,10 @@ def set_category():
         learned = _load_learned()
         learned.setdefault(query_key, {})[d["asin"]] = d["category"]
         learned.setdefault("_global", {})[d["asin"]] = d["category"]
+        if d.get("category"):
+            cats = learned.setdefault("_categories", [])
+            if d["category"] not in cats:
+                cats.append(d["category"])
         _save_learned(learned)
         for p in job["result"].products:
             if p.asin == d["asin"]:

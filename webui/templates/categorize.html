@@ -6,6 +6,9 @@
 <style>
 /* pagina categorize in tema chiaro griege (beige+grigio) */
 body { background:#e9e6e0; }
+/* questa pagina usa tutto lo schermo largo per il girasole (.shell ha max-width:1100px altrove) */
+.shell.cat-light { max-width: none; width: 100%; padding-left: 32px; padding-right: 32px; }
+.sf-circle { font-size:0.82rem !important; }
 .shell.cat-light { --text:#2b2723; --sub:#4a453f; --dim:#7a746b; --muted:#b3ac9f;
   --border:#cfc9bf; --border2:#dcd7cd; }
 .cat-light .glass, .cat-light .glass-sm { background:rgba(255,255,255,.72);
@@ -18,7 +21,7 @@ body { background:#e9e6e0; }
 .cat-light .sf-center img, .cat-light .sf-group-img, .cat-light .sf-stack-img
   { mix-blend-mode:multiply; background:transparent !important; border:none !important; }
 .sunflower-wrap { width:100%; height:640px; margin:0; background:#e9e6e0; }
-.sf-circle { font-size:0.74rem !important; font-weight:600; }
+.sf-circle { font-weight:600; }
 .sf-stack-img { cursor:grab; pointer-events:auto !important; }
 .sf-stack-img:active { cursor:grabbing }
 #sf-amazon { position:absolute; left:50%; top:-16px; transform:translateX(-50%); width:34px; height:34px;
@@ -48,8 +51,7 @@ body { background:#e9e6e0; }
 .sf-tool:hover { transform:scale(1.2) }
 .sf-tool.del:hover { border-color:#c0392b; color:#c0392b }
 /* overlay info riducibile */
-#sf-overlay { position:absolute; right:18px; top:18px; width:250px; z-index:40;
-  transition:all .25s ease; }
+#sf-overlay { width:100%; transition:all .25s ease; }
 #sf-overlay.collapsed .ov-body { display:none }
 #sf-overlay .ov-head { display:flex; align-items:center; justify-content:space-between;
   cursor:pointer; font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--dim) }
@@ -105,90 +107,92 @@ body { background:#e9e6e0; }
 
   <!-- ── SUNFLOWER VIEW ────────────────────────────────────────────────── -->
   <div id="view-sunflower">
-    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;position:relative">
+    <div class="cat-layout" style="display:flex;gap:20px;align-items:stretch">
 
-      <!-- Sunflower -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
-        <div class="sunflower-wrap" id="sunflower">
-          <!-- center image -->
-          <div class="sf-center" id="sf-img-wrap">
-            <a id="sf-amazon" href="#" target="_blank" title="View on Amazon">&#128722;</a>
-            <img id="sf-img" src="" alt="" style="display:none"/>
-            <svg id="sf-ph" width="48" height="48" viewBox="0 0 24 24" fill="none" style="color:var(--muted)">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
-              <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor"/>
-              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <!-- category circles rendered by JS -->
+      <!-- Sunflower: prende TUTTO lo spazio rimasto (vero flex item, non overlay) -->
+      <div class="sunflower-wrap" id="sunflower" style="flex:1;position:relative;min-height:560px;min-width:0">
+        <!-- center image: position:absolute centrato SUL contenitore reale -->
+        <div class="sf-center" id="sf-img-wrap">
+          <a id="sf-amazon" href="#" target="_blank" title="View on Amazon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6" fill="#fff"/><circle cx="19" cy="21" r="1.6" fill="#fff"/><path d="M1 2h3l3.2 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.5L23 7H6"/></svg></a>
+          <img id="sf-img" src="" alt="" style="display:none"/>
+          <svg id="sf-ph" width="48" height="48" viewBox="0 0 24 24" fill="none" style="color:var(--muted)">
+            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor"/>
+            <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-
+        <!-- category circles rendered by JS -->
       </div>
 
-      <!-- overlay info riducibile (chiaramente sopra il girasole) -->
-      <div id="sf-overlay" class="glass" style="padding:10px 12px">
-        <div class="ov-head" onclick="document.getElementById('sf-overlay').classList.toggle('collapsed')">
-          <span>ℹ product</span><span id="ov-toggle">—</span>
-        </div>
-        <div class="ov-body">
-          <div style="font-size:0.7rem;font-weight:700;line-height:1.35;margin:6px 0 4px;color:var(--text)" id="sf-title">—</div>
-          <div style="font-size:0.68rem;color:var(--orange)" id="sf-price"></div>
-          <div style="font-size:0.6rem;color:var(--dim)" id="sf-brand"></div>
-          <div style="margin-top:6px;font-size:0.6rem">
-            <span style="color:var(--muted)">cat:</span> <span id="sf-current-cat" style="color:var(--sub)">—</span>
-            · <span style="color:var(--muted)">suggest:</span> <span id="sf-suggest" style="color:var(--orange)">—</span>
+      <!-- Sidebar: colonna vera, mai sopra il girasole -->
+      <div class="sf-side" style="width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
+        <div id="sf-overlay" class="glass" style="padding:10px 12px">
+          <div class="ov-head" onclick="document.getElementById('sf-overlay').classList.toggle('collapsed')">
+            <span>ℹ product</span><span id="ov-toggle">—</span>
           </div>
-          <div style="display:flex;gap:5px;margin-top:8px">
-            <input type="text" id="new-cat-input" placeholder="new category…"
-                   style="flex:1;font-size:0.68rem;padding:5px 8px"/>
-            <button class="btn btn-orange btn-sm" onclick="addCategory()">+</button>
-          </div>
-        </div>
-      </div>
-      <div id="sf-side" class="glass" style="position:absolute;right:18px;top:190px;width:250px;padding:12px;display:flex;flex-direction:column;gap:12px;z-index:40">
-        <!-- progress -->
-        <div style="text-align:center">
-          <div style="font-size:0.68rem;color:var(--dim);margin-bottom:4px">
-            <span id="sf-progress">— / —</span> products
-          </div>
-          <div style="width:200px;height:3px;background:var(--muted);border-radius:99px;overflow:hidden">
-            <div id="sf-bar" style="height:100%;background:var(--orange);width:0%;transition:width 0.3s"></div>
+          <div class="ov-body">
+            <div style="font-size:0.7rem;font-weight:700;line-height:1.35;margin:6px 0 4px;color:var(--text)" id="sf-title">—</div>
+            <div style="font-size:0.68rem;color:var(--orange)" id="sf-price"></div>
+            <div style="font-size:0.6rem;color:var(--dim)" id="sf-brand"></div>
+            <div style="margin-top:6px;font-size:0.6rem">
+              <span style="color:var(--muted)">cat:</span> <span id="sf-current-cat" style="color:var(--sub)">—</span>
+              · <span style="color:var(--muted)">suggest:</span> <span id="sf-suggest" style="color:var(--orange)">—</span>
+            </div>
+            <div style="display:flex;gap:5px;margin-top:8px">
+              <input type="text" id="new-cat-input" placeholder="new category…"
+                     style="flex:1;font-size:0.68rem;padding:5px 8px"/>
+              <button class="btn btn-orange btn-sm" onclick="addCategory()">+</button>
+            </div>
           </div>
         </div>
 
-        <!-- group mode: N images the code thinks belong together, draggable one by one -->
-        <div style="display:flex;gap:10px;align-items:center;font-size:0.66rem;color:var(--dim)">
-          <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
-            <input type="checkbox" id="group-mode" onchange="renderCurrentProduct()"> Group mode
-          </label>
-          <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
-            <input type="checkbox" id="crop-mode"
-                   onchange="document.getElementById('sunflower').classList.toggle('crop-on', this.checked)"> Cropped photos
-          </label>
-          <input type="range" id="group-size" min="2" max="8" value="4" style="width:90px"
-                 oninput="document.getElementById('group-size-lbl').textContent=this.value;renderCurrentProduct()">
-          <span id="group-size-lbl">4</span> photos
-        </div>
+        <div class="glass" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+          <!-- progress -->
+          <div style="text-align:center">
+            <div style="font-size:0.68rem;color:var(--dim);margin-bottom:4px">
+              <span id="sf-progress">— / —</span> products
+            </div>
+            <div style="width:100%;height:3px;background:var(--muted);border-radius:99px;overflow:hidden">
+              <div id="sf-bar" style="height:100%;background:var(--orange);width:0%;transition:width 0.3s"></div>
+            </div>
+          </div>
 
-        <!-- skip / skip assigned -->
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-outline btn-sm" onclick="skipCurrent()">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8h10M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Skip
-          </button>
-          <button class="btn btn-outline btn-sm" id="skip-assigned-btn" onclick="toggleSkipAssigned()">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span id="skip-assigned-label">Skip assigned</span>
-          </button>
-        
+          <!-- group mode: N images the code thinks belong together, draggable one by one -->
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:0.68rem;color:var(--dim)">
+            <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
+              <input type="checkbox" id="group-mode" onchange="renderCurrentProduct()"> Group mode
+            </label>
+            <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
+              <input type="checkbox" id="crop-mode"
+                     onchange="document.getElementById('sunflower').classList.toggle('crop-on', this.checked)"> Cropped photos
+            </label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="range" id="group-size" min="2" max="8" value="4" style="flex:1"
+                     oninput="document.getElementById('group-size-lbl').textContent=this.value;renderCurrentProduct()">
+              <span id="group-size-lbl">4</span> photos
+            </div>
+          </div>
+
+          <!-- skip / skip assigned -->
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="skipCurrent()">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Skip
+            </button>
+            <button class="btn btn-outline btn-sm" id="skip-assigned-btn" onclick="toggleSkipAssigned()">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span id="skip-assigned-label">Skip assigned</span>
+            </button>
+          </div>
+        </div>
       </div>
-      <div id="cat-list-wrap" style="display:none"></div>
-      <div id="sf-toast"><span id="sf-toast-msg"></span><button onclick="undoDelete()">Undo</button></div>
     </div>
+    <div id="cat-list-wrap" style="display:none"></div>
+    <div id="sf-toast"><span id="sf-toast-msg"></span><button onclick="undoDelete()">Undo</button></div>
   </div>
 
   <!-- ── KANBAN VIEW ───────────────────────────────────────────────────── -->
@@ -302,13 +306,12 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'ArrowRight') { skipCurrent(); }
   if (e.key === 'ArrowLeft') {
+    currentIdx = Math.max(0, currentIdx - 1);
+    renderCurrentProduct();
+  }
+  if (e.key === 'z' || e.key === 'Z') {
     const last = HISTORY.pop();
-    if (last) {
-      assignCategory(last.asin, last.prevCat, true).then(() => {
-        if (currentIdx > 0) currentIdx--;
-        renderCurrentProduct();
-      });
-    }
+    if (last) assignCategory(last.asin, last.prevCat, true).then(renderCurrentProduct);
   }
 });
 
@@ -352,30 +355,47 @@ function renderGroupCenter(group) {
   });
 }
 
-// album stacks: pila a ventaglio APPENA FUORI dal cerchio lungo il suo raggio,
-// foto trascinabili anche DOPO l'assegnazione (drag su un altro cerchio = sposta)
-function renderStacks(sf, cat, ccx, ccy, angle, color) {
-  const thumbs = ALL_PRODUCTS.filter(p => p.category === cat && p.thumbnail
-                                     && /^https?:\/\//.test(p.thumbnail)).slice(-6);
-  const dirx = Math.cos(angle), diry = Math.sin(angle);
-  const perx = -diry, pery = dirx;   // perpendicolare: il ventaglio si apre di lato
-  const bx = ccx + dirx * 92, by = ccy + diry * 92;
+// album stacks: pila ordinata a ventaglio, appesa FUORI dal cerchio lungo il suo
+// raggio (mai sopra il cerchio: i click restano liberi). Trascinabili per spostarle.
+function renderStacks(sf, cat, ccx, ccy, angle, color, CS) {
+  const items = ALL_PRODUCTS.filter(p => p.category === cat && p.thumbnail
+                                    && /^https?:\/\//.test(p.thumbnail));
+  const thumbs = items.slice(-6);
+  // nodi in alto/basso: ventaglio appiattito verso l'orizzontale, cosi' non buca
+  // il bordo dello schermo; poi comunque clamp dentro il contenitore
+  let dirx = Math.cos(angle), diry = Math.sin(angle) * 0.45;
+  const L = Math.hypot(dirx, diry) || 1; dirx /= L; diry /= L;
+  const perx = -diry, pery = dirx;
+  const base = CS / 2 + 38;
+  const W = sf.clientWidth || 900, H = sf.clientHeight || 640;
   thumbs.forEach((p, i) => {
     const im = document.createElement('img');
     im.className = 'sf-circle sf-stack-img';
     im.src = p.thumbnail;
-    im.title = (p.title || '').slice(0, 60) + ' — drag to move';
+    im.title = (p.title || '').slice(0, 60) + ' \u2014 drag to move';
     im.draggable = true;
-    const k = i - (thumbs.length - 1) / 2;
-    const jit = (h => (h % 11) - 5)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
-    im.style.cssText = 'position:absolute;width:56px;height:56px;object-fit:contain;'
-      + 'left:' + (bx + perx * k * 20 + dirx * Math.abs(k) * 8 - 28) + 'px;'
-      + 'top:'  + (by + pery * k * 20 + diry * Math.abs(k) * 8 - 28) + 'px;'
-      + 'transform:rotate(' + (jit + k * 7) + 'deg);z-index:' + (10 + i);
+    const along = base + i * 25;
+    const side = (i % 2 ? 1 : -1) * 10;
+    const jit = (h => (h % 9) - 4)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
+    const px = Math.min(Math.max(ccx + dirx * along + perx * side - 29, 4), W - 62);
+    const py = Math.min(Math.max(ccy + diry * along + pery * side - 29, 4), H - 62);
+    im.style.cssText = 'position:absolute;width:58px;height:58px;object-fit:contain;'
+      + 'left:' + px + 'px;top:' + py + 'px;'
+      + 'transform:rotate(' + jit + 'deg);z-index:' + (8 + i);
     im.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', p.asin); im.style.opacity = '.4'; });
     im.addEventListener('dragend', () => { im.style.opacity = '1'; });
     sf.appendChild(im);
   });
+  if (items.length > 6) {
+    const more = document.createElement('div');
+    more.className = 'sf-circle';
+    more.style.cssText = 'position:absolute;width:auto;height:auto;border:none;background:none;'
+      + 'font-size:.66rem;color:#7a746b;z-index:9;'
+      + 'left:' + Math.min(Math.max(ccx + dirx * (base + 6 * 25) - 14, 4), W - 40) + 'px;'
+      + 'top:'  + Math.min(Math.max(ccy + diry * (base + 6 * 25), 4), H - 30) + 'px;';
+    more.textContent = '+' + (items.length - 6);
+    sf.appendChild(more);
+  }
 }
 
 function renderSunflower() {
@@ -386,43 +406,48 @@ function renderSunflower() {
   const n = allCats.length;
   const W = sf.clientWidth || 900, H = sf.clientHeight || 640;
   const cx = W / 2, cy = H / 2;
-  // ELLISSE, non cerchio: lo schermo è rettangolare, usiamo la larghezza
-  const rx = Math.max(W / 2 - 190, 220), ry = Math.max(H / 2 - 120, 160);
-  const CS = 96;
+  // ELLISSE: schermo rettangolare, i nodi usano la larghezza
+  const rx = Math.max(W / 2 - 250, 230), ry = Math.max(H / 2 - 150, 170);
+  const counts = Object.fromEntries(categories.map(c =>
+    [c, ALL_PRODUCTS.filter(p => p.category === c).length]));
+  const maxCount = Math.max(1, ...Object.values(counts));
 
   allCats.forEach((cat, i) => {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2;
-    const ccx = cx + Math.cos(angle) * rx, ccy = cy + Math.sin(angle) * ry;
+    // pochi elementi = cerchio piu' piccolo e piu' lontano (fa spazio ai grossi)
+    const cnt = counts[cat] || 0;
+    const ratio = cat === '+' ? 0.5 : cnt / maxCount;
+    const CS = cat === '+' ? 72 : Math.round(72 + 40 * ratio);
+    const push = cat === '+' ? 1 : (1 + 0.14 * (1 - ratio));
+    const ccx = cx + Math.cos(angle) * rx * push;
+    const ccy = cy + Math.sin(angle) * ry * push;
+
     const circle = document.createElement('div');
     circle.className = 'sf-circle' + (cat === '+' ? ' add-cat' : '');
-    circle.style.left = '0px'; circle.style.top = '0px';
-    circle.style.width = CS + 'px'; circle.style.height = CS + 'px';
+    circle.style.cssText = 'left:0;top:0;width:' + CS + 'px;height:' + CS + 'px;'
+      + 'transition:width .3s,height .3s';
     circle.style.borderColor = cat !== '+' ? catColor(i) + '88' : '';
 
     const holder = document.createElement('div');
     holder.className = 'sf-circle-holder';
     holder.style.cssText = 'position:absolute;left:' + (ccx - CS / 2) + 'px;top:'
-      + (ccy - CS / 2) + 'px;width:' + CS + 'px;height:' + CS + 'px;z-index:20';
+      + (ccy - CS / 2) + 'px;width:' + CS + 'px;height:' + CS + 'px;z-index:25;cursor:pointer';
 
     if (cat === '+') {
       circle.textContent = '+';
       circle.title = 'Add new category';
-      // niente focus su input (magari è chiuso): prompt diretto, funziona sempre
       holder.onclick = () => {
-        const name = prompt('New category name:');
-        if (name && name.trim() && !categories.includes(name.trim())) {
-          categories.push(name.trim()); persistCats(); renderSunflower();
-        }
+        document.getElementById('sf-overlay').classList.remove('collapsed');
+        document.getElementById('new-cat-input').focus();
       };
     } else {
       circle.textContent = cat;
-      if (cat.length > 14) circle.style.fontSize = '0.6rem';
+      if (cat.length > 14) circle.style.fontSize = '0.66rem';
       circle.dataset.cat = cat;
       const group = isGroupMode() ? currentGroup() : null;
       const prod = ALL_PRODUCTS[currentIdx % ALL_PRODUCTS.length];
       const suggested = autoSuggest(group ? group[0] : prod);
       if (suggested === cat) circle.classList.add('suggested');
-      // click sull'INTERA area del nodo, non solo sul cerchio interno
       holder.onclick = () => {
         const targets = group || [prod];
         Promise.all(targets.map(t => assignCategory(t.asin, cat)))
@@ -439,14 +464,14 @@ function renderSunflower() {
       tools.className = 'sf-tools';
       tools.style.cssText += 'top:-10px;right:-6px;position:absolute';
       const bEdit = document.createElement('div');
-      bEdit.className = 'sf-tool'; bEdit.textContent = '✎'; bEdit.title = 'Rename';
+      bEdit.className = 'sf-tool'; bEdit.textContent = '\u270E'; bEdit.title = 'Rename';
       bEdit.onclick = e => { e.stopPropagation(); renameCategory(cat); };
       const bDel = document.createElement('div');
-      bDel.className = 'sf-tool del'; bDel.textContent = '✕'; bDel.title = 'Delete';
+      bDel.className = 'sf-tool del'; bDel.textContent = '\u2715'; bDel.title = 'Delete';
       bDel.onclick = e => { e.stopPropagation(); deleteCategory(cat); };
       tools.append(bEdit, bDel);
       holder.appendChild(tools);
-      renderStacks(sf, cat, ccx, ccy, angle, catColor(i));
+      renderStacks(sf, cat, ccx, ccy, angle, catColor(i), CS);
     }
     holder.insertBefore(circle, holder.firstChild);
     sf.appendChild(holder);
