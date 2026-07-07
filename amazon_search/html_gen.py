@@ -449,14 +449,24 @@ def generate_html(
     categories = [getattr(p, "category", None) for p in products]
     if any(categories):
         seen_order: list[str] = []
+        # sezioni da 1-2 card sprecano una riga intera di schermo ciascuna (heading +
+        # griglia quasi vuota): sotto 3 prodotti la categoria finisce dentro "Altro"
+        from collections import Counter
+        counts = Counter((c or "Altro") for c in categories)
+        def _bucket(p):
+            c = getattr(p, "category", None) or "Altro"
+            return c if counts[c] >= 3 else "Altro"
         for c in categories:
             c = c or "Altro"
+            c = c if counts[c] >= 3 else "Altro"
             if c not in seen_order:
                 seen_order.append(c)
+        if "Altro" in seen_order:  # sempre in coda
+            seen_order.remove("Altro"); seen_order.append("Altro")
         blocks = []
         idx = 0
         for cat in seen_order:
-            cat_products = [p for p in products if (getattr(p, "category", None) or "Altro") == cat]
+            cat_products = [p for p in products if _bucket(p) == cat]
             cat_cards = "\n".join(_card(p, idx + i, video_coverage=video_coverage) for i, p in enumerate(cat_products))
             idx += len(cat_products)
             blocks.append(f'<h3 class="cat-title">{html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')

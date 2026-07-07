@@ -64,8 +64,10 @@ CATEGORY_PRESETS: dict[str, dict[str, list[str]]] = {
         "Tongue trainer": ["lingua", "tongue"],
         # Trazione PRIMA di Banda: i device di trazione citano spesso "supporto mento"
         # ma una fascia mento non dice mai "gonfiabile/trazione" (ordine = priorità).
-        "Trazione gonfiabile": ["gonfiabile", "inflatable", "trazione", "traction",
-                                 "pompa", "pump", " aria"],
+        # Gonfiabile SOLO con keyword d'aria: un "dispositivo di trazione" a molla/stecca
+        # NON è gonfiabile (feedback utente su caso reale NEWFUN) — categoria separata.
+        "Trazione gonfiabile": ["gonfiabile", "inflatable", "pompa", "pump", " aria"],
+        "Trazione (altro tipo)": ["trazione", "traction", "estensore", "stretcher"],
         # " mento" con spazio: "Poggiamento"/"trattamento" contengono "mento" (bug reale
         # visto sul pool collare cervicale); "strap" da solo matcha troppo
         "Banda mandibola": [" mento", "mentoniera", "mandibol", "chin strap", "chinstrap",

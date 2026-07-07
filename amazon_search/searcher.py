@@ -155,6 +155,66 @@ def _serpapi_search(query: str, max_results: int, domain: str,
         return None
 
 
+_SCRAPE_UA = ("Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36")
+
+
+def _scrape_search(query: str, max_results: int, domain: str,
+                   price_range: tuple[float, float] | None = None) -> list[AmazonProduct] | None:
+    """SERP scraping diretto, zero API. Solo fallback quando la quota è finita:
+    dà ASIN/titolo/prezzo/immagine/stelle — abbastanza per un report base."""
+    import re as _rx
+    amazon_domain = {
+        "IT": "amazon.it", "DE": "amazon.de", "UK": "amazon.co.uk",
+        "FR": "amazon.fr", "ES": "amazon.es", "US": "amazon.com",
+    }.get(domain.upper(), f"amazon.{domain.lower()}")
+    params = {"k": query}
+    if price_range:
+        params["rh"] = f"p_36:{int(price_range[0]*100)}-{int(price_range[1]*100)}"
+    try:
+        r = httpx.get(f"https://www.{amazon_domain}/s", params=params,
+                      headers={"User-Agent": _SCRAPE_UA, "Accept-Language": "it-IT"},
+                      timeout=TIMEOUT, follow_redirects=True)
+        if r.status_code != 200 or "captcha" in r.text[:5000].lower():
+            return None
+        blocks = _rx.split(r'data-asin="(B0[A-Z0-9]{8})"', r.text)
+        products, seen = [], set()
+        for i in range(1, len(blocks) - 1, 2):
+            asin, chunk = blocks[i], blocks[i + 1][:20000]
+            if asin in seen or "Sponsorizzat" in chunk[:3000] or "Sponsored" in chunk[:3000]:
+                continue
+            img = _rx.search(r'<img[^>]+src="(https://m\.media-amazon\.com/images/I/[^"]+)"[^>]*alt="([^"]{15,300})"', chunk)
+            if not img:
+                continue
+            seen.add(asin)
+            pw = _rx.search(r'class="a-price-whole">([\d.,]+)', chunk)
+            pf = _rx.search(r'class="a-price-fraction">(\d+)', chunk)
+            price = None
+            if pw:
+                try:
+                    price = float(pw.group(1).replace(".", "").replace(",", "")) + (int(pf.group(1)) / 100 if pf else 0)
+                except ValueError:
+                    pass
+            st = _rx.search(r'(\d[,.]\d) su 5', chunk) or _rx.search(r'(\d[,.]\d) out of 5', chunk)
+            rv = _rx.search(r'da (\d[\d.,]*) recensioni', chunk)
+            title = img.group(2)
+            products.append(AmazonProduct(
+                title=title, asin=asin, brand=guess_brand(title),
+                price=price, price_str=f"{price:.2f} €".replace(".", ",") if price else None,
+                stars=float(st.group(1).replace(",", ".")) if st else None,
+                reviews=int(rv.group(1).replace(".", "").replace(",", "")) if rv else None,
+                thumbnail=img.group(1),
+                link=f"https://www.{amazon_domain}/dp/{asin}",
+                prime="a-icon-prime" in chunk, in_stock=True, source="scrape",
+            ))
+            if len(products) >= max_results:
+                break
+        return products or None
+    except Exception as e:
+        print(f"[scrape error: {e}]")
+        return None
+
+
 def _searchapi_search(query: str, max_results: int, domain: str) -> list[AmazonProduct] | None:
     """Returns products or None on error."""
     key = os.environ.get("SEARCHAPI_KEY", "")
@@ -274,6 +334,15 @@ class AmazonSearcher:
                     source_used = futures[future]
                     print(f"[{source_used} OK] {len(products)} prodotti")
                     break
+
+        if not products:
+            # ultima spiaggia GRATIS: GET diretto della SERP (0 crediti). Testato live:
+            # 200 senza captcha con UA mobile. Fragile per natura (HTML può cambiare,
+            # possibile rate-limit) — per questo è SOLO fallback, mai primo canale.
+            products = _scrape_search(query, max_results, domain, price_range) or []
+            if products:
+                source_used = "scrape"
+                print(f"[scrape fallback] {len(products)} prodotti (0 crediti, dati parziali)")
 
         if not products:
             raise RuntimeError("Nessun risultato dalle API disponibili.")
