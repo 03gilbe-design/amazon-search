@@ -181,10 +181,15 @@ def export(job_id, fmt):
         data = json.dumps(payload, ensure_ascii=False, indent=1)
         mime = "application/json"
     elif fmt == "csv":
+        def _safe(v):
+            # CSV formula injection: Excel esegue celle che iniziano con =+-@
+            if isinstance(v, str) and v[:1] in "=+-@":
+                return "'" + v
+            return v
         buf = io.StringIO()
         w = csv.DictWriter(buf, fieldnames=rows[0].keys() if rows else ["asin"])
         w.writeheader()
-        w.writerows(rows)
+        w.writerows([{k: _safe(v) for k, v in r.items()} for r in rows])
         data, mime = buf.getvalue(), "text/csv"
     else:
         return jsonify({"error": "fmt must be csv or json"}), 400

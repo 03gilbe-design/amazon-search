@@ -67,6 +67,16 @@
           </div>
         </div>
 
+        <!-- group mode: N images the code thinks belong together, draggable one by one -->
+        <div style="display:flex;gap:10px;align-items:center;font-size:0.66rem;color:var(--dim)">
+          <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
+            <input type="checkbox" id="group-mode" onchange="renderCurrentProduct()"> Group mode
+          </label>
+          <input type="range" id="group-size" min="2" max="8" value="4" style="width:90px"
+                 oninput="document.getElementById('group-size-lbl').textContent=this.value;renderCurrentProduct()">
+          <span id="group-size-lbl">4</span> photos
+        </div>
+
         <!-- skip / skip assigned -->
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline btn-sm" onclick="skipCurrent()">
@@ -185,6 +195,64 @@ async function assignCategory(asin, cat) {
 }
 
 // ── Sunflower ─────────────────────────────────────────────────────────────
+function isGroupMode() { return document.getElementById('group-mode').checked; }
+function groupSize() { return parseInt(document.getElementById('group-size').value, 10); }
+
+// group = next N unassigned that the code considers together: same suggested
+// category first, then sequential fill. Draggable singles; click circle = all.
+function currentGroup() {
+  const n = groupSize();
+  const un = ALL_PRODUCTS.filter(p => !p.category);
+  if (!un.length) return [];
+  const seed = un[currentIdx % un.length];
+  const key = autoSuggest(seed);
+  const same = un.filter(p => autoSuggest(p) === key && p !== seed);
+  return [seed, ...same, ...un.filter(p => p !== seed && !same.includes(p))].slice(0, n);
+}
+
+function renderGroupCenter(group) {
+  const wrap = document.getElementById('sf-img-wrap');
+  wrap.querySelectorAll('.sf-group-img').forEach(el => el.remove());
+  document.getElementById('sf-img').style.display = 'none';
+  document.getElementById('sf-ph').style.display = 'none';
+  group.forEach((p, i) => {
+    const img = document.createElement('img');
+    img.className = 'sf-group-img';
+    img.draggable = true;
+    if (p.thumbnail && /^https?:\/\//.test(p.thumbnail)) img.src = p.thumbnail;
+    img.title = p.title || '';
+    const ang = (2 * Math.PI * i / group.length);
+    img.style.cssText = 'position:absolute;width:54px;height:54px;object-fit:contain;'
+      + 'background:#fff;border-radius:8px;border:2px solid var(--border2);cursor:grab;'
+      + 'left:' + (43 + Math.cos(ang) * 34) + 'px;top:' + (43 + Math.sin(ang) * 34) + 'px;'
+      + 'transform:rotate(' + ((i * 37) % 21 - 10) + 'deg);z-index:' + (5 + i);
+    img.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', p.asin);
+      img.style.opacity = '.4';
+    });
+    img.addEventListener('dragend', () => { img.style.opacity = '1'; });
+    wrap.appendChild(img);
+  });
+}
+
+// album stacks: assigned thumbnails pile up under each category circle,
+// semi-overlapping with scattered angles — visible history of your picks
+function renderStacks(sf, cat, x, y, color) {
+  const thumbs = ALL_PRODUCTS.filter(p => p.category === cat && p.thumbnail
+                                     && /^https?:\/\//.test(p.thumbnail)).slice(-5);
+  thumbs.forEach((p, i) => {
+    const im = document.createElement('img');
+    im.className = 'sf-circle sf-stack-img';
+    if (p.thumbnail) im.src = p.thumbnail;
+    const jit = (h => (h % 17) - 8)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
+    im.style.cssText = 'position:absolute;width:30px;height:30px;object-fit:contain;'
+      + 'background:#fff;border-radius:6px;border:1.5px solid ' + color + '66;'
+      + 'left:' + (x + 20 + i * 9 + jit / 3) + 'px;top:' + (y + 74 + (i % 2) * 6) + 'px;'
+      + 'transform:rotate(' + (jit + i * 4) + 'deg);z-index:2;pointer-events:none';
+    sf.appendChild(im);
+  });
+}
+
 function renderSunflower() {
   const sf = document.getElementById('sunflower');
   // Remove old circles
@@ -215,14 +283,24 @@ function renderSunflower() {
       circle.textContent = cat;
       circle.style.fontSize = cat.length > 12 ? '0.52rem' : '0.6rem';
       circle.dataset.cat = cat;
-      const prod = ALL_PRODUCTS[currentIdx];
-      const suggested = autoSuggest(prod);
+      const group = isGroupMode() ? currentGroup() : null;
+      const prod = ALL_PRODUCTS[currentIdx % ALL_PRODUCTS.length];
+      const suggested = autoSuggest(group ? group[0] : prod);
       if (suggested === cat) circle.classList.add('suggested');
       circle.onclick = () => {
-        assignCategory(prod.asin, cat).then(() => {
-          advanceSunflower();
-        });
+        const targets = group || [prod];
+        Promise.all(targets.map(t => assignCategory(t.asin, cat)))
+          .then(() => advanceSunflower());
       };
+      // drop di una singola foto trascinata dal gruppo centrale
+      circle.addEventListener('dragover', e => { e.preventDefault(); circle.classList.add('suggested'); });
+      circle.addEventListener('dragleave', () => { if (suggested !== cat) circle.classList.remove('suggested'); });
+      circle.addEventListener('drop', e => {
+        e.preventDefault();
+        const asin = e.dataTransfer.getData('text/plain');
+        if (asin) assignCategory(asin, cat).then(() => renderCurrentProduct());
+      });
+      renderStacks(sf, cat, x, y, catColor(i));
     }
     sf.appendChild(circle);
   });
@@ -242,6 +320,23 @@ function renderCurrentProduct() {
   // Wrap around
   let idx = currentIdx % ALL_PRODUCTS.length;
   if (ALL_PRODUCTS.length === 0) return;
+
+  document.getElementById('sf-img-wrap').querySelectorAll('.sf-group-img').forEach(el => el.remove());
+  if (isGroupMode()) {
+    const group = currentGroup();
+    renderGroupCenter(group);
+    const first = group[0] || ALL_PRODUCTS[idx];
+    document.getElementById('sf-title').textContent = group.length + ' products — drag one, or click a circle for all';
+    document.getElementById('sf-price').textContent = '';
+    document.getElementById('sf-brand').textContent = first.title ? first.title.slice(0, 50) : '';
+    document.getElementById('sf-current-cat').textContent = 'group';
+    document.getElementById('sf-suggest').textContent = autoSuggest(first) || '—';
+    const done = ALL_PRODUCTS.filter(x => x.category).length;
+    document.getElementById('sf-progress').textContent = done + ' / ' + ALL_PRODUCTS.length;
+    document.getElementById('sf-bar').style.width = (done / ALL_PRODUCTS.length * 100) + '%';
+    renderSunflower();
+    return;
+  }
 
   const p = ALL_PRODUCTS[idx];
   const img = document.getElementById('sf-img');
