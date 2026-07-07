@@ -126,18 +126,13 @@ def categorize(job_id):
     if not job or job["status"] != "done":
         return render_template("loading.html", job_id=job_id)
     result = job["result"]
-    # skip items already certain: inside a photo-identical family the category of
-    # one member answers for all — the sunflower must stay fast, not exhaustive
-    fam_seen: set[int] = set()
-    items = []
-    for p in result.products:
-        fid = getattr(p, "family_id", None)
-        if fid is not None:
-            if fid in fam_seen:
-                continue
-            fam_seen.add(fid)
-        items.append({"asin": p.asin, "title": p.title, "thumbnail": p.thumbnail,
-                      "price": p.price, "category": getattr(p, "category", None)})
+    # full pool: every product is a labelable dataset row (family members included —
+    # confirming a duplicate's category is one click and improves the dataset)
+    items = [{"asin": p.asin, "title": p.title, "thumbnail": p.thumbnail,
+              "price": p.price, "price_str": p.price_str, "brand": p.brand,
+              "family_id": getattr(p, "family_id", None),
+              "category": getattr(p, "category", None)}
+             for p in result.products]
     existing = sorted({getattr(p, "category", None) for p in result.products}
                       - {None, ""})
     return render_template("categorize.html", job_id=job_id,

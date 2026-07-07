@@ -3,7 +3,43 @@
 {% block title %}Categorize — {{ query }}{% endblock %}
 
 {% block body %}
-<div class="shell" style="padding-top:32px">
+<style>
+/* pagina categorize in tema chiaro griege (beige+grigio) */
+body { background:#e9e6e0; }
+.shell.cat-light { --text:#2b2723; --sub:#4a453f; --dim:#7a746b; --muted:#b3ac9f;
+  --border:#cfc9bf; --border2:#dcd7cd; }
+.cat-light .glass, .cat-light .glass-sm { background:rgba(255,255,255,.72);
+  border-color:#d8d2c8; backdrop-filter:blur(8px); box-shadow:0 4px 18px rgba(60,52,40,.08); }
+.cat-light .btn-outline { border-color:#c5bfb4; color:#4a453f; }
+.cat-light .sf-center { border-color:#d0cabf; background:transparent; box-shadow:none; }
+.cat-light .sf-circle { background:rgba(255,255,255,.55); border-color:#c9c3b8; color:#4a453f; }
+.cat-light .sf-circle:hover { background:rgba(255,102,0,.1); }
+/* foto prodotto: multiply toglie visivamente lo sfondo bianco sul griege */
+.cat-light .sf-center img, .cat-light .sf-group-img, .cat-light .sf-stack-img
+  { mix-blend-mode:multiply; background:transparent !important; border:none !important; }
+.sunflower-wrap { width:560px !important; height:680px !important; }
+.sf-center { width:200px !important; height:200px !important; }
+.sf-circle { width:84px; height:84px; }
+/* mini-tool ✎/✕ sul cerchio al passaggio del mouse */
+.sf-tools { position:absolute; display:none; gap:4px; z-index:30 }
+.sf-circle-holder:hover .sf-tools { display:flex }
+.sf-tool { width:22px; height:22px; border-radius:50%; border:1.5px solid #c9c3b8;
+  background:#fff; color:#4a453f; font-size:11px; display:flex; align-items:center;
+  justify-content:center; cursor:pointer; transition:transform .15s }
+.sf-tool:hover { transform:scale(1.2) }
+.sf-tool.del:hover { border-color:#c0392b; color:#c0392b }
+/* overlay info riducibile */
+#sf-overlay { position:absolute; right:18px; top:18px; width:250px; z-index:40;
+  transition:all .25s ease; }
+#sf-overlay.collapsed .ov-body { display:none }
+#sf-overlay .ov-head { display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--dim) }
+@keyframes popIn { from { opacity:0; transform:scale(.5) rotate(-8deg) } to { opacity:1 } }
+.sf-stack-img { animation:popIn .35s ease }
+.sf-group-img { animation:popIn .3s ease; transition:transform .2s }
+.sf-group-img:hover { transform:scale(1.25) rotate(0deg) !important; z-index:99 !important }
+</style>
+<div class="shell cat-light" style="padding-top:32px">
 
   <div style="margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
@@ -40,7 +76,7 @@
 
   <!-- ── SUNFLOWER VIEW ────────────────────────────────────────────────── -->
   <div id="view-sunflower">
-    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;position:relative">
 
       <!-- Sunflower -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
@@ -94,52 +130,27 @@
         </div>
       </div>
 
-      <!-- Product info + current category -->
-      <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px">
-        <div class="glass" style="padding:16px" id="sf-info">
-          <div style="font-size:0.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Current product</div>
-          <div style="font-size:0.84rem;font-weight:700;line-height:1.4;margin-bottom:8px;color:var(--text)" id="sf-title">—</div>
-          <div style="font-size:0.78rem;color:var(--orange);margin-bottom:6px" id="sf-price"></div>
-          <div style="font-size:0.68rem;color:var(--dim)" id="sf-brand"></div>
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
-            <span style="font-size:0.62rem;color:var(--muted)">Current category: </span>
-            <span style="font-size:0.72rem;color:var(--sub)" id="sf-current-cat">—</span>
-          </div>
-          <div style="margin-top:6px">
-            <span style="font-size:0.62rem;color:var(--muted)">Auto-suggest: </span>
-            <span style="font-size:0.72rem;color:var(--orange)" id="sf-suggest">—</span>
-          </div>
+      <!-- overlay info riducibile (chiaramente sopra il girasole) -->
+      <div id="sf-overlay" class="glass" style="padding:10px 12px">
+        <div class="ov-head" onclick="document.getElementById('sf-overlay').classList.toggle('collapsed')">
+          <span>ℹ product</span><span id="ov-toggle">—</span>
         </div>
-
-        <!-- Add new category inline -->
-        <div class="glass-sm" style="padding:12px">
-          <div style="font-size:0.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin-right:3px">
-              <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            New category
+        <div class="ov-body">
+          <div style="font-size:0.7rem;font-weight:700;line-height:1.35;margin:6px 0 4px;color:var(--text)" id="sf-title">—</div>
+          <div style="font-size:0.68rem;color:var(--orange)" id="sf-price"></div>
+          <div style="font-size:0.6rem;color:var(--dim)" id="sf-brand"></div>
+          <div style="margin-top:6px;font-size:0.6rem">
+            <span style="color:var(--muted)">cat:</span> <span id="sf-current-cat" style="color:var(--sub)">—</span>
+            · <span style="color:var(--muted)">suggest:</span> <span id="sf-suggest" style="color:var(--orange)">—</span>
           </div>
-          <div style="display:flex;gap:6px">
-            <input type="text" id="new-cat-input" placeholder="e.g. Over-ear headphones"
-                   style="flex:1;font-size:0.78rem;padding:7px 10px"/>
-            <button class="btn btn-orange btn-sm" onclick="addCategory()">Add</button>
+          <div style="display:flex;gap:5px;margin-top:8px">
+            <input type="text" id="new-cat-input" placeholder="new category…"
+                   style="flex:1;font-size:0.68rem;padding:5px 8px"/>
+            <button class="btn btn-orange btn-sm" onclick="addCategory()">+</button>
           </div>
-        </div>
-
-        <!-- All categories list -->
-        <div class="glass-sm" style="padding:12px">
-          <div style="font-size:0.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin-right:3px">
-              <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-            Categories
-          </div>
-          <div id="cat-list-wrap" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
       </div>
+      <div id="cat-list-wrap" style="display:none"></div>
     </div>
   </div>
 
@@ -184,17 +195,52 @@ function autoSuggest(product) {
   return null;
 }
 
-async function assignCategory(asin, cat) {
+async function assignCategory(asin, cat, skipHistory) {
+  const p = ALL_PRODUCTS.find(x => x.asin === asin);
+  if (!skipHistory) HISTORY.push({ asin, prevCat: p ? p.category : null });
   await fetch('/api/set_category', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ job_id: JOB_ID, asin, category: cat }),
   });
-  const p = ALL_PRODUCTS.find(x => x.asin === asin);
   if (p) p.category = cat;
 }
 
 // ── Sunflower ─────────────────────────────────────────────────────────────
+
+const HISTORY = [];  // {asin, prevCat} per undo con freccia sinistra
+
+function renameCategory(cat) {
+  const name = prompt('Rename "' + cat + '" to:', cat);
+  if (!name || name === cat) return;
+  categories[categories.indexOf(cat)] = name;
+  ALL_PRODUCTS.filter(p => p.category === cat)
+    .forEach(p => assignCategory(p.asin, name));
+  renderSunflower();
+}
+
+function deleteCategory(cat) {
+  if (!confirm('Delete category "' + cat + '"? Its products go back to unassigned.')) return;
+  categories.splice(categories.indexOf(cat), 1);
+  ALL_PRODUCTS.filter(p => p.category === cat)
+    .forEach(p => assignCategory(p.asin, null));
+  renderCurrentProduct();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { skipCurrent(); }
+  if (e.key === 'ArrowLeft') {
+    const last = HISTORY.pop();
+    if (last) {
+      assignCategory(last.asin, last.prevCat, true).then(() => {
+        if (currentIdx > 0) currentIdx--;
+        renderCurrentProduct();
+      });
+    }
+  }
+});
+
 function isGroupMode() { return document.getElementById('group-mode').checked; }
 function groupSize() { return parseInt(document.getElementById('group-size').value, 10); }
 
@@ -222,9 +268,9 @@ function renderGroupCenter(group) {
     if (p.thumbnail && /^https?:\/\//.test(p.thumbnail)) img.src = p.thumbnail;
     img.title = p.title || '';
     const ang = (2 * Math.PI * i / group.length);
-    img.style.cssText = 'position:absolute;width:54px;height:54px;object-fit:contain;'
-      + 'background:#fff;border-radius:8px;border:2px solid var(--border2);cursor:grab;'
-      + 'left:' + (43 + Math.cos(ang) * 34) + 'px;top:' + (43 + Math.sin(ang) * 34) + 'px;'
+    img.style.cssText = 'position:absolute;width:80px;height:80px;object-fit:contain;'
+      + 'border-radius:8px;cursor:grab;'
+      + 'left:' + (60 + Math.cos(ang) * 48) + 'px;top:' + (60 + Math.sin(ang) * 48) + 'px;'
       + 'transform:rotate(' + ((i * 37) % 21 - 10) + 'deg);z-index:' + (5 + i);
     img.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', p.asin);
@@ -245,10 +291,13 @@ function renderStacks(sf, cat, x, y, color) {
     im.className = 'sf-circle sf-stack-img';
     if (p.thumbnail) im.src = p.thumbnail;
     const jit = (h => (h % 17) - 8)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
-    im.style.cssText = 'position:absolute;width:30px;height:30px;object-fit:contain;'
-      + 'background:#fff;border-radius:6px;border:1.5px solid ' + color + '66;'
-      + 'left:' + (x + 20 + i * 9 + jit / 3) + 'px;top:' + (y + 74 + (i % 2) * 6) + 'px;'
-      + 'transform:rotate(' + (jit + i * 4) + 'deg);z-index:2;pointer-events:none';
+    // direzione radiale: le foto si accumulano fuori dal cerchio, mai su barra/testi
+    const dx = (x + 42 - 280) / 215, dy = (y + 42 - 300) / 215;
+    im.style.cssText = 'position:absolute;width:44px;height:44px;object-fit:contain;'
+      + 'border-radius:6px;'
+      + 'left:' + (x + 20 + dx * (58 + i * 13) + jit / 2) + 'px;'
+      + 'top:'  + (y + 20 + dy * (58 + i * 13) + (i % 2) * 7) + 'px;'
+      + 'transform:rotate(' + (jit + i * 5) + 'deg);z-index:2;pointer-events:none';
     sf.appendChild(im);
   });
 }
@@ -260,13 +309,13 @@ function renderSunflower() {
 
   const allCats = [...categories, '+'];
   const n = allCats.length;
-  const r = 175; // radius
-  const cx = 210, cy = 210; // center of 420×420 wrap
+  const r = 215; // radius
+  const cx = 280, cy = 300; // center of 560×680 wrap
 
   allCats.forEach((cat, i) => {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2;
-    const x = cx + Math.cos(angle) * r - 36; // 36 = half circle width
-    const y = cy + Math.sin(angle) * r - 36;
+    const x = cx + Math.cos(angle) * r - 42;
+    const y = cy + Math.sin(angle) * r - 42;
     const circle = document.createElement('div');
     circle.className = 'sf-circle' + (cat === '+' ? ' add-cat' : '');
     circle.style.left = x + 'px';
@@ -301,6 +350,26 @@ function renderSunflower() {
         if (asin) assignCategory(asin, cat).then(() => renderCurrentProduct());
       });
       renderStacks(sf, cat, x, y, catColor(i));
+      // mini-strumenti al passaggio: rinomina / elimina categoria
+      const holder = document.createElement('div');
+      holder.className = 'sf-circle-holder';
+      holder.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:84px;height:84px';
+      circle.style.left = '0px'; circle.style.top = '0px';
+      const tools = document.createElement('div');
+      tools.className = 'sf-tools';
+      tools.style.cssText += 'top:-10px;right:-6px;position:absolute';
+      const bEdit = document.createElement('div');
+      bEdit.className = 'sf-tool'; bEdit.textContent = '✎'; bEdit.title = 'Rename';
+      bEdit.onclick = e => { e.stopPropagation(); renameCategory(cat); };
+      const bDel = document.createElement('div');
+      bDel.className = 'sf-tool del'; bDel.textContent = '✕'; bDel.title = 'Delete';
+      bDel.onclick = e => { e.stopPropagation(); deleteCategory(cat); };
+      tools.append(bEdit, bDel);
+      holder.append(circle, tools);
+      holder.classList.add('sf-circle');  // così il cleanup lo rimuove
+      holder.style.background = 'none'; holder.style.border = 'none';
+      sf.appendChild(holder);
+      return;
     }
     sf.appendChild(circle);
   });
