@@ -166,8 +166,11 @@ class TestPhashTransforms(unittest.TestCase):
         for i in range(0, 120, 12):
             im.paste((200 - i, 30 + i, 60), (10 + i, 8 + i // 2, 60 + i, 50 + i // 2))
         tdir = tempfile.mkdtemp()
-        cases = {"orig": im, "small": im.resize((60, 48)), "mirror": ImageOps.mirror(im),
+        inset = ImageOps.expand(im.resize((100, 80)), border=70, fill="white")
+        corner = Image.new("RGB", (400, 320), "white"); corner.paste(im.resize((100, 80)), (15, 20))
+        cases = {"orig": im, "small": im.resize((100, 80)), "mirror": ImageOps.mirror(im),
                  "rot90": im.rotate(90, expand=True), "rot180": im.rotate(180),
+                 "inset": inset, "corner": corner,
                  "other": Image.new("RGB", (200, 160), (10, 10, 10))}
         paths = {}
         for name, img in cases.items():
@@ -177,7 +180,7 @@ class TestPhashTransforms(unittest.TestCase):
         fams = phash_families(paths, threshold=8)
         self.assertEqual(len(fams), 1, fams)
         self.assertEqual(set(fams[0]["items"]),
-                         {"orig", "small", "mirror", "rot90", "rot180"}, fams)
+                         {"orig", "small", "mirror", "rot90", "rot180", "inset", "corner"}, fams)
 
 
 class TestVttToText(unittest.TestCase):

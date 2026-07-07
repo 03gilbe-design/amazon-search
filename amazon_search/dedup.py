@@ -37,15 +37,25 @@ def phash_families(images: dict[str, str], *, threshold: int = 8) -> list[dict]:
     import imagehash
     from PIL import Image, ImageOps
 
+    def _trim_white(im: "Image.Image", thresh: int = 240) -> "Image.Image":
+        """Croppa la cornice bianca prima dell'hash. Foto Amazon = prodotto su bianco;
+        lo stesso prodotto RIMESSO dentro una foto più grande (inset/angolo) misurava
+        dist 32-40 (invisibile) — dopo il trim torna a 0. Costo: un getbbox, ~ms."""
+        try:
+            mask = im.convert("L").point(lambda p: 255 if p < thresh else 0)
+            box = mask.getbbox()
+            return im.crop(box) if box else im
+        except Exception:
+            return im
+
     # Misure reali (foto prodotto, soglia 8): resize=0, mirror=0 (con hash specchiato),
-    # rot 3°=2 — coperti. Rot 90/180/270 = dist ~30 con un hash solo, quindi ogni immagine
-    # viene hashata anche ruotata. Crop e inset (prodotto dentro foto più grande) restano
-    # fuori (dist 24-34): li copre il fingerprint numerico del titolo, non il pHash.
+    # rot 3°=2, inset/angolo=0 (dopo trim) — coperti. Rot 90/180/270 hashate a parte.
+    # Crop parziale resta fuori (dist ~24): lo copre il fingerprint numerico del titolo.
     variants: dict[str, list["imagehash.ImageHash"]] = {}
     hashes: dict[str, "imagehash.ImageHash"] = {}
     for item_id, path in images.items():
         try:
-            im = Image.open(path)
+            im = _trim_white(Image.open(path).convert("RGB"))
             hashes[item_id] = imagehash.phash(im)
             variants[item_id] = [
                 hashes[item_id],

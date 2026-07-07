@@ -245,27 +245,46 @@ def _possible_duplicates_section(families: list[dict]) -> str:
 
 
 def _price_chart(products: list) -> str:
-    pts = [(p.price, p.stars, p.title, p.thumbnail or "") for p in products if p.price is not None and p.stars is not None]
+    def _user_cat(p):
+        # solo categorie scelte dall'utente: le etichette del clustering visivo
+        # ("Simili: …", "Gruppo visivo N") sono un'altra cosa e affollerebbero la legenda
+        c = getattr(p, "category", None)
+        return None if not c or c.startswith(("Simili:", "Gruppo visivo")) else c
+
+    pts = [(p.price, p.stars, p.title, p.thumbnail or "", _user_cat(p))
+           for p in products if p.price is not None and p.stars is not None]
     if len(pts) < 2:
         return ""
-    prices = [p for p, _, _, _ in pts]
+    prices = [pt[0] for pt in pts]
     pmin, pmax = min(prices), max(prices)
     prange = (pmax - pmin) or 1
     w, h, pad = 600, 160, 24
+    # colore per categoria (stesse hue distanziate della famiglia dedup); niente
+    # categoria = blu default. La legenda compare solo se ci sono categorie vere.
+    cats = sorted({c for *_, c in pts if c})
+    cat_color = {c: f"hsl({(i * 360 // max(len(cats), 1)) % 360},65%,45%)" for i, c in enumerate(cats)}
     dots = []
-    for price, stars, title, thumb in pts:
+    for price, stars, title, thumb, cat in pts:
         x = pad + (price - pmin) / prange * (w - 2 * pad)
         y = h - pad - (stars / 5) * (h - 2 * pad)
+        color = cat_color.get(cat, "#0066c0")
         dots.append(
-            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="#0066c0" fill-opacity="0.65" class="chart-dot" '
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="{color}" fill-opacity="0.7" class="chart-dot" '
             f'onclick="showChartPoint(this)" '
             f'data-title="{html.escape(title)}" data-price="{price:.2f}" data-stars="{stars}" data-thumb="{html.escape(thumb)}">'
-            f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★</title></circle>'
+            f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★'
+            + (f' [{html.escape(cat)}]' if cat else '') + '</title></circle>'
         )
+    legend = ""
+    if cats:
+        legend = '<div class="chart-legend">' + "".join(
+            f'<span class="chart-legend-item"><span class="chart-legend-dot" '
+            f'style="background:{cat_color[c]}"></span>{html.escape(c)}</span>' for c in cats) + '</div>'
     return f"""
     <div class="section">
         <h2>Prezzo vs valutazione</h2>
         <p class="section-sub">Ogni punto è un prodotto, cliccalo per vederlo — outlier isolati sono spesso rumore (poche recensioni, prezzo anomalo).</p>
+        {legend}
         <div class="chart-wrap">
             <svg viewBox="0 0 {w} {h}" class="price-chart">
                 <line x1="{pad}" y1="{h-pad}" x2="{w-pad}" y2="{h-pad}" stroke="#ddd"/>
@@ -569,6 +588,9 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .price-chart{{width:100%;height:auto}}
 .chart-wrap{{position:relative}}
 .chart-dot{{cursor:pointer;transition:r .15s}}
+.chart-legend{{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 8px;font-size:12px}}
+.chart-legend-item{{display:inline-flex;align-items:center;gap:4px;color:#555}}
+.chart-legend-dot{{width:10px;height:10px;border-radius:50%;display:inline-block}}
 .chart-dot:hover{{r:8}}
 .chart-popup{{
   position:absolute; top:8px; right:8px; background:#fff; border-radius:10px;
