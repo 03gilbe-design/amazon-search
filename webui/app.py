@@ -93,7 +93,7 @@ def index():
 
 @app.route("/search", methods=["POST"])
 def search():
-    payload = request.get_json(force=True)
+    payload = request.get_json()
     if not (payload.get("query") or "").strip():
         return jsonify({"error": "query is required"})
     job_id = uuid.uuid4().hex[:10]
@@ -142,12 +142,12 @@ def categorize(job_id):
                       - {None, ""})
     return render_template("categorize.html", job_id=job_id,
                            query=result.query, existing_cats=existing,
-                           products_json=json.dumps(items, ensure_ascii=False))
+                           products=items)
 
 
 @app.route("/api/set_category", methods=["POST"])
 def set_category():
-    d = request.get_json(force=True)
+    d = request.get_json()
     job = JOBS.get(d.get("job_id") or "")
     if job and job.get("result"):
         query_key = job["result"].query.lower().strip()
@@ -160,11 +160,49 @@ def set_category():
     return jsonify({"ok": True})
 
 
+@app.route("/export/<job_id>.<fmt>")
+def export(job_id, fmt):
+    import csv
+    import io
+    job = JOBS.get(job_id)
+    if not job or not job.get("result"):
+        return jsonify({"error": "unknown job"}), 404
+    result = job["result"]
+    rows = [{"asin": p.asin, "title": p.title, "brand": p.brand, "price": p.price,
+             "stars": p.stars, "reviews": p.reviews, "prime": p.prime,
+             "category": getattr(p, "category", None),
+             "family_id": getattr(p, "family_id", None),
+             "dedup_note": getattr(p, "dedup_note", None),
+             "link": p.link, "thumbnail": p.thumbnail}
+            for p in result.products]
+    if fmt == "json":
+        payload = {"query": result.query, "products": rows,
+                   "families": result.families, "excluded": result.excluded}
+        data = json.dumps(payload, ensure_ascii=False, indent=1)
+        mime = "application/json"
+    elif fmt == "csv":
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=rows[0].keys() if rows else ["asin"])
+        w.writeheader()
+        w.writerows(rows)
+        data, mime = buf.getvalue(), "text/csv"
+    else:
+        return jsonify({"error": "fmt must be csv or json"}), 400
+    from flask import Response
+    return Response(data, mimetype=mime, headers={
+        "Content-Disposition": f"attachment; filename=amazon_{_slugify(result.query)}.{fmt}"})
+
+
+def _slugify(t: str) -> str:
+    import re as _r
+    return _r.sub(r"[^a-z0-9]+", "_", t.lower())[:30].strip("_")
+
+
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     env_path = Path.home() / ".env"
     if request.method == "POST":
-        d = request.get_json(force=True)
+        d = request.get_json()
         keys = {k: v for k, v in d.items() if k.isupper()}     # API keys -> ~/.env
         prefs = {k: v for k, v in d.items() if not k.isupper()}  # form defaults -> json
         if keys:

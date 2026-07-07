@@ -323,9 +323,15 @@
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:7px">
       {% for v in result.query_variants %}
-      <span class="chip" style="cursor:pointer" onclick="document.getElementById('query')&&(document.getElementById('query').value='{{v}}')">{{ v }}</span>
+      <span class="chip chip-variant" style="cursor:pointer" data-variant="{{ v }}">{{ v }}</span>
       {% endfor %}
     </div>
+    <script>
+    // niente JS costruito in Jinja (XSS in contesto attributo): data-attribute + bind
+    document.querySelectorAll('.chip-variant').forEach(el => el.onclick = () => {
+      const q = document.getElementById('query'); if (q) q.value = el.dataset.variant;
+    });
+    </script>
   </div>
   {% endif %}
 

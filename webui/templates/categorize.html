@@ -153,7 +153,7 @@
 {% block scripts %}
 <script>
 const JOB_ID = {{ job_id | tojson }};
-const ALL_PRODUCTS = {{ products_json | safe }};
+const ALL_PRODUCTS = {{ products | tojson }};
 const CAT_COLORS = ['#ff6600','#4a9eff','#3dba6a','#9b6dff','#ffcc44','#ff4466','#00ccbb','#ff88cc'];
 
 let categories = {{ existing_cats | tojson }};
@@ -322,9 +322,11 @@ function renderKanban() {
     colEl.innerHTML = `
       <div class="kanban-col-head" style="background:${catColor(ci-1)}22;color:${ci===0?'var(--dim)':catColor(ci-1)}">
         <span style="width:6px;height:6px;border-radius:50%;background:${ci===0?'var(--muted)':catColor(ci-1)};display:inline-block"></span>
-        ${col}
       </div>
-      <div class="kanban-items" data-col="${col}" id="kanban-col-${ci}"></div>`;
+      <div class="kanban-items" id="kanban-col-${ci}"></div>`;
+    // nome categoria e data-col via API DOM: è testo utente, non markup (XSS)
+    colEl.querySelector('.kanban-col-head').append(document.createTextNode(' ' + col));
+    colEl.querySelector('.kanban-items').dataset.col = col;
     board.appendChild(colEl);
 
     const items = colEl.querySelector('.kanban-items');
@@ -347,9 +349,25 @@ function renderKanban() {
       item.className = 'kanban-item';
       item.draggable = true;
       item.dataset.asin = p.asin;
-      item.innerHTML = `
-        ${p.thumbnail ? `<img class="kanban-img" src="${p.thumbnail}" loading="lazy" onerror="this.style.display='none'"/>` : '<div class="kanban-img" style="display:flex;align-items:center;justify-content:center;color:var(--muted)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg></div>'}
-        <div class="kanban-label">${p.title.slice(0,40)}</div>`;
+      // DOM APIs, non innerHTML: titolo/thumbnail sono dati Amazon non fidati (XSS)
+      if (p.thumbnail && /^https?:\/\//.test(p.thumbnail)) {
+        const img = document.createElement('img');
+        img.className = 'kanban-img';
+        img.loading = 'lazy';
+        img.onerror = () => { img.style.display = 'none'; };
+        img.src = p.thumbnail;
+        item.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'kanban-img';
+        ph.style.cssText = 'display:flex;align-items:center;justify-content:center;color:var(--muted)';
+        ph.textContent = '▦';
+        item.appendChild(ph);
+      }
+      const label = document.createElement('div');
+      label.className = 'kanban-label';
+      label.textContent = (p.title || '').slice(0, 40);
+      item.appendChild(label);
       item.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', p.asin);
         item.classList.add('dragging');
