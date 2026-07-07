@@ -53,14 +53,29 @@ def run(query: str, *,
         pull_asins: list[str] | None = None,
         external_benchmarks: list[dict] | None = None,
         suggest_queries: bool = False,
+        deep_image_match: bool = False,
+        price_bands: list[tuple[float, float]] | None = None,
         categories: dict[str, list[str]] | None = None) -> SearchResult:
     """Run the full pipeline once, returning everything computed — the report renders
     from this single object, nothing is a side file."""
     from amazon_search import scoring
 
     searcher = AmazonSearcher()
-    products = searcher.search(query, max_results=n, max_price=max_price,
-                                min_stars=min_stars, domain=domain)
+    if price_bands:
+        # una ricerca (1+ crediti) PER FASCIA: i primi organici Amazon sono quasi
+        # tutti cheap, così ogni fascia di prezzo porta i suoi candidati veri
+        products, seen = [], set()
+        for lo, hi in price_bands:
+            for p in searcher.search(query, max_results=n, max_price=max_price,
+                                      min_stars=min_stars, domain=domain,
+                                      price_range=(lo, hi)):
+                if p.asin and p.asin in seen:
+                    continue
+                seen.add(p.asin)
+                products.append(p)
+    else:
+        products = searcher.search(query, max_results=n, max_price=max_price,
+                                    min_stars=min_stars, domain=domain)
 
     # 2. negative sampling — before any paid enrichment
     excluded: list[dict] = []
@@ -145,6 +160,21 @@ def run(query: str, *,
                 fam.get("shared", []),
                 [brand_by_asin.get(a) or "" for a in fam["items"]])
             raw_families.append(fam)
+        # third tier (opt-in, lento ~1s/coppia): stesso prodotto RIFOTOGRAFATO in una
+        # scena (3 copie, persona, sfondo) — invisibile a pHash e spesso ai numeri.
+        # Solo su item non già raggruppati, dentro la stessa categoria (meno coppie).
+        if deep_image_match:
+            grouped = {a for fam in raw_families for a in fam["items"]}
+            cat_of = {p.asin: getattr(p, "category", None) for p in products}
+            from collections import defaultdict
+            by_cat: dict = defaultdict(dict)
+            for asin, path in paths.items():
+                if asin not in grouped:
+                    by_cat[cat_of.get(asin)][asin] = path
+            for cat_imgs in by_cat.values():
+                if len(cat_imgs) > 1:
+                    raw_families.extend(dedup_mod.scene_families(cat_imgs))
+
         for fam_ix, fam in enumerate(raw_families):
             by_specs = fam.get("match") == "specs"
             spread = dedup_mod.price_spread(fam["items"], price_by_asin)
@@ -161,7 +191,7 @@ def run(query: str, *,
             families.append({
                 "spread": spread,
                 "diff_image": fam.get("diff_image", False),
-                "match": "specs" if by_specs else "photo",
+                "match": fam.get("match", "photo"),
                 "confidence": fam.get("confidence"),
                 "shared_specs": fam.get("shared", []),
                 "items": [{"asin": a, "price": price_by_asin.get(a),

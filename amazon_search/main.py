@@ -46,6 +46,8 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--suggest-queries", is_flag=True, help="Suggerisce query alternative (gratis, deterministico + AI se disponibile)")
 @click.option("--categorize", "category_defs", default=None, help="Sotto-categorie per titolo, es: 'Gonfiabile:gonfiabile,inflatable|Rigido:rigido,semirigido' (ordine=priorità, primo match vince)")
 @click.option("--categorize-preset", "category_preset", default=None, help="Usa un set di categorie predefinito da config_search.CATEGORY_PRESETS (es: 'neck')")
+@click.option("--deep-dedup", is_flag=True, help="Trova lo stesso prodotto RIFOTOGRAFATO in scene diverse (SIFT, lento, richiede opencv) — oltre a foto identiche e misure")
+@click.option("--price-bands", "price_bands", default=None, help="Fasce prezzo per ricerche multiple, es: '5-15,15-30,30-60' — 1 ricerca (1 credito) per fascia, pool più grande e bilanciato")
 @click.option("--no-llm", is_flag=True, help="Salta AI ranking e comparazione")
 @click.option("--no-open", is_flag=True, help="Non aprire il browser")
 @click.option("--domain", default="IT", show_default=True, help="Marketplace Amazon (es: IT, DE, UK)")
@@ -57,7 +59,7 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--clear-log", is_flag=True, help="Svuota log ed esci")
 def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage,
          criteria, junk, pull_asins, suggest_queries, category_defs, category_preset,
-         no_llm, no_open, domain,
+         deep_dedup, price_bands, no_llm, no_open, domain,
          show_quota, show_cache, clear_cache, test, log_summary, clear_log):
     """Cerca prodotti su Amazon e apre i risultati nel browser."""
     from amazon_search import quota as q
@@ -146,6 +148,9 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
                 pull_asins=pull_list or None,
                 suggest_queries=suggest_queries,
                 categories=categories,
+                deep_image_match=deep_dedup,
+                price_bands=[tuple(map(float, b.split("-"))) for b in price_bands.split(",")]
+                            if price_bands else None,
             )
         except Exception as e:
             console.print(f"[red]Errore ricerca: {e}[/red]")

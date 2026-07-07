@@ -79,8 +79,11 @@ def _parse_price(item: dict) -> tuple[float | None, str]:
         return None, str(raw)
 
 
-def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonProduct] | None:
-    """Returns products or None on error."""
+def _serpapi_search(query: str, max_results: int, domain: str,
+                    price_range: tuple[float, float] | None = None) -> list[AmazonProduct] | None:
+    """Returns products or None on error. price_range=(min€, max€) usa il filtro
+    prezzo nativo Amazon (rh=p_36, centesimi): una ricerca per fascia = pool
+    bilanciato invece dei soliti primi organici tutti cheap."""
     key = os.environ.get("SERPAPI_KEY", "")
     if not key or not quota.check("serpapi"):
         return None
@@ -100,17 +103,18 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
                 if not quota.check("serpapi"):
                     break
                 quota.increment("serpapi")
-                resp = client.get(
-                    f"{SERPAPI_BASE}/search.json",
-                    params={
-                        "engine": "amazon",
-                        "k": query,
-                        "amazon_domain": amazon_domain,
-                        "api_key": key,
-                        "num": max_results,
-                        "page": page,
-                    },
-                )
+                params = {
+                    "engine": "amazon",
+                    "k": query,
+                    "amazon_domain": amazon_domain,
+                    "api_key": key,
+                    "num": max_results,
+                    "page": page,
+                }
+                if price_range:
+                    lo, hi = price_range
+                    params["rh"] = f"p_36:{int(lo*100)}-{int(hi*100)}"
+                resp = client.get(f"{SERPAPI_BASE}/search.json", params=params)
                 resp.raise_for_status()
                 batch = resp.json().get("organic_results") or []
                 if not batch:
@@ -216,8 +220,11 @@ class AmazonSearcher:
         max_price: float | None = None,
         min_stars: float | None = None,
         domain: str = "IT",
+        price_range: tuple[float, float] | None = None,
     ) -> list[AmazonProduct]:
         start_time = time.time()
+        # la fascia prezzo fa parte dell'identità della ricerca (cache separata)
+        cache_query = f"{query}|band{price_range[0]}-{price_range[1]}" if price_range else query
         quota_before = {
             "serpapi": quota.used("serpapi"),
             "canopy": quota.used("canopy"),
@@ -225,7 +232,7 @@ class AmazonSearcher:
         }
 
         # 1. Check cache
-        cached = cache.get(query, domain, max_price, min_stars)
+        cached = cache.get(cache_query, domain, max_price, min_stars)
         if cached:
             products = []
             for item in cached:
@@ -255,7 +262,7 @@ class AmazonSearcher:
         source_used = None
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = {
-                executor.submit(_serpapi_search, query, max_results, domain): "serpapi",
+                executor.submit(_serpapi_search, query, max_results, domain, price_range): "serpapi",
             }
             if config_search.SEARCHAPI_ENABLED:
                 futures[executor.submit(_searchapi_search, query, max_results, domain)] = "searchapi"
@@ -278,7 +285,7 @@ class AmazonSearcher:
             products = [p for p in products if p.stars is None or p.stars >= min_stars]
 
         # 4. Cache results
-        cache.set(query, domain, max_price, min_stars, products)
+        cache.set(cache_query, domain, max_price, min_stars, products)
 
         duration = time.time() - start_time
         quota_after = {

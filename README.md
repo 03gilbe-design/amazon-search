@@ -83,9 +83,22 @@ independent signals catch it, and they collaborate:
 3. **Pseudo-brand score** — trademark-registry generated names ("XKJIYU": no vowels, rare
    letters, all caps) raise family confidence; never auto-exclude, always shown for a human eye.
 
+4. **Scene matching** (`--deep-dedup`, needs opencv) — the same product *re-photographed*
+   inside a different scene (3 copies, a model wearing it, a lifestyle shot). SIFT features +
+   RANSAC geometric check; measured on a real case: true matches 13-44 inliers, false ≤7,
+   threshold 10. Slow (~1s/pair), so it only runs on same-category items not already grouped.
+
 The report shows each family with photos side by side, the price spread ("same item seen for
 €X less"), and — with `--montage` — the whole pool as one numbered image grid where duplicates
-jump out visually.
+jump out visually. Cards in the same family carry a colored border + "stesso prodotto" chip.
+
+## Big balanced pools
+
+`--price-bands "5-15,15-30,30-80"` runs one search per price band (Amazon's native price
+filter): the first organic results are almost all cheap, so banding is how you actually get
+100+ products across the whole price spectrum instead of 70 budget clones. Combined with
+`--categorize-preset neck` (13 keyword categories, measured 99% on a real 96-product pool)
+the report splits everything into scannable sections without any AI call.
 
 `--dedup`, `--criteria`, `--junk`, `--pull-asin` are all wired into `pipeline.run()` and show up
 as real sections in the report (same-photo families, feature-fit chips, a collapsed exclusion

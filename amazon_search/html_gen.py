@@ -503,14 +503,14 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .summary{{background:#fff7e0;border-left:4px solid #f5a623;padding:14px 18px;margin:16px 16px 0;border-radius:6px;font-size:13.5px;line-height:1.55;color:#5c4b1e}}
 
-.grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px;padding-bottom:80px}}
-@media (max-width:1100px){{.grid{{grid-template-columns:repeat(3,1fr)}}}}
-@media (max-width:820px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:14px;padding-bottom:80px}}
+
+
 .cat-title{{font-size:15px;font-weight:800;color:#1c1a17;margin:22px 16px 4px;letter-spacing:-.01em}}
 .cat-title:first-of-type{{margin-top:16px}}
 .cat-count{{font-weight:500;color:#a39d8f;font-size:12.5px}}
 
-.card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
+.card{{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
 .card-grouped{{box-shadow:0 0 0 2px hsla(var(--fam-hue,145),70%,45%,.55),0 1px 3px rgba(20,20,10,.08)}}
 .fam-chip{{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
   background:hsla(var(--fam-hue,145),70%,45%,.15);color:hsl(var(--fam-hue,145),60%,32%);
@@ -522,7 +522,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .card-link{{display:flex;flex-direction:column;gap:0;text-decoration:none;color:inherit;cursor:pointer;height:100%}}
 
-.card-img{{flex-shrink:0;width:100%;height:150px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+.card-img{{flex-shrink:0;width:100%;height:120px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
 .card-img img{{max-width:88%;max-height:88%;object-fit:contain}}
 .no-img{{font-size:2rem;color:#ccc}}
 
@@ -534,16 +534,16 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
   transform:translate(calc(-50% + var(--i)*10px), calc(-50% + var(--i)*6px)) rotate(calc(var(--i)*3deg - 3deg));
 }}
 
-.card-info{{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px}}
+.card-info{{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;padding:10px}}
 
-.card-title{{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}}
+.card-title{{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}}
 
 .card-rating{{font-size:12px;color:#666;display:flex;gap:4px;align-items:center}}
 .card-rating strong{{color:#e08a2e;font-size:13px}}
 .confidence{{color:#b8b2a5;font-size:10px;letter-spacing:1px}}
 .reviews{{color:#999;font-size:11px}}
 
-.card-price{{font-size:19px;font-weight:800;color:#c0392b;letter-spacing:-.01em}}
+.card-price{{font-size:16px;font-weight:800;color:#c0392b;letter-spacing:-.01em}}
 
 .badge-alert{{background:#d32f2f;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
 .badge-prime{{background:#0066c0;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
@@ -637,7 +637,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .specs td{{padding:3px 6px;border-bottom:1px solid #f0f0f0}}
 .specs td:first-child{{color:#666;width:45%;font-weight:500}}
 
-.btn-cta{{display:block;text-align:center;background:#e47911;color:#fff;text-decoration:none;padding:10px 12px;min-height:44px;border-radius:4px;font-size:13px;font-weight:600;margin-top:auto;border:none;cursor:pointer;transition:background 0.2s,transform 0.1s}}
+.btn-cta{{display:block;text-align:center;background:#e47911;color:#fff;text-decoration:none;padding:7px 10px;min-height:34px;border-radius:4px;font-size:13px;font-weight:600;margin-top:auto;border:none;cursor:pointer;transition:background 0.2s,transform 0.1s}}
 .btn-cta:active{{background:#c96b00;transform:scale(0.95)}}
 
 .no-results{{text-align:center;padding:40px 20px;color:#999;font-size:14px}}

@@ -174,6 +174,72 @@ def spec_families(titles: dict[str, str], *, min_shared: int = 2,
     return families
 
 
+# --- prodotto DENTRO un'altra foto (scene compositing) ---
+# Caso reale (test utente, collari neri): stesso prodotto rifotografato in una scena
+# con 3 copie + persona. pHash globale = cieco (nessun match a soglia 16), template
+# matching grayscale/edge non separa (prodotti scuri simili). SIFT + RANSAC sì:
+# misurato inliers veri {13,20,44} vs falsi ≤7 → soglia 10. Costo ~1s/coppia,
+# quindi opt-in e limitato a coppie candidate, mai sul prodotto cartesiano.
+
+def image_in_scene(template_path: str, scene_path: str, *, size: int = 500) -> int:
+    """Quanti feature-match geometricamente coerenti (RANSAC inliers) del prodotto
+    `template` si trovano dentro `scene`. >= 10 = il prodotto è in quella foto.
+    0 se opencv non è installato o le immagini non si leggono."""
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return 0
+    try:
+        def _gray(p):
+            im = cv2.imread(p)
+            sh = size / max(im.shape[:2])
+            return cv2.cvtColor(cv2.resize(im, None, fx=sh, fy=sh), cv2.COLOR_BGR2GRAY)
+        sift = cv2.SIFT_create(400)
+        k1, d1 = sift.detectAndCompute(_gray(template_path), None)
+        k2, d2 = sift.detectAndCompute(_gray(scene_path), None)
+        if d1 is None or d2 is None or len(k1) < 4:
+            return 0
+        pairs = cv2.BFMatcher(cv2.NORM_L2).knnMatch(d1, d2, k=2)
+        good = [m for m, n in (p for p in pairs if len(p) == 2) if m.distance < 0.75 * n.distance]
+        if len(good) < 8:
+            return 0
+        src = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+        dst = np.float32([k2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+        _, mask = cv2.findHomography(src, dst, cv2.RANSAC, 5.0)
+        return int(mask.sum()) if mask is not None else 0
+    except Exception:
+        return 0
+
+
+def scene_families(images: dict[str, str], *, threshold: int = 10,
+                   max_pairs: int = 150) -> list[dict]:
+    """Famiglie 'stesso prodotto in scene diverse' via image_in_scene, in entrambe
+    le direzioni per coppia. Cap a max_pairs (SIFT è lento): il chiamante passi solo
+    candidati sensati (stessa categoria, non già raggruppati da pHash/specs)."""
+    ids = list(images)
+    seen: set[str] = set()
+    families: list[dict] = []
+    pairs = 0
+    for i, a in enumerate(ids):
+        if a in seen:
+            continue
+        group = [a]
+        for b in ids[i + 1:]:
+            if b in seen or pairs >= max_pairs:
+                continue
+            pairs += 2
+            score = max(image_in_scene(images[a], images[b]),
+                        image_in_scene(images[b], images[a]))
+            if score >= threshold:
+                group.append(b)
+                seen.add(b)
+        if len(group) > 1:
+            seen.add(a)
+            families.append({"items": group, "match": "scene"})
+    return families
+
+
 # --- pseudo-brand signal (idea da AmazonBrandFilter, ★54: filtrare per brand noti) ---
 # I rebrand cinesi usano nomi generati per il registro marchi USA: consonanti a caso,
 # tutto maiuscolo ("XKJIYU", "BZDZMQM"). Un nome così + stesso stampo = rebrand quasi certo.
