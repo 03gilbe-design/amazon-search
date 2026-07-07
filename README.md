@@ -109,6 +109,16 @@ too slow/API-hungry to be automatic) — recovered and generalized from real pro
 against a manually-labeled set (see `dedup.py`/`montage.py` docstrings — that number is one
 measured test on one product category, not a guarantee).
 
+## Web UI (optional)
+
+`python -m webui.app` starts a local Flask interface (http://127.0.0.1:5000) over the same
+pipeline: search form with live log, report page, settings (API keys + defaults), and a
+**categorizer** — a sunflower wheel + drag-and-drop kanban where a few clicks per product
+teach the tool your categories. Picks are saved to
+`~/.amazon_search_learned_categories.json` and re-applied automatically on future runs of
+the same query. Photo-identical duplicates are asked only once. The classic CLI +
+standalone HTML report are untouched — the UI is an extra way in, not a replacement.
+
 ## Status
 
 Functional, used for real product research (see `PROGRESS.md`, `DESIGN_PLAN.md`,

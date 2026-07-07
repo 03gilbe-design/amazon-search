@@ -147,7 +147,7 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         <div class="card-info">
             <div class="card-title">{title_esc}</div>
             <div class="card-rating">{stars_str} <span class="confidence">{review_confidence}</span> <span class="reviews">({reviews_count})</span></div>
-            <div class="card-price">{price_esc}</div>
+            <div class="card-price-row"><span class="card-price">{price_esc}</span><a href="{link_esc}" target="_blank" class="btn-cart" title="Apri su Amazon" aria-label="Apri su Amazon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6"/><circle cx="19" cy="21" r="1.6"/><path d="M1 2h3l3.2 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.5L23 7H6"/></svg></a></div>
             {fam_chip}
             {sibling_html}
             {badge_html}
@@ -155,7 +155,6 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
             {fit_html}
             {video_html}
             {specs_html}
-            <a href="{link_esc}" target="_blank" class="btn-cta">Vedi su Amazon</a>
         </div>
     </div>"""
 
@@ -244,6 +243,29 @@ def _possible_duplicates_section(families: list[dict]) -> str:
     </details>"""
 
 
+
+# icona per categoria: si sceglie sulla keyword distintiva del nome (estendibile).
+_CAT_ICONS = [
+    ("gonfiabil", "🫧"), ("inflat", "🫧"), ("trazion", "⚙️"),
+    ("rigid", "🦺"), ("medical", "⚕️"), ("morbid", "☁️"),
+    ("soft", "☁️"), ("mandibol", "👄"), ("chin", "👄"),
+    ("bite", "🦷"), ("mouth", "🦷"), ("lingua", "👅"),
+    ("tongue", "👅"), ("massagg", "⚡"), ("elettr", "⚡"),
+    ("cane", "🐶"), ("animale", "🐶"), ("pet", "🐶"),
+    ("gel", "💧"), ("cuscino", "🛏️"), ("pillow", "🛏️"),
+    ("viaggio", "✈️"), ("travel", "✈️"), ("scalda", "🔥"),
+    ("warmer", "🔥"), ("fascia", "🧣"), ("altro", "📦"),
+]
+
+
+def _cat_icon(name: str) -> str:
+    low = (name or "").lower()
+    for kw, ico in _CAT_ICONS:
+        if kw in low:
+            return ico
+    return "🏷️"
+
+
 def _price_chart(products: list) -> str:
     def _user_cat(p):
         # solo categorie scelte dall'utente: le etichette del clustering visivo
@@ -279,7 +301,7 @@ def _price_chart(products: list) -> str:
     if cats:
         legend = '<div class="chart-legend">' + "".join(
             f'<span class="chart-legend-item"><span class="chart-legend-dot" '
-            f'style="background:{cat_color[c]}"></span>{html.escape(c)}</span>' for c in cats) + '</div>'
+            f'style="background:{cat_color[c]}"></span>{_cat_icon(c)} {html.escape(c)}</span>' for c in cats) + '</div>'
     return f"""
     <div class="section">
         <h2>Prezzo vs valutazione</h2>
@@ -469,7 +491,7 @@ def generate_html(
             cat_products = [p for p in products if _bucket(p) == cat]
             cat_cards = "\n".join(_card(p, idx + i, video_coverage=video_coverage) for i, p in enumerate(cat_products))
             idx += len(cat_products)
-            blocks.append(f'<h3 class="cat-title">{html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')
+            blocks.append(f'<h3 class="cat-title">{_cat_icon(cat)} {html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')
         cards_html = "\n".join(blocks)
         grid_wrap_class = ""  # each category already has its own .grid
     else:
@@ -647,8 +669,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .specs td{{padding:3px 6px;border-bottom:1px solid #f0f0f0}}
 .specs td:first-child{{color:#666;width:45%;font-weight:500}}
 
-.btn-cta{{display:block;text-align:center;background:#e47911;color:#fff;text-decoration:none;padding:7px 10px;min-height:34px;border-radius:4px;font-size:13px;font-weight:600;margin-top:auto;border:none;cursor:pointer;transition:background 0.2s,transform 0.1s}}
-.btn-cta:active{{background:#c96b00;transform:scale(0.95)}}
+.card-price-row{{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}}
+.btn-cart{{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:#e47911;color:#fff;border-radius:8px;flex-shrink:0;text-decoration:none;transition:background .2s,transform .1s;box-shadow:0 1px 4px rgba(228,121,17,.4)}}
+.btn-cart:active{{transform:scale(.92)}}
+.btn-cart:hover{{background:#c96b00}}
 
 .no-results{{text-align:center;padding:40px 20px;color:#999;font-size:14px}}
 
