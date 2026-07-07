@@ -17,9 +17,21 @@ body { background:#e9e6e0; }
 /* foto prodotto: multiply toglie visivamente lo sfondo bianco sul griege */
 .cat-light .sf-center img, .cat-light .sf-group-img, .cat-light .sf-stack-img
   { mix-blend-mode:multiply; background:transparent !important; border:none !important; }
-.sunflower-wrap { width:560px !important; height:680px !important; }
-.sf-center { width:200px !important; height:200px !important; }
+.sunflower-wrap { width:560px; height:620px; margin:0 auto; transform-origin:top center; background:#e9e6e0; }
+/* centro: foto LIBERA, niente ritaglio circolare */
+.cat-light .sf-center { width:190px !important; height:190px !important; border:none !important;
+  border-radius:0 !important; overflow:visible !important; background:transparent !important; }
+/* niente filter qui: drop-shadow crea uno stacking context che rompe mix-blend-multiply */
+.cat-light .sf-center img { object-fit:contain; }
 .sf-circle { width:84px; height:84px; }
+/* toggle crop: ritagliate (cover, riquadro) vs intere (contain) */
+.crop-on .sf-stack-img, .crop-on .sf-group-img { object-fit:cover !important;
+  border-radius:8px !important; mix-blend-mode:normal !important; background:#fff !important; }
+#sf-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:#2b2723; color:#f2efe9; padding:10px 16px; border-radius:10px; font-size:.72rem;
+  display:none; z-index:99; box-shadow:0 6px 22px rgba(0,0,0,.3); align-items:center; gap:12px }
+#sf-toast button { background:var(--orange); border:none; color:#fff; border-radius:6px;
+  padding:4px 10px; cursor:pointer; font-size:.7rem }
 /* mini-tool ✎/✕ sul cerchio al passaggio del mouse */
 .sf-tools { position:absolute; display:none; gap:4px; z-index:30 }
 .sf-circle-holder:hover .sf-tools { display:flex }
@@ -108,6 +120,10 @@ body { background:#e9e6e0; }
           <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
             <input type="checkbox" id="group-mode" onchange="renderCurrentProduct()"> Group mode
           </label>
+          <label style="display:flex;gap:5px;align-items:center;cursor:pointer">
+            <input type="checkbox" id="crop-mode"
+                   onchange="document.getElementById('sunflower').classList.toggle('crop-on', this.checked)"> Cropped photos
+          </label>
           <input type="range" id="group-size" min="2" max="8" value="4" style="width:90px"
                  oninput="document.getElementById('group-size-lbl').textContent=this.value;renderCurrentProduct()">
           <span id="group-size-lbl">4</span> photos
@@ -151,6 +167,7 @@ body { background:#e9e6e0; }
         </div>
       </div>
       <div id="cat-list-wrap" style="display:none"></div>
+      <div id="sf-toast"><span id="sf-toast-msg"></span><button onclick="undoDelete()">Undo</button></div>
     </div>
   </div>
 
@@ -178,6 +195,12 @@ const ALL_PRODUCTS = {{ products | tojson }};
 const CAT_COLORS = ['#ff6600','#4a9eff','#3dba6a','#9b6dff','#ffcc44','#ff4466','#00ccbb','#ff88cc'];
 
 let categories = {{ existing_cats | tojson }};
+// le categorie create sopravvivono al reload (per job)
+try {
+  const saved = JSON.parse(localStorage.getItem('cats_' + JOB_ID) || '[]');
+  saved.forEach(c => { if (!categories.includes(c)) categories.push(c); });
+} catch (e) {}
+function persistCats() { localStorage.setItem('cats_' + JOB_ID, JSON.stringify(categories)); }
 if (categories.length === 0) categories = ['Other'];
 let currentIdx  = 0;
 let skipAssigned = false;
@@ -214,18 +237,47 @@ function renameCategory(cat) {
   const name = prompt('Rename "' + cat + '" to:', cat);
   if (!name || name === cat) return;
   categories[categories.indexOf(cat)] = name;
+  persistCats();
   ALL_PRODUCTS.filter(p => p.category === cat)
     .forEach(p => assignCategory(p.asin, name));
   renderSunflower();
 }
 
+let _undoDelete = null;
 function deleteCategory(cat) {
-  if (!confirm('Delete category "' + cat + '"? Its products go back to unassigned.')) return;
+  const affected = ALL_PRODUCTS.filter(p => p.category === cat).map(p => p.asin);
   categories.splice(categories.indexOf(cat), 1);
-  ALL_PRODUCTS.filter(p => p.category === cat)
-    .forEach(p => assignCategory(p.asin, null));
+  persistCats();
+  affected.forEach(a => assignCategory(a, null, true));
+  renderCurrentProduct();
+  // niente popup di conferma: toast con Undo per 5 secondi
+  const toast = document.getElementById('sf-toast');
+  document.getElementById('sf-toast-msg').textContent = 'Category "' + cat + '" deleted';
+  toast.style.display = 'flex';
+  _undoDelete = { cat, affected };
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.display = 'none'; _undoDelete = null; }, 5000);
+}
+function undoDelete() {
+  if (!_undoDelete) return;
+  categories.push(_undoDelete.cat);
+  persistCats();
+  _undoDelete.affected.forEach(a => assignCategory(a, _undoDelete.cat, true));
+  _undoDelete = null;
+  document.getElementById('sf-toast').style.display = 'none';
   renderCurrentProduct();
 }
+
+
+function fitSunflower() {
+  const wrap = document.getElementById('sunflower');
+  const avail = window.innerHeight - wrap.getBoundingClientRect().top - 150;
+  const k = Math.min(1, avail / 620, (window.innerWidth - 60) / 560);
+  wrap.style.transform = 'scale(' + Math.max(k, 0.5) + ')';
+  wrap.style.marginBottom = (620 * (Math.max(k, 0.5) - 1)) + 'px';
+}
+window.addEventListener('resize', fitSunflower);
+fitSunflower();
 
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
@@ -293,10 +345,10 @@ function renderStacks(sf, cat, x, y, color) {
     const jit = (h => (h % 17) - 8)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
     // direzione radiale: le foto si accumulano fuori dal cerchio, mai su barra/testi
     const dx = (x + 42 - 280) / 215, dy = (y + 42 - 300) / 215;
-    im.style.cssText = 'position:absolute;width:44px;height:44px;object-fit:contain;'
+    im.style.cssText = 'position:absolute;width:56px;height:56px;object-fit:contain;'
       + 'border-radius:6px;'
-      + 'left:' + (x + 20 + dx * (58 + i * 13) + jit / 2) + 'px;'
-      + 'top:'  + (y + 20 + dy * (58 + i * 13) + (i % 2) * 7) + 'px;'
+      + 'left:' + (x + 14 + dx * (64 + i * 15) + jit / 2) + 'px;'
+      + 'top:'  + (y + 14 + dy * (64 + i * 15) + (i % 2) * 8) + 'px;'
       + 'transform:rotate(' + (jit + i * 5) + 'deg);z-index:2;pointer-events:none';
     sf.appendChild(im);
   });
@@ -451,6 +503,7 @@ function addCategory() {
   const name  = input.value.trim();
   if (!name || categories.includes(name)) { input.value = ''; return; }
   categories.push(name);
+  persistCats();
   input.value = '';
   renderCatList();
   renderSunflower();

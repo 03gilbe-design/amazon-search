@@ -72,7 +72,8 @@ def _run_job(job_id: str, payload: dict) -> None:
             junk_patterns={j.strip(): [j.strip()] for j in (payload.get("junk") or "").split(",") if j.strip()} or None,
         )
         # apply learned category picks from previous sunflower sessions
-        learned = _load_learned().get(payload["query"].lower().strip(), {})
+        _l = _load_learned()
+        learned = {**_l.get("_global", {}), **_l.get(payload["query"].lower().strip(), {})}
         for p in result.products:
             if p.asin in learned:
                 p.category = learned[p.asin]
@@ -120,8 +121,51 @@ def report(job_id):
                            params=job.get("params", {}))
 
 
+class _DatasetResult:
+    """Job sintetico: l'intero archivio prodotti come pool da etichettare."""
+    def __init__(self, products):
+        self.query = "dataset"
+        self.products = products
+        self.families, self.excluded, self.filters = [], [], {"domain": "IT"}
+
+
+class _P:
+    def __init__(self, d, cat):
+        self.asin = d.get("asin", "")
+        self.title = d.get("title", "")
+        self.thumbnail = d.get("thumbnail")
+        self.price = d.get("price")
+        self.price_str = d.get("price_str")
+        self.brand = d.get("brand")
+        self.category = cat
+        self.family_id = None
+
+
+def _build_dataset_job() -> None:
+    import glob
+    learned = _load_learned()
+    lookup = learned.get("_global", {})
+    seen: dict[str, dict] = {}
+    for f in glob.glob(str(Path.home() / ".amazon_search_cache" / "*.json")):
+        try:
+            data = json.loads(Path(f).read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        items = data.get("products") if isinstance(data, dict) else data
+        if not isinstance(items, list):
+            continue
+        for it in items:
+            if isinstance(it, dict) and it.get("asin") and it.get("thumbnail"):
+                seen.setdefault(it["asin"], it)
+    products = [_P(d, lookup.get(a)) for a, d in seen.items()]
+    JOBS["dataset"] = {"status": "done", "log": [], "error": None,
+                       "result": _DatasetResult(products), "params": {}}
+
+
 @app.route("/categorize/<job_id>")
 def categorize(job_id):
+    if job_id == "dataset":
+        _build_dataset_job()
     job = JOBS.get(job_id)
     if not job or job["status"] != "done":
         return render_template("loading.html", job_id=job_id)
@@ -148,6 +192,7 @@ def set_category():
         query_key = job["result"].query.lower().strip()
         learned = _load_learned()
         learned.setdefault(query_key, {})[d["asin"]] = d["category"]
+        learned.setdefault("_global", {})[d["asin"]] = d["category"]
         _save_learned(learned)
         for p in job["result"].products:
             if p.asin == d["asin"]:
