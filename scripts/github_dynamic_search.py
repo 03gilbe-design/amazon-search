@@ -1,3 +1,4 @@
+from pathlib import Path
 import urllib.request
 import json
 import time
@@ -96,7 +97,7 @@ while queue and iterations < max_iterations:
     time.sleep(6.5)
 
 # Salvataggio finale
-output_file = r"C:\Users\Gilberto Bizzo\amazon_search\github_dynamic_tree_search.json"
+output_file = rstr(Path.home() / "amazon_search", "github_dynamic_tree_search.json")
 with open(output_file, "w", encoding="utf-8") as f:
     json.dump({
         "visited_queries": list(visited_queries),

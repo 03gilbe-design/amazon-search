@@ -1,3 +1,4 @@
+from pathlib import Path
 import urllib.request
 import json
 import time
@@ -83,7 +84,7 @@ for i, q in enumerate(queries):
     # Pausa di 6.5 secondi per restare sotto le 10 chiamate al minuto
     time.sleep(6.5)
 
-output_file = r"C:\Users\Gilberto Bizzo\amazon_search\github_animations_report.json"
+output_file = rstr(Path.home() / "amazon_search", "github_animations_report.json")
 with open(output_file, "w", encoding="utf-8") as f:
     json.dump(results, f, indent=4, ensure_ascii=False)
 

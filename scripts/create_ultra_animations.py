@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 
 html_content = """<!DOCTYPE html>
@@ -198,6 +199,6 @@ html_content = """<!DOCTYPE html>
 </html>
 """
 
-output_path = r"C:\Users\Gilberto Bizzo\amazon_search\agent_animations_v3.html"
+output_path = rstr(Path.home() / "amazon_search", "agent_animations_v3.html")
 with open(output_path, "w", encoding="utf-8") as f:
     f.write(html_content)

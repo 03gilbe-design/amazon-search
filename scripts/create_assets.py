@@ -1,6 +1,7 @@
+from pathlib import Path
 import os
 
-out_dir = r'C:\Users\Gilberto Bizzo\Downloads\App_Assets_Github'
+out_dir = rstr(Path.home() / "Downloads", "App_Assets_Github")
 os.makedirs(out_dir, exist_ok=True)
 
 # 1. GitHub Header Hero Animation (Wide banner)

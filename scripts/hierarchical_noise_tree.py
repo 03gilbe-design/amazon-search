@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import re
 
-dataset_file = Path("C:/Users/Gilberto Bizzo/.amazon_search_offline.json")
+dataset_file = Path(str(Path.home() / ".amazon_search_offline.json"))
 try:
     with open(dataset_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -24,7 +24,7 @@ noise_tree = {
     },
     "Level_3_Function": {
         "description": "Scarta supporti non ortopedici (Viaggio, Gonfiabili, Russamento)",
-        "noise_regex": r"(?i)\b(gonfiabil|aria|viaggio|aereo|russare|snoring|tappi|mascherina|notturno|dormire letto)\b"
+        "noise_regex": r"(?i)\b(gonfiabil|viaggio|aereo|tappi|notturno)\b"
     }
 }
 
@@ -64,7 +64,7 @@ for level, rejected in rejected_by_level.items():
     print(f" - {level}: {len(rejected)} prodotti scartati")
 
 # Salvataggio
-output_dir = Path("C:/Users/Gilberto Bizzo/amazon_search")
+output_dir = Path(str(Path.home() / "amazon_search"))
 results = {
     "pure_signal": survivors,
     "pruned_noise": rejected_by_level

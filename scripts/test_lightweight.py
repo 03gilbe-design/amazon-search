@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Caricamento del dataset
-dataset_file = Path("C:/Users/Gilberto Bizzo/.amazon_search_offline.json")
+dataset_file = Path(str(Path.home() / ".amazon_search_offline.json"))
 try:
     with open(dataset_file, 'r', encoding='utf-8') as f:
         products = json.load(f).get('products', [])
