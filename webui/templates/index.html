@@ -10,12 +10,12 @@
 .home-brand { font-family:'Space Mono',monospace; font-size:2rem; font-weight:700;
   color:#2b2723; letter-spacing:-0.04em; margin-bottom:6px; }
 .home-brand em { color:#e47911; font-style:normal; }
-.home-tag { color:#7a746b; font-size:0.85rem; margin-bottom:30px; text-align:center; }
+.home-tag { color:#57514a; font-size:0.85rem; margin-bottom:30px; text-align:center; }
 .searchbox { width:100%; max-width:640px; display:flex; background:#fff;
   border:2px solid #d8d2c8; border-radius:12px; overflow:hidden;
   transition:border-color .2s, box-shadow .2s; }
 .searchbox:focus-within { border-color:#e47911; box-shadow:0 4px 24px rgba(228,121,17,.15); }
-.searchbox .sb-icon { display:flex; align-items:center; padding-left:16px; color:#b3ac9f; }
+.searchbox .sb-icon { display:flex; align-items:center; padding-left:16px; color:#8d867a; }
 .searchbox input { flex:1; border:none; outline:none; padding:18px 14px;
   font-size:1.05rem; color:#2b2723; background:transparent; }
 .searchbox button { border:none; background:#e47911; color:#fff; padding:0 26px;
@@ -27,40 +27,40 @@
   padding:6px 14px; border-radius:99px; cursor:pointer; transition:all .15s;
   display:inline-flex; align-items:center; gap:6px; }
 .example-chip:hover { border-color:#e47911; color:#e47911; }
-.adv-toggle { margin-top:24px; font-size:0.75rem; color:#a09a8e; cursor:pointer;
+.adv-toggle { margin-top:24px; font-size:0.75rem; color:#6b655b; cursor:pointer;
   background:none; border:none; display:inline-flex; align-items:center; gap:5px; }
 .adv-toggle:hover { color:#4a453f; }
 .adv-panel { display:none; margin-top:14px; width:100%; max-width:640px;
   background:#fff; border:1px solid #d8d2c8; border-radius:12px; padding:18px;
   grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
 .adv-panel.open { display:grid; }
-.adv-panel label { font-size:0.68rem; color:#7a746b; display:flex; align-items:center;
+.adv-panel label { font-size:0.68rem; color:#57514a; display:flex; align-items:center;
   gap:5px; margin-bottom:4px; }
 .adv-panel input, .adv-panel select { width:100%; padding:7px 9px; font-size:0.8rem;
   border:1px solid #d8d2c8; border-radius:7px; color:#2b2723; background:#fff; }
 .recent { margin-top:42px; width:100%; max-width:640px; }
 .recent h3 { font-size:0.68rem; text-transform:uppercase; letter-spacing:.1em;
-  color:#a09a8e; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  color:#6b655b; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
 .recent-item { display:flex; justify-content:space-between; align-items:center;
   padding:10px 14px; background:#fff; border:1px solid #e2ddd4; border-radius:9px;
   margin-bottom:6px; cursor:pointer; transition:border-color .15s; }
 .recent-item:hover { border-color:#e47911; }
 .recent-q { font-size:0.85rem; color:#2b2723; display:inline-flex; align-items:center; gap:8px; }
-.recent-n { font-size:0.68rem; color:#a09a8e; }
+.recent-n { font-size:0.68rem; color:#6b655b; }
 #run-panel { display:none; margin-top:26px; width:100%; max-width:640px; }
 .skel-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
 .skel { height:130px; border-radius:10px;
   background:linear-gradient(100deg,#dfd9cf 40%,#efeae2 50%,#dfd9cf 60%);
   background-size:200% 100%; animation:shimmer 1.2s infinite; }
 @keyframes shimmer { to { background-position:-200% 0; } }
-#run-log { font-family:'Space Mono',monospace; font-size:0.7rem; color:#7a746b;
+#run-log { font-family:'Space Mono',monospace; font-size:0.7rem; color:#57514a;
   margin-top:10px; max-height:80px; overflow-y:auto; white-space:pre-line; }
 #run-error { display:none; color:#b91c1c; font-size:0.8rem; margin-top:10px;
   background:#fdf0ee; border:1px solid #f3c7c0; border-radius:8px; padding:10px 14px; }
 .lang-switch { position:absolute; top:74px; right:22px; display:flex; gap:2px;
   background:#fff; border:1px solid #d8d2c8; border-radius:99px; padding:3px; }
 .lang-switch button { border:none; background:none; font-size:0.7rem; font-weight:700;
-  color:#a09a8e; padding:4px 10px; border-radius:99px; cursor:pointer; }
+  color:#6b655b; padding:4px 10px; border-radius:99px; cursor:pointer; }
 .lang-switch button.on { background:#e47911; color:#fff; }
 @media (prefers-reduced-motion: reduce) { .skel { animation:none; } }
 </style>
@@ -102,7 +102,7 @@
   </button>
   <div id="adv" class="adv-panel">
     <div><label><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="results">Results</span></label>
-      <input id="results" type="number" value="{{ settings.n or 30 }}" min="5" max="100"/></div>
+      <input id="results" type="number" value="{{ settings.n or 60 }}" min="5" max="100"/></div>
     <div><label><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6H9.5a3 3 0 000 6h5a3 3 0 010 6H6"/></svg><span data-i18n="maxprice">Max price</span></label>
       <input id="max_price" type="number" step="0.5" placeholder="—"/></div>
     <div><label><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.6 6.6L21 9.3l-5 4.6 1.5 6.8L12 17l-5.5 3.7L8 13.9 3 9.3l6.4-.7z"/></svg><span data-i18n="minstars">Min stars</span></label>
@@ -123,6 +123,13 @@
     <div id="run-error"></div>
   </div>
 
+  <a href="/categorize/dataset" style="margin-top:22px;font-size:0.78rem;color:#e47911;
+     text-decoration:none;display:inline-flex;align-items:center;gap:6px;border:1px dashed #e47911;
+     padding:7px 14px;border-radius:99px" title="Play with the local dataset: clustering, sunflower, kanban">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    <span data-i18n="demo">Demo: local dataset (clustering &amp; categorizer)</span>
+  </a>
+
   <div class="recent" id="recent" style="display:none">
     <h3><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span data-i18n="recent">Recent searches</span></h3>
     <div id="recent-list"></div>
@@ -139,6 +146,7 @@ const I18N = {
         results: "Results", maxprice: "Max price", minstars: "Min stars",
         junk: "Exclude (junk)", junkph: "e.g. case, kids", criteria: "Fit criteria",
         critph: "e.g. waterproof, USB-C", recent: "Recent searches",
+        demo: "Demo: local dataset (clustering & categorizer)",
         start: "Starting search…", neterr: "Network error: ",
         unkerr: "Unknown error — retry or check API keys in Settings.", cache: " products in cache" },
   it: { tag: "Cerca un prodotto. Togli le categorie che non c'entrano. Tieni solo il meglio.",
@@ -146,6 +154,7 @@ const I18N = {
         results: "Risultati", maxprice: "Prezzo max", minstars: "Stelle min",
         junk: "Escludi (junk)", junkph: "es. custodia, bambini", criteria: "Criteri fit",
         critph: "es. impermeabile, USB-C", recent: "Ricerche recenti",
+        demo: "Demo: dataset locale (clustering e categorizer)",
         start: "Avvio ricerca…", neterr: "Errore di rete: ",
         unkerr: "Errore sconosciuto — riprova o controlla le API key in Settings.", cache: " prodotti in cache" },
 };
@@ -210,7 +219,7 @@ fetch('/api/searches').then(r => r.json()).then(data => {
     const div = document.createElement('div');
     div.className = 'recent-item';
     const q = document.createElement('span'); q.className = 'recent-q';
-    q.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a09a8e" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
+    q.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b655b" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
     const qt = document.createElement('span'); qt.textContent = s.query; q.appendChild(qt);
     const n = document.createElement('span'); n.className = 'recent-n'; n.textContent = s.count + t('cache');
     div.append(q, n);

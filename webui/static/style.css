@@ -8,10 +8,10 @@
   --surface: rgba(255,255,255,0.72);
   --border:  #d8d2c8;
   --border2: #e2ddd4;
-  --muted:   #b3ac9f;
-  --dim:     #7a746b;
+  --muted:   #8d867a;
+  --dim:     #5f594f;
   --text:    #2b2723;
-  --sub:     #4a453f;
+  --sub:     #3d3833;
 
   --red:     #c0392b;
   --orange:  #e47911;
@@ -221,7 +221,7 @@ select option { background: #111; }
 }
 .pcard:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-1px); }
 
-.pcard-rank {
+.pcard-rank { display: none;  /* il rank non serve all'utente */
   position: absolute; top: 10px; left: 10px;
   font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
   color: var(--muted); background: rgba(0,0,0,0.6);
@@ -230,9 +230,9 @@ select option { background: #111; }
 .pcard-rank.top { color: var(--gold); }
 
 .pcard-img-wrap {
-  background: rgba(0,0,0,0.3);
+  background: #fff;   /* le foto Amazon hanno sfondo bianco: cornice invisibile */
   display: flex; align-items: center; justify-content: center;
-  height: 160px; flex-shrink: 0; overflow: hidden;
+  height: 190px; flex-shrink: 0; overflow: hidden;
   border-bottom: 1px solid var(--border2);
 }
 .pcard-img {
@@ -261,8 +261,8 @@ select option { background: #111; }
 .pcard-specs { display: flex; flex-wrap: wrap; gap: 3px; }
 .spec-tag {
   font-size: 0.58rem; padding: 2px 6px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
-  border-radius: 2px; color: var(--dim);
+  background: #fff; border: 1px solid var(--border2);
+  border-radius: 4px; color: var(--sub);
 }
 .spec-tag strong { color: var(--sub); }
 
@@ -276,7 +276,7 @@ select option { background: #111; }
   display: flex; align-items: center; justify-content: space-between;
   margin-top: auto;
 }
-.pcard-asin { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.05em; }
+.pcard-asin { display: none; }  /* l'ASIN non serve all'utente */
 .btn-amazon {
   font-family: var(--font); font-size: 0.6rem; letter-spacing: 0.08em;
   text-transform: uppercase; font-weight: 700;
