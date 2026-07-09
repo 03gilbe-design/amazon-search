@@ -1,19 +1,20 @@
 /* ── Reset & tokens ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* tema unico LIGHT greige + arancione Amazon, coerente su TUTTE le pagine */
 :root {
-  --bg:      #06060a;
-  --bg2:     #0c0c12;
-  --surface: rgba(255,255,255,0.03);
-  --border:  rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.04);
-  --muted:   #333340;
-  --dim:     #6b6b80;
-  --text:    #efefef;
-  --sub:     #aaaacc;
+  --bg:      #e9e6e0;
+  --bg2:     #f4f1ec;
+  --surface: rgba(255,255,255,0.72);
+  --border:  #d8d2c8;
+  --border2: #e2ddd4;
+  --muted:   #b3ac9f;
+  --dim:     #7a746b;
+  --text:    #2b2723;
+  --sub:     #4a453f;
 
-  --red:     #ff2200;
-  --orange:  #ff6600;
+  --red:     #c0392b;
+  --orange:  #e47911;
   --gold:    #c8a84b;
   --green:   #3dba6a;
   --blue:    #4a9eff;
@@ -69,27 +70,25 @@ body {
   height: var(--nav-h);
   display: flex; align-items: center;
   padding: 0 24px;
-  background: rgba(6,6,10,0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border2);
+  background: #26221e;
+  border-bottom: 1px solid #3a352f;
   gap: 24px;
 }
 .nav-brand {
   font-size: 1rem; font-weight: 700; letter-spacing: -0.04em;
-  color: var(--text); text-decoration: none; flex-shrink: 0;
+  color: #fff; text-decoration: none; flex-shrink: 0;
 }
 .nav-brand em { color: var(--orange); font-style: normal; }
 .nav-links { display: flex; gap: 4px; flex: 1; }
 .nav-link {
   font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--dim); text-decoration: none;
+  color: #a8a094; text-decoration: none;
   padding: 6px 12px; border-radius: var(--r);
   transition: color 0.15s, background 0.15s;
   white-space: nowrap;
 }
-.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-.nav-link.active { color: var(--text); }
+.nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-link.active { color: #fff; }
 .nav-right { display: flex; gap: 8px; align-items: center; margin-left: auto; }
 .key-pill {
   font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;

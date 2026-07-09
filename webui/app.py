@@ -36,7 +36,8 @@ def _settings() -> dict:
 
 @app.context_processor
 def _inject():
-    return {"settings": _settings(), "environ": os.environ}
+    last = next((jid for jid in reversed(list(JOBS)) if JOBS[jid].get("status") == "done"), None)
+    return {"settings": _settings(), "environ": os.environ, "last_job_id": last}
 
 # user category picks survive restarts and feed future runs: {query: {asin: category}}
 LEARNED_PATH = Path.home() / ".amazon_search_learned_categories.json"
@@ -118,8 +119,34 @@ def report(job_id):
     job = JOBS.get(job_id)
     if not job or job["status"] != "done":
         return render_template("loading.html", job_id=job_id)
-    return render_template("report.html", result=job["result"], job_id=job_id,
-                           params=job.get("params", {}))
+    result = job["result"]
+    # il template raggruppa per categoria: cat_list/single_cat/families vanno
+    # costruiti qui (il template li ha sempre pretesi, nessuno li passava — report vuoto)
+    colors = ["#e47911", "#4a9eff", "#3dba6a", "#9b6dff", "#c8a84b", "#ff66aa", "#00ccbb", "#c0392b"]
+    groups: dict[str, list] = {}
+    for i, prod in enumerate(result.products, 1):
+        groups.setdefault(getattr(prod, "category", None) or "All results", []).append((i, prod))
+    cat_list = [{"name": name, "color": colors[ix % len(colors)], "prods": prods}
+                for ix, (name, prods) in enumerate(sorted(groups.items(), key=lambda kv: -len(kv[1])))]
+    rank_of = {}
+    for c in cat_list:
+        for r, prod in c["prods"]:
+            if prod.asin:
+                rank_of[prod.asin] = (r, prod)
+    families = []
+    for fam in (result.families or []):
+        members = [rank_of[it["asin"]] for it in fam.get("items", []) if it.get("asin") in rank_of]
+        if len(members) > 1:
+            families.append({"members": members, "get": fam.get,
+                             "diff_image": fam.get("diff_image", True),
+                             "min_distance": fam.get("min_distance", "?")})
+    # dict.get non è esposto come attributo in Jinja sui dict custom: uso dict veri
+    families = [{"members": f["members"], "diff_image": f["diff_image"],
+                 "min_distance": f["min_distance"]} for f in families]
+    return render_template("report.html", result=result, job_id=job_id,
+                           params=job.get("params", {}),
+                           cat_list=cat_list, single_cat=len(cat_list) <= 1,
+                           families=families)
 
 
 class _DatasetResult:
