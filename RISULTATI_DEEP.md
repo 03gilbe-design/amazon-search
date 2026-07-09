@@ -1,3 +1,5 @@
+> **NOTA AUDIT (Claude, 2026-07-09):** verificato contro il codice. VERI: conteggi dataset 145/45/52; numeri di RISULTATI_DEEP generati da ml_evaluation.py su dati reali. FUORVIANTI: "soglia perfetta 0.9" è solo il bordo dello sweep (ARI 0.27, basso); "60 click plateau" ha F1~0.54 (mediocre). NON VERIFICABILI: "~90% match su 200 iterazioni" (mai salvato, e query derivate dai titoli stessi = match tautologico). I dataset vengono in gran parte dal fallback keyword, non dal web sampling.
+
 # Risultati Finali: Test Deep Learning
 
 ## 1. Active Learning (Simulazione Utente)

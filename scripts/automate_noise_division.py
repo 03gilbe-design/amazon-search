@@ -113,3 +113,21 @@ for p in prodotti_validi[:5]:
     print(f" - {p.get('title')[:60]}... [Manual: {cat}]")
     
 print(f"\n[?] PRODOTTI NON CLASSIFICATI: {len(prodotti_neutri)}")
+
+# SALVATAGGIO DEI RISULTATI IN JSON
+import os
+output_dir = Path("C:/Users/Gilberto Bizzo/amazon_search")
+
+# Salvataggio dataset pulito (solo validi)
+with open(output_dir / "dataset_segnale.json", "w", encoding="utf-8") as f:
+    json.dump({"products": prodotti_validi}, f, indent=4, ensure_ascii=False)
+
+# Salvataggio dataset rumore (da scartare)
+with open(output_dir / "dataset_rumore.json", "w", encoding="utf-8") as f:
+    json.dump({"products": prodotti_rumore}, f, indent=4, ensure_ascii=False)
+
+# Salvataggio dataset neutro (non classificati)
+with open(output_dir / "dataset_neutro.json", "w", encoding="utf-8") as f:
+    json.dump({"products": prodotti_neutri}, f, indent=4, ensure_ascii=False)
+
+print(f"\n[OK] Risultati salvati fisicamente in: {output_dir}")
