@@ -57,10 +57,12 @@ def _fit_chips(p) -> str:
     hits = getattr(p, "feature_fit_hits", None)
     if not hits:
         return ""
-    chips = "".join(
-        f'<span class="fit-chip {"fit-yes" if ok else "fit-no"}">{"✓" if ok else "✗"} {html.escape(name)}</span>'
-        for name, ok in hits.items()
-    )
+    def _chip(name, ok):
+        if ok is None:  # criterion unverifiable: only the title was available
+            return f'<span class="fit-chip fit-unk">? {html.escape(name)}</span>'
+        cls, mark = ("fit-yes", "✓") if ok else ("fit-no", "✗")
+        return f'<span class="fit-chip {cls}">{mark} {html.escape(name)}</span>'
+    chips = "".join(_chip(name, ok) for name, ok in hits.items())
     return f'<div class="fit-chips">{chips}</div>'
 
 
@@ -73,8 +75,16 @@ def _video_line(p, video_coverage: dict) -> str:
     if not cov:
         return ""
     n = cov["video_count"]
-    if n >= 2:
-        return f'<div class="video-line video-ok">Confermato da {n} recensioni indipendenti</div>'
+    ch = cov.get("channel_count", 0)
+    if cov.get("single_source"):
+        return f'<div class="video-line video-warn">{n} video ma UN solo canale — voce singola, non conferma indipendente</div>'
+    if cov.get("all_affiliate"):
+        return f'<div class="video-line video-warn">{n} video, TUTTI con link affiliato in descrizione — coro pagato, non conferma</div>'
+    if ch >= 2 or (ch == 0 and n >= 2):
+        label = f"{n} video da {ch} canali diversi" if ch else f"{n} recensioni indipendenti"
+        aff = cov.get("affiliate_count", 0)
+        aff_note = f" ({aff} con link affiliato)" if aff else ""
+        return f'<div class="video-line video-ok">Confermato da {label}{aff_note}</div>'
     return '<div class="video-line video-warn">Solo 1 video, verifica sponsorizzazione</div>'
 
 
@@ -107,7 +117,16 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         )
         specs_html = f'<details class="specs"><summary>Specifiche</summary><table>{rows}</table></details>'
 
-    fam_ring = ' card-grouped' if getattr(p, "family_id", None) is not None else ''
+    fid = getattr(p, "family_id", None)
+    fam_ring, fam_chip, fam_style = '', '', ''
+    if fid is not None:
+        # collegamento visivo: stesso family_id = stesso colore bordo + stesso chip,
+        # così due card lontane nella griglia si riconoscono come lo stesso prodotto
+        hue = (int(fid) * 67) % 360
+        fam_ring = ' card-grouped'
+        fam_style = f' style="--fam-hue:{hue}"'
+        fam_chip = (f'<span class="fam-chip" style="--fam-hue:{hue}">'
+                    f'&#128279; stesso prodotto &middot; gruppo {int(fid) + 1}</span>')
     siblings = getattr(p, "sibling_prices", None)
     img_area = f'<div class="card-img">{thumb_html}</div>'
     sibling_html = ""
@@ -123,19 +142,19 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         prices_txt = ", ".join(f"€{s:.2f}" for s in siblings)
         sibling_html = f'<div class="sibling-note">stessa foto anche a: {prices_txt}</div>'
     return f"""
-    <div class="card{fam_ring}" data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
+    <div class="card{fam_ring}"{fam_style} data-price="{price_data}" data-stars="{stars_data}" data-idx="{idx}">
         {img_area}
         <div class="card-info">
             <div class="card-title">{title_esc}</div>
             <div class="card-rating">{stars_str} <span class="confidence">{review_confidence}</span> <span class="reviews">({reviews_count})</span></div>
-            <div class="card-price">{price_esc}</div>
+            <div class="card-price-row"><span class="card-price">{price_esc}</span><a href="{link_esc}" target="_blank" class="btn-cart" title="Apri su Amazon" aria-label="Apri su Amazon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6"/><circle cx="19" cy="21" r="1.6"/><path d="M1 2h3l3.2 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.5L23 7H6"/></svg></a></div>
+            {fam_chip}
             {sibling_html}
             {badge_html}
             {dedup_badge_html}
             {fit_html}
             {video_html}
             {specs_html}
-            <a href="{link_esc}" target="_blank" class="btn-cta">Vedi su Amazon</a>
         </div>
     </div>"""
 
@@ -144,7 +163,9 @@ def _family_card(fam: dict) -> str:
     spread = fam.get("spread")
     spread_txt = f"€{spread:.2f} di differenza" if spread is not None else "differenza non nota"
     items = sorted(fam["items"], key=lambda it: it["price"] if it["price"] is not None else 9e9)
-    identical = not fam.get("diff_image", False)
+    by_specs = fam.get("match") == "specs"
+    # spec-matched rebrands have genuinely different photos: never collapse to one image
+    identical = not fam.get("diff_image", False) and not by_specs
 
     if identical:
         # exact same photo file: it's literally one photo, so show it ONCE — no point
@@ -172,11 +193,16 @@ def _family_card(fam: dict) -> str:
         )
         body = f'<div class="fam-sim-cluster">{thumbs}</div>'
 
+    if by_specs:
+        shared = ", ".join(fam.get("shared_specs", [])[:4])
+        match_label = f' — misure identiche ({html.escape(shared)})' if shared else ' — misure identiche'
+    else:
+        match_label = ' — foto identica' if identical else ' — foto simili'
     return f"""
     <div class="fam-card {'fam-identical' if identical else 'fam-similar'}">
         <div class="fam-spread">{spread_txt}</div>
         {body}
-        <div class="fam-count">{len(items)} listati{' — foto identica' if identical else ' — foto simili'}</div>
+        <div class="fam-count">{len(items)} listati{match_label}</div>
     </div>"""
 
 
@@ -217,28 +243,70 @@ def _possible_duplicates_section(families: list[dict]) -> str:
     </details>"""
 
 
+
+# icona per categoria: si sceglie sulla keyword distintiva del nome (estendibile).
+_CAT_ICONS = [
+    ("gonfiabil", "🫧"), ("inflat", "🫧"), ("trazion", "⚙️"),
+    ("rigid", "🦺"), ("medical", "⚕️"), ("morbid", "☁️"),
+    ("soft", "☁️"), ("mandibol", "👄"), ("chin", "👄"),
+    ("bite", "🦷"), ("mouth", "🦷"), ("lingua", "👅"),
+    ("tongue", "👅"), ("massagg", "⚡"), ("elettr", "⚡"),
+    ("cane", "🐶"), ("animale", "🐶"), ("pet", "🐶"),
+    ("gel", "💧"), ("cuscino", "🛏️"), ("pillow", "🛏️"),
+    ("viaggio", "✈️"), ("travel", "✈️"), ("scalda", "🔥"),
+    ("warmer", "🔥"), ("fascia", "🧣"), ("altro", "📦"),
+]
+
+
+def _cat_icon(name: str) -> str:
+    low = (name or "").lower()
+    for kw, ico in _CAT_ICONS:
+        if kw in low:
+            return ico
+    return "🏷️"
+
+
 def _price_chart(products: list) -> str:
-    pts = [(p.price, p.stars, p.title, p.thumbnail or "") for p in products if p.price is not None and p.stars is not None]
+    def _user_cat(p):
+        # solo categorie scelte dall'utente: le etichette del clustering visivo
+        # ("Simili: …", "Gruppo visivo N") sono un'altra cosa e affollerebbero la legenda
+        c = getattr(p, "category", None)
+        return None if not c or c.startswith(("Simili:", "Gruppo visivo")) else c
+
+    pts = [(p.price, p.stars, p.title, p.thumbnail or "", _user_cat(p))
+           for p in products if p.price is not None and p.stars is not None]
     if len(pts) < 2:
         return ""
-    prices = [p for p, _, _, _ in pts]
+    prices = [pt[0] for pt in pts]
     pmin, pmax = min(prices), max(prices)
     prange = (pmax - pmin) or 1
     w, h, pad = 600, 160, 24
+    # colore per categoria (stesse hue distanziate della famiglia dedup); niente
+    # categoria = blu default. La legenda compare solo se ci sono categorie vere.
+    cats = sorted({c for *_, c in pts if c})
+    cat_color = {c: f"hsl({(i * 360 // max(len(cats), 1)) % 360},65%,45%)" for i, c in enumerate(cats)}
     dots = []
-    for price, stars, title, thumb in pts:
+    for price, stars, title, thumb, cat in pts:
         x = pad + (price - pmin) / prange * (w - 2 * pad)
         y = h - pad - (stars / 5) * (h - 2 * pad)
+        color = cat_color.get(cat, "#0066c0")
         dots.append(
-            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="#0066c0" fill-opacity="0.65" class="chart-dot" '
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="{color}" fill-opacity="0.7" class="chart-dot" '
             f'onclick="showChartPoint(this)" '
             f'data-title="{html.escape(title)}" data-price="{price:.2f}" data-stars="{stars}" data-thumb="{html.escape(thumb)}">'
-            f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★</title></circle>'
+            f'<title>{html.escape(title[:40])} — €{price:.2f}, {stars}★'
+            + (f' [{html.escape(cat)}]' if cat else '') + '</title></circle>'
         )
+    legend = ""
+    if cats:
+        legend = '<div class="chart-legend">' + "".join(
+            f'<span class="chart-legend-item"><span class="chart-legend-dot" '
+            f'style="background:{cat_color[c]}"></span>{_cat_icon(c)} {html.escape(c)}</span>' for c in cats) + '</div>'
     return f"""
     <div class="section">
         <h2>Prezzo vs valutazione</h2>
         <p class="section-sub">Ogni punto è un prodotto, cliccalo per vederlo — outlier isolati sono spesso rumore (poche recensioni, prezzo anomalo).</p>
+        {legend}
         <div class="chart-wrap">
             <svg viewBox="0 0 {w} {h}" class="price-chart">
                 <line x1="{pad}" y1="{h-pad}" x2="{w-pad}" y2="{h-pad}" stroke="#ddd"/>
@@ -403,17 +471,27 @@ def generate_html(
     categories = [getattr(p, "category", None) for p in products]
     if any(categories):
         seen_order: list[str] = []
+        # sezioni da 1-2 card sprecano una riga intera di schermo ciascuna (heading +
+        # griglia quasi vuota): sotto 3 prodotti la categoria finisce dentro "Altro"
+        from collections import Counter
+        counts = Counter((c or "Altro") for c in categories)
+        def _bucket(p):
+            c = getattr(p, "category", None) or "Altro"
+            return c if counts[c] >= 3 else "Altro"
         for c in categories:
             c = c or "Altro"
+            c = c if counts[c] >= 3 else "Altro"
             if c not in seen_order:
                 seen_order.append(c)
+        if "Altro" in seen_order:  # sempre in coda
+            seen_order.remove("Altro"); seen_order.append("Altro")
         blocks = []
         idx = 0
         for cat in seen_order:
-            cat_products = [p for p in products if (getattr(p, "category", None) or "Altro") == cat]
+            cat_products = [p for p in products if _bucket(p) == cat]
             cat_cards = "\n".join(_card(p, idx + i, video_coverage=video_coverage) for i, p in enumerate(cat_products))
             idx += len(cat_products)
-            blocks.append(f'<h3 class="cat-title">{html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')
+            blocks.append(f'<h3 class="cat-title">{_cat_icon(cat)} {html.escape(cat)} <span class="cat-count">({len(cat_products)})</span></h3><div class="grid">{cat_cards}</div>')
         cards_html = "\n".join(blocks)
         grid_wrap_class = ""  # each category already has its own .grid
     else:
@@ -458,15 +536,18 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .summary{{background:#fff7e0;border-left:4px solid #f5a623;padding:14px 18px;margin:16px 16px 0;border-radius:6px;font-size:13.5px;line-height:1.55;color:#5c4b1e}}
 
-.grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:16px;padding-bottom:80px}}
-@media (max-width:1100px){{.grid{{grid-template-columns:repeat(3,1fr)}}}}
-@media (max-width:820px){{.grid{{grid-template-columns:repeat(2,1fr)}}}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:14px;padding-bottom:80px}}
+
+
 .cat-title{{font-size:15px;font-weight:800;color:#1c1a17;margin:22px 16px 4px;letter-spacing:-.01em}}
 .cat-title:first-of-type{{margin-top:16px}}
 .cat-count{{font-weight:500;color:#a39d8f;font-size:12.5px}}
 
-.card{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
-.card-grouped{{box-shadow:0 0 0 2px rgba(22,163,74,.35),0 1px 3px rgba(20,20,10,.08)}}
+.card{{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(20,20,10,.08),0 1px 2px rgba(20,20,10,.04);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}}
+.card-grouped{{box-shadow:0 0 0 2px hsla(var(--fam-hue,145),70%,45%,.55),0 1px 3px rgba(20,20,10,.08)}}
+.fam-chip{{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:hsla(var(--fam-hue,145),70%,45%,.15);color:hsl(var(--fam-hue,145),60%,32%);
+  border:1px solid hsla(var(--fam-hue,145),70%,45%,.4);margin:2px 0}}
 .sibling-note{{font-size:10.5px;color:#16a34a;font-weight:600}}
 .card:hover{{box-shadow:0 6px 18px rgba(20,20,10,.12);transform:translateY(-1px)}}
 .card:active{{animation:cardPulse 0.3s ease}}
@@ -474,7 +555,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 
 .card-link{{display:flex;flex-direction:column;gap:0;text-decoration:none;color:inherit;cursor:pointer;height:100%}}
 
-.card-img{{flex-shrink:0;width:100%;height:150px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+.card-img{{flex-shrink:0;width:100%;height:120px;background:linear-gradient(135deg,#faf8f5,#f0ede7);display:flex;align-items:center;justify-content:center;overflow:hidden}}
 .card-img img{{max-width:88%;max-height:88%;object-fit:contain}}
 .no-img{{font-size:2rem;color:#ccc}}
 
@@ -486,16 +567,16 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
   transform:translate(calc(-50% + var(--i)*10px), calc(-50% + var(--i)*6px)) rotate(calc(var(--i)*3deg - 3deg));
 }}
 
-.card-info{{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px}}
+.card-info{{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;padding:10px}}
 
-.card-title{{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}}
+.card-title{{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}}
 
 .card-rating{{font-size:12px;color:#666;display:flex;gap:4px;align-items:center}}
 .card-rating strong{{color:#e08a2e;font-size:13px}}
 .confidence{{color:#b8b2a5;font-size:10px;letter-spacing:1px}}
 .reviews{{color:#999;font-size:11px}}
 
-.card-price{{font-size:19px;font-weight:800;color:#c0392b;letter-spacing:-.01em}}
+.card-price{{font-size:16px;font-weight:800;color:#c0392b;letter-spacing:-.01em}}
 
 .badge-alert{{background:#d32f2f;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
 .badge-prime{{background:#0066c0;color:#fff;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}}
@@ -505,6 +586,7 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .fit-chip{{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}}
 .fit-yes{{background:rgba(22,163,74,.12);color:#16a34a}}
 .fit-no{{background:rgba(0,0,0,.04);color:#aaa}}
+.fit-unk{{background:rgba(201,120,31,.1);color:#c9781f}}
 
 .video-line{{font-size:11px;font-weight:600;padding:2px 0}}
 .video-ok{{color:#16a34a}}
@@ -539,6 +621,9 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .price-chart{{width:100%;height:auto}}
 .chart-wrap{{position:relative}}
 .chart-dot{{cursor:pointer;transition:r .15s}}
+.chart-legend{{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 8px;font-size:12px}}
+.chart-legend-item{{display:inline-flex;align-items:center;gap:4px;color:#555}}
+.chart-legend-dot{{width:10px;height:10px;border-radius:50%;display:inline-block}}
 .chart-dot:hover{{r:8}}
 .chart-popup{{
   position:absolute; top:8px; right:8px; background:#fff; border-radius:10px;
@@ -585,8 +670,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .specs td{{padding:3px 6px;border-bottom:1px solid #f0f0f0}}
 .specs td:first-child{{color:#666;width:45%;font-weight:500}}
 
-.btn-cta{{display:block;text-align:center;background:#e47911;color:#fff;text-decoration:none;padding:10px 12px;min-height:44px;border-radius:4px;font-size:13px;font-weight:600;margin-top:auto;border:none;cursor:pointer;transition:background 0.2s,transform 0.1s}}
-.btn-cta:active{{background:#c96b00;transform:scale(0.95)}}
+.card-price-row{{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}}
+.btn-cart{{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:#e47911;color:#fff;border-radius:8px;flex-shrink:0;text-decoration:none;transition:background .2s,transform .1s;box-shadow:0 1px 4px rgba(228,121,17,.4)}}
+.btn-cart:active{{transform:scale(.92)}}
+.btn-cart:hover{{background:#c96b00}}
 
 .no-results{{text-align:center;padding:40px 20px;color:#999;font-size:14px}}
 
@@ -634,6 +721,22 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
 .header{{padding:12px 14px}}
 .header h1{{font-size:14px}}
 }}
+
+html[data-theme="dark"],html[data-theme="dark"] body{{background:#1a1a1a;color:#e0e0e0}}
+html[data-theme="dark"] .header{{background:linear-gradient(135deg,#0a0a0a,#151515)}}
+html[data-theme="dark"] .filter-chips,html[data-theme="dark"] .controls,html[data-theme="dark"] .drawer{{background:#2a2a2a;border-color:#444}}
+html[data-theme="dark"] .card,html[data-theme="dark"] .section{{background:#2a2a2a;border-color:#444}}
+html[data-theme="dark"] .card-img,html[data-theme="dark"] .fam-single,html[data-theme="dark"] .fam-sim-item img{{background:#333}}
+html[data-theme="dark"] .card-title,html[data-theme="dark"] .cat-title,html[data-theme="dark"] .drawer-header{{color:#e0e0e0}}
+html[data-theme="dark"] .card-rating,html[data-theme="dark"] .controls,html[data-theme="dark"] .result-count{{color:#b0b0b0}}
+html[data-theme="dark"] .sort-ctrl{{background:#333;border-color:#555;color:#e0e0e0}}
+html[data-theme="dark"] .summary{{background:#332b1f;border-color:#665533;color:#d4af37}}
+html[data-theme="dark"] .chip{{background:#1a3a5a;border-color:#2a5a8a;color:#66b3ff}}
+html[data-theme="dark"] .filter-option:active{{background:#333}}
+html[data-theme="dark"] .drawer-close{{color:#b0b0b0}}
+html[data-theme="dark"] .btn-reset{{background:#444;border-color:#666;color:#e0e0e0}}
+.btn-dark-toggle{{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:13px;transition:all 0.2s}}
+.btn-dark-toggle:active{{background:rgba(255,255,255,0.1);transform:scale(0.95)}}
 </style>
 </head>
 <body>
@@ -643,7 +746,10 @@ body{{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
     <div class="eyebrow">amazon-search report</div>
     <h1>{html.escape(query)}</h1>
   </div>
-  <button class="btn-filter" onclick="openDrawer()">Filtri</button>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button class="btn-filter" onclick="openDrawer()">Filtri</button>
+    <button class="btn-dark-toggle" onclick="toggleDarkMode()" id="darkToggle">🌙</button>
+  </div>
 </div>
 
 <div class="page">
@@ -825,6 +931,22 @@ function showChartPoint(dot){{
   popup.classList.remove('hidden');
 }}
 
+function toggleDarkMode(){{
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  const newTheme=isDark?'light':'dark';
+  html.setAttribute('data-theme',newTheme);
+  localStorage.setItem('darkMode',newTheme);
+  document.getElementById('darkToggle').textContent=isDark?'🌙':'☀️';
+}}
+(()=>{{
+  const saved=localStorage.getItem('darkMode');
+  if(saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){{
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('darkToggle').textContent='☀️';
+  }}
+}})();
+
 updatePreview();
 document.getElementById('resultCount').textContent={n}+' risultati';
 document.getElementById('priceSlider').addEventListener('input',updatePrice);
@@ -838,7 +960,25 @@ document.getElementById('overlay').addEventListener('click',e=>{{if(e.target===d
     return out_path
 
 
-def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
+def _montage_section(montage_path) -> str:
+    """Embed the numbered-thumbnail montage inline (base64) — one look at the whole
+    pool beats scrolling 15 cards, and duplicates jump out visually."""
+    if not montage_path:
+        return ""
+    try:
+        import base64
+        data = base64.b64encode(Path(montage_path).read_bytes()).decode()
+    except Exception:
+        return ""
+    return (
+        '<details class="section dup-section"><summary>Vista d\'insieme — tutte le foto del pool</summary>'
+        '<p class="section-sub">Griglia numerata con prezzi: i doppioni (stessa foto o stesso stampo) '
+        'si vedono a colpo d\'occhio prima ancora di leggere le card.</p>'
+        f'<img src="data:image/png;base64,{data}" style="max-width:100%;border-radius:8px" '
+        'alt="montage pool prodotti" loading="lazy"></details>')
+
+
+def generate_report(result, *, output_dir: Path = OUTPUT_DIR, montage_path=None) -> Path:
     """Single entry point for a pipeline.SearchResult -> one HTML report with every
     section the pipeline computed (families, price chart, video claims, exclusions,
     benchmarks). This is what the CLI calls; generate_html() stays as the lower-level
@@ -857,6 +997,7 @@ def generate_report(result, *, output_dir: Path = OUTPUT_DIR) -> Path:
         _video_section(result.video_claims),
         _query_variants_section(result.query_variants, result.query),
         _possible_duplicates_section(result.families),
+        _montage_section(montage_path),
         _excluded_section(result.excluded),
         _benchmarks_section(result.external_benchmarks),
     ])

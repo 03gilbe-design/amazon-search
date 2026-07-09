@@ -28,9 +28,16 @@ def feature_fit_score(product, criteria: dict[str, list[str]]) -> tuple[float, d
     if not criteria:
         return 0.0, {}
     text = _haystack(product)
-    hits = {name: any(kw.lower() in text for kw in keywords)
-            for name, keywords in criteria.items()}
-    score = sum(hits.values()) / len(criteria)
+    # Title-only products (no bullets/specs fetched) can't prove a criterion ABSENT:
+    # a miss there means "unknown", not "no" — showing it as a confident ✗ misled
+    # real searches (--specs not used -> everything looked like a bad fit). None
+    # marks the unknowns; score counts them as 0 but the report can render "?".
+    thin_data = not (product.bullets or product.specs)
+    hits: dict[str, bool | None] = {}
+    for name, keywords in criteria.items():
+        found = any(kw.lower() in text for kw in keywords)
+        hits[name] = True if found else (None if thin_data else False)
+    score = sum(1 for v in hits.values() if v) / len(criteria)
     return score, hits
 
 

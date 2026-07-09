@@ -53,14 +53,29 @@ def run(query: str, *,
         pull_asins: list[str] | None = None,
         external_benchmarks: list[dict] | None = None,
         suggest_queries: bool = False,
+        deep_image_match: bool = False,
+        price_bands: list[tuple[float, float]] | None = None,
         categories: dict[str, list[str]] | None = None) -> SearchResult:
     """Run the full pipeline once, returning everything computed — the report renders
     from this single object, nothing is a side file."""
     from amazon_search import scoring
 
     searcher = AmazonSearcher()
-    products = searcher.search(query, max_results=n, max_price=max_price,
-                                min_stars=min_stars, domain=domain)
+    if price_bands:
+        # una ricerca (1+ crediti) PER FASCIA: i primi organici Amazon sono quasi
+        # tutti cheap, così ogni fascia di prezzo porta i suoi candidati veri
+        products, seen = [], set()
+        for lo, hi in price_bands:
+            for p in searcher.search(query, max_results=n, max_price=max_price,
+                                      min_stars=min_stars, domain=domain,
+                                      price_range=(lo, hi)):
+                if p.asin and p.asin in seen:
+                    continue
+                seen.add(p.asin)
+                products.append(p)
+    else:
+        products = searcher.search(query, max_results=n, max_price=max_price,
+                                    min_stars=min_stars, domain=domain)
 
     # 2. negative sampling — before any paid enrichment
     excluded: list[dict] = []
@@ -122,29 +137,68 @@ def run(query: str, *,
                 fp = imagecache.local_path(p.asin, domain=domain.lower())
                 if fp:
                     paths[p.asin] = fp
+        price_by_asin = {p.asin: p.price for p in products}
+        title_by_asin = {p.asin: p.title for p in products}
+        thumb_by_asin = {p.asin: p.thumbnail for p in products}
+        raw_families = []
         if len(paths) > 1:
             raw_families = dedup_mod.phash_families(paths, threshold=8)
-            price_by_asin = {p.asin: p.price for p in products}
-            title_by_asin = {p.asin: p.title for p in products}
-            thumb_by_asin = {p.asin: p.thumbnail for p in products}
-            for fam_ix, fam in enumerate(raw_families):
-                spread = dedup_mod.price_spread(fam["items"], price_by_asin)
-                cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
-                if spread is not None and spread > 2:
-                    for p in products:
-                        if p.asin in fam["items"] and p.asin != cheapest:
-                            p.dedup_note = f"Same item also seen for €{spread:.2f} less"
+        # second tier: same-mold rebrands that shot a DIFFERENT photo — invisible to
+        # pHash, caught by identical measurements in the title (numeric fingerprint).
+        # Only over items not already grouped by photo; lower confidence -> match="specs".
+        in_photo_fam = {a for fam in raw_families for a in fam["items"]}
+        # titolo + bullet (se --specs li ha portati): più numeri-con-unità nel testo
+        # = fingerprint più discriminante, i rebrand copiano le misure anche lì
+        spec_titles = {p.asin: " ".join([p.title] + (p.bullets or []))
+                       for p in products if p.asin and p.asin not in in_photo_fam}
+        brand_by_asin = {p.asin: p.brand for p in products}
+        for fam in dedup_mod.spec_families(spec_titles):
+            fam["match"] = "specs"
+            # segnali che collaborano: misure condivise + brand pseudo-generato
+            # (nome da registro marchi tipo "XKJIYU") = fiducia rebrand più alta
+            fam["confidence"] = dedup_mod.rebrand_confidence(
+                fam.get("shared", []),
+                [brand_by_asin.get(a) or "" for a in fam["items"]])
+            raw_families.append(fam)
+        # third tier (opt-in, lento ~1s/coppia): stesso prodotto RIFOTOGRAFATO in una
+        # scena (3 copie, persona, sfondo) — invisibile a pHash e spesso ai numeri.
+        # Solo su item non già raggruppati, dentro la stessa categoria (meno coppie).
+        if deep_image_match:
+            grouped = {a for fam in raw_families for a in fam["items"]}
+            cat_of = {p.asin: getattr(p, "category", None) for p in products}
+            from collections import defaultdict
+            by_cat: dict = defaultdict(dict)
+            for asin, path in paths.items():
+                if asin not in grouped:
+                    by_cat[cat_of.get(asin)][asin] = path
+            for cat_imgs in by_cat.values():
+                if len(cat_imgs) > 1:
+                    raw_families.extend(dedup_mod.scene_families(cat_imgs))
+
+        for fam_ix, fam in enumerate(raw_families):
+            by_specs = fam.get("match") == "specs"
+            spread = dedup_mod.price_spread(fam["items"], price_by_asin)
+            cheapest = min(fam["items"], key=lambda a: price_by_asin.get(a) or 9e9)
+            if spread is not None and spread > 2:
+                note = (f"Possibile stesso stampo (misure identiche), visto per €{spread:.2f} meno"
+                        if by_specs else f"Same item also seen for €{spread:.2f} less")
                 for p in products:
-                    if p.asin in fam["items"]:
-                        p.family_id = fam_ix  # so the report can cluster same-family cards together
-                families.append({
-                    "spread": spread,
-                    "diff_image": fam.get("diff_image", False),
-                    "items": [{"asin": a, "price": price_by_asin.get(a),
-                               "title": title_by_asin.get(a) or "",
-                               "thumbnail": thumb_by_asin.get(a) or ""}
-                              for a in fam["items"]],
-                })
+                    if p.asin in fam["items"] and p.asin != cheapest:
+                        p.dedup_note = note
+            for p in products:
+                if p.asin in fam["items"]:
+                    p.family_id = fam_ix  # so the report can cluster same-family cards together
+            families.append({
+                "spread": spread,
+                "diff_image": fam.get("diff_image", False),
+                "match": fam.get("match", "photo"),
+                "confidence": fam.get("confidence"),
+                "shared_specs": fam.get("shared", []),
+                "items": [{"asin": a, "price": price_by_asin.get(a),
+                           "title": title_by_asin.get(a) or "",
+                           "thumbnail": thumb_by_asin.get(a) or ""}
+                          for a in fam["items"]],
+            })
 
     # 6. video claims — opt-in, slow, never automatic
     video_claims: list[dict] = []

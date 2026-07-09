@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+{% set active = 'report' %}
+{% block title %}"{{ result.query }}" — amazon·search{% endblock %}
+
+{# ── Macro: star rating ─────────────────────────────────────────────────── #}
+{% macro stars(val) %}
+{% if val is not none %}
+{% set f = val|int %}
+{% set h = 1 if (val - f) >= 0.5 else 0 %}
+{% set e = 5 - f - h %}
+<div class="stars">
+  <div class="stars-vis">
+    {% for i in range(f) %}<span class="star f">★</span>{% endfor %}
+    {% for i in range(h) %}<span class="star h">½</span>{% endfor %}
+    {% for i in range(e) %}<span class="star e">☆</span>{% endfor %}
+  </div>
+  <span class="stars-val">{{ "%.1f"|format(val) }}</span>
+</div>
+{% endif %}
+{% endmacro %}
+
+{# ── Macro: product card ────────────────────────────────────────────────── #}
+{% macro pcard(rank, p) %}
+<div class="glass pcard">
+  <div class="pcard-rank {% if rank <= 3 %}top{% endif %}">
+    {% if rank == 1 %}🥇{% elif rank == 2 %}🥈{% elif rank == 3 %}🥉{% else %}#{{ rank }}{% endif %}
+  </div>
+
+  <div class="pcard-img-wrap">
+    {% if p.thumbnail %}
+    <img class="pcard-img" src="{{ p.thumbnail }}" alt="" loading="eager"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <div class="pcard-img-ph" style="display:none">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor"/>
+        <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    {% else %}
+    <div class="pcard-img-ph">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor"/>
+        <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="pcard-body">
+    <div class="pcard-title">
+      {% if p.brand %}<span class="pcard-brand">{{ p.brand }} — </span>{% endif %}{{ p.title[:90] }}{% if p.title|length > 90 %}…{% endif %}
+    </div>
+
+    <div class="pcard-price-row">
+      {% if p.price is not none %}
+      <span class="pcard-price">{{ p.price_str or ('€' + '%.2f'|format(p.price)) }}</span>
+      {% else %}
+      <span class="pcard-price-na">Price N/A</span>
+      {% endif %}
+      {% if p.reviews %}
+      <span class="stars-reviews">
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+          <path d="M2 2h12a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 3v-3H2a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        {{ "{:,}".format(p.reviews) }}
+      </span>
+      {% endif %}
+    </div>
+
+    {{ stars(p.stars) }}
+
+    <div class="pcard-badges">
+      {% if p.prime %}
+      <span class="badge b-prime">
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 4.5H14l-3.7 2.7 1.4 4.3L8 11l-3.7 2 1.4-4.3L2 6.5h4.5z" fill="currentColor"/></svg>
+        Prime
+      </span>
+      {% endif %}
+      {% if p.in_stock %}
+      <span class="badge b-stock">
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        In stock
+      </span>
+      {% else %}
+      <span class="badge b-nostock">
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Out of stock
+      </span>
+      {% endif %}
+      {% if p.dedup_note %}
+      <span class="badge b-dedup">
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/></svg>
+        {{ p.dedup_note }}
+      </span>
+      {% endif %}
+      {% for hit in (p.ff_hits or {}).keys() %}
+      <span class="badge b-fit">
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        {{ hit }}
+      </span>
+      {% endfor %}
+    </div>
+
+    {% if p.specs %}
+    <div class="pcard-specs">
+      {% for k, v in (p.specs.items()|list)[:6] %}
+      <span class="spec-tag"><strong>{{ k }}</strong> {{ v }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if p.bullets %}
+    <div class="pcard-bullets">
+      {% for b in p.bullets[:3] %}
+      <div class="bullet"><span class="bullet-dot">›</span><span>{{ b[:90] }}</span></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="pcard-footer">
+    <span class="pcard-asin">
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style="opacity:.5">
+        <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M5 5h6M5 8h6M5 11h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      {{ p.asin }}
+    </span>
+    <a class="btn-amazon" href="{{ p.link }}" target="_blank" rel="noopener">
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+        <path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Amazon
+    </a>
+  </div>
+</div>
+{% endmacro %}
+
+{# ─────────────────────────────────────────────────────────────────────────── #}
+
+{% block nav_right %}
+<a class="btn btn-sm btn-outline" href="/categorize/{{ job_id }}">
+  <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+    <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+  </svg>
+  Categorize
+</a>
+{% endblock %}
+
+{% block body %}
+<div class="shell" style="padding-top:32px">
+
+  <!-- ── Report header ─────────────────────────────────────────────────── -->
+  <div class="glass" style="padding:24px 28px;margin-bottom:24px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h1 style="font-size:1.6rem;font-weight:700;letter-spacing:-0.04em;margin-bottom:10px">
+          "{{ result.query }}"
+        </h1>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <!-- product count -->
+          <span class="chip">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            {{ result.products|length }} products
+          </span>
+          {% if result.filters.get('max_price') %}
+          <span class="chip">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <path d="M2 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            max {{ result.filters.get('max_price') }}
+          </span>
+          {% endif %}
+          {% if result.filters.get('min_stars') %}
+          <span class="chip">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1l1.5 4.5H14l-3.7 2.7 1.4 4.3L8 11l-3.7 2 1.4-4.3L2 6.5h4.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+            ≥ {{ result.filters.get('min_stars') }}★
+          </span>
+          {% endif %}
+          {% if result.excluded %}
+          <span class="chip">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            {{ result.excluded|length }} excluded
+          </span>
+          {% endif %}
+          {% if families %}
+          <span class="chip" style="color:var(--purple);border-color:rgba(155,109,255,0.2)">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            {{ families|length }} duplicate group{{ 's' if families|length != 1 else '' }}
+          </span>
+          {% endif %}
+          {% if result.feature_fit_ready %}
+          <span class="chip" style="color:var(--gold);border-color:rgba(200,168,75,0.2)">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            criteria matched
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      <!-- New search btn -->
+      <a class="btn btn-outline btn-sm" href="/">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+          <path d="M1 8a7 7 0 1012.5-4.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M10 2l4 2-2 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        New search
+      </a>
+    </div>
+
+    <!-- Refine search -->
+    <details style="margin-top:16px">
+      <summary class="label" style="cursor:pointer;padding:4px 0">
+        <span class="arr">›</span>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin:0 4px">
+          <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Refine search
+      </summary>
+      <div class="refine-panel" id="refine-panel">
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Query</label>
+            <input id="r-query" type="text" value="{{ result.query }}"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Max price</label>
+            <input id="r-price" type="number" value="{{ params.get('max_price','') }}" placeholder="optional"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Min stars</label>
+            <input id="r-stars" type="number" step="0.1" value="{{ params.get('min_stars','') }}" placeholder="optional"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Results</label>
+            <input id="r-n" type="number" value="{{ params.get('results', 15) }}" min="1" max="40"/>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Must-have features</label>
+            <input id="r-criteria" type="text" value="{{ params.get('criteria','') }}" placeholder="noise cancelling, waterproof"/>
+          </div>
+          <div class="field">
+            <label class="field-label">Exclude keywords</label>
+            <input id="r-junk" type="text" value="{{ params.get('junk','') }}" placeholder="toy, refurbished"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <label class="toggle">
+            <input type="checkbox" id="r-nollm" {% if params.get('no_llm') %}checked{% endif %}/>
+            <span class="toggle-track"></span>
+            <span class="toggle-label">Skip AI <small>Faster results</small></span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="r-specs" {% if params.get('specs') %}checked{% endif %}/>
+            <span class="toggle-track"></span>
+            <span class="toggle-label">Fetch specs <small>Needs CANOPY_KEY</small></span>
+          </label>
+          <button class="btn btn-orange btn-sm" id="refine-btn" style="margin-left:auto">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+              <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            Re-run
+          </button>
+        </div>
+        <!-- refine status -->
+        <div id="refine-status" style="display:none;align-items:center;gap:8px">
+          <div class="spinner" id="refine-spinner"></div>
+          <span class="label" id="refine-label">Running …</span>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── AI Summary ──────────────────────────────────────────────────────── -->
+  {% if result.ai_summary %}
+  <div class="glass" style="padding:20px 24px;margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block"></span>
+      <span class="label">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin-right:4px">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        AI Analysis
+      </span>
+    </div>
+    <p style="font-size:0.82rem;line-height:1.72;color:#ccc;white-space:pre-wrap">{{ result.ai_summary }}</p>
+  </div>
+  {% endif %}
+
+  <!-- ── Query variants ──────────────────────────────────────────────────── -->
+  {% if result.query_variants %}
+  <div style="margin-bottom:28px">
+    <div class="section-head">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="section-head-label">Related queries</span>
+      <span class="section-head-count">{{ result.query_variants|length }}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      {% for v in result.query_variants %}
+      <span class="chip chip-variant" style="cursor:pointer" data-variant="{{ v }}">{{ v }}</span>
+      {% endfor %}
+    </div>
+    <script>
+    // niente JS costruito in Jinja (XSS in contesto attributo): data-attribute + bind
+    document.querySelectorAll('.chip-variant').forEach(el => el.onclick = () => {
+      const q = document.getElementById('query'); if (q) q.value = el.dataset.variant;
+    });
+    </script>
+  </div>
+  {% endif %}
+
+  <!-- ── Products ────────────────────────────────────────────────────────── -->
+  {% if single_cat %}
+  <!-- Single category — plain grid -->
+  <div class="section-head">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <span class="section-head-label">All results</span>
+    <span class="section-head-count">{{ result.products|length }}</span>
+  </div>
+  <div class="product-grid" style="margin-bottom:40px">
+    {% for rank, p in cat_list[0].prods %}
+    {{ pcard(rank, p) }}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Multiple categories -->
+  {% for cat in cat_list %}
+  <section class="cat-section">
+    <div class="cat-header" style="border-color:{{ cat.color }};color:{{ cat.color }}">
+      <span class="cat-dot" style="background:{{ cat.color }}"></span>
+      <span class="cat-name" style="color:{{ cat.color }}">{{ cat.name }}</span>
+      <span class="cat-count">{{ cat.prods|length }} product{{ 's' if cat.prods|length != 1 else '' }}</span>
+    </div>
+    <div class="product-grid">
+      {% for rank, p in cat.prods %}
+      {{ pcard(rank, p) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  <!-- ── Duplicate families ──────────────────────────────────────────────── -->
+  {% if families %}
+  <hr/>
+  <div style="margin-bottom:28px">
+    <div class="section-head">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <span class="section-head-label" style="color:var(--purple)">Duplicate families</span>
+      <span class="section-head-count" style="color:var(--purple)">{{ families|length }} group{{ 's' if families|length != 1 else '' }}</span>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:16px">
+      Products sharing the same image or visual fingerprint — likely rebrands or the same mold sold under different names.
+    </p>
+    {% for fam in families %}
+    <div class="family-block" style="margin-bottom:12px">
+      <div class="family-head">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        {{ fam.members|length }} similar items
+        {% if not fam.get('diff_image', True) %}
+        · <span style="color:var(--orange)">identical image</span>
+        {% endif %}
+        · Hamming Δ {{ fam.get('min_distance', '?') }}
+      </div>
+      <div class="family-cards">
+        {% for rank, p in fam.members %}
+        {{ pcard(rank, p) }}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Negative sampling (excluded) ───────────────────────────────────── -->
+  {% if result.excluded %}
+  <hr/>
+  <div style="margin-bottom:28px">
+    <div class="section-head">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="section-head-label" style="color:var(--red)">Negative sampling — excluded</span>
+      <span class="section-head-count" style="color:var(--red)">{{ result.excluded|length }}</span>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:14px">
+      Products removed by junk-pattern filters before spending API credits on them.
+    </p>
+    <details>
+      <summary class="label" style="padding:8px 0">
+        <span class="arr">›</span> Show {{ result.excluded|length }} filtered items
+      </summary>
+      <div class="excl-grid" style="margin-top:10px">
+        {% for item in result.excluded %}
+        <div class="excl-row">
+          {% if item.get('thumbnail') %}
+          <img src="{{ item.thumbnail }}" style="width:36px;height:36px;object-fit:contain;border-radius:3px;flex-shrink:0" loading="eager"/>
+          {% endif %}
+          <span class="excl-title">{{ item.get('title', item.get('asin','—'))[:80] }}</span>
+          {% if item.get('price_str') %}<span style="font-size:0.68rem;color:var(--dim)">{{ item.price_str }}</span>{% endif %}
+          <span class="excl-reason">{{ item.get('reason','—') }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </div>
+  {% endif %}
+
+  <!-- ── YouTube reviews ────────────────────────────────────────────────── -->
+  {% if result.video_claims %}
+  <hr/>
+  <div style="margin-bottom:28px">
+    <div class="section-head">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M6 6l5 2.5L6 11z" fill="currentColor"/>
+      </svg>
+      <span class="section-head-label" style="color:var(--red)">YouTube review claims</span>
+      <span class="section-head-count">{{ result.video_claims|length }}</span>
+    </div>
+    <div class="yt-list">
+      {% for claim in result.video_claims %}
+      <div class="yt-item">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="color:var(--red);flex-shrink:0;float:left;margin:2px 6px 0 0">
+          <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M6 6l5 2.5L6 11z" fill="currentColor"/>
+        </svg>
+        {% if claim is string %}{{ claim }}{% else %}{{ claim.get('claim', claim.get('text', str(claim)))[:200] }}{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Quota ──────────────────────────────────────────────────────────── -->
+  {% if result.quota_info %}
+  <div class="glass-sm" style="padding:12px 16px;margin-top:16px;display:flex;align-items:center;gap:10px">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span style="font-size:0.68rem;color:var(--dim)">{{ result.quota_info }}</span>
+  </div>
+  {% endif %}
+
+  <footer class="footer">
+    <span>amazon·search — MIT</span>
+    <span>{{ result.products|length }} results · {{ result.query }}</span>
+  </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Refine search
+document.getElementById('refine-btn').addEventListener('click', () => {
+  const payload = {
+    query:     document.getElementById('r-query').value.trim(),
+    max_price: document.getElementById('r-price').value,
+    min_stars: document.getElementById('r-stars').value,
+    results:   document.getElementById('r-n').value,
+    criteria:  document.getElementById('r-criteria').value,
+    junk:      document.getElementById('r-junk').value,
+    no_llm:    document.getElementById('r-nollm').checked,
+    specs:     document.getElementById('r-specs').checked,
+  };
+  if (!payload.query) return;
+
+  const btn     = document.getElementById('refine-btn');
+  const status  = document.getElementById('refine-status');
+  const spinner = document.getElementById('refine-spinner');
+  const label   = document.getElementById('refine-label');
+
+  btn.disabled = true;
+  status.style.display = 'flex';
+  spinner.className = 'spinner';
+  label.textContent = 'Running …';
+
+  let pollTimer;
+  fetch('/search', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).then(r => r.json()).then(d => {
+    if (d.error) {
+      spinner.className = 'spinner err';
+      label.textContent = d.error;
+      btn.disabled = false;
+      return;
+    }
+    pollTimer = setInterval(() => {
+      fetch('/status/' + d.job_id).then(r => r.json()).then(s => {
+        label.textContent = (s.log || []).slice(-1)[0] || 'Running …';
+        if (s.status === 'done') {
+          clearInterval(pollTimer);
+          window.location.href = '/report/' + d.job_id;
+        } else if (s.status === 'error') {
+          clearInterval(pollTimer);
+          spinner.className = 'spinner err';
+          label.textContent = s.error || 'Error.';
+          btn.disabled = false;
+        }
+      });
+    }, 1200);
+  });
+});
+</script>
+{% endblock %}

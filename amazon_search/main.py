@@ -45,6 +45,9 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--pull-asin", "pull_asins", default=None, help="ASIN specifici da includere sempre (comma-separated), bypassano il filtro --junk")
 @click.option("--suggest-queries", is_flag=True, help="Suggerisce query alternative (gratis, deterministico + AI se disponibile)")
 @click.option("--categorize", "category_defs", default=None, help="Sotto-categorie per titolo, es: 'Gonfiabile:gonfiabile,inflatable|Rigido:rigido,semirigido' (ordine=priorità, primo match vince)")
+@click.option("--categorize-preset", "category_preset", default=None, help="Usa un set di categorie predefinito da config_search.CATEGORY_PRESETS (es: 'neck')")
+@click.option("--deep-dedup", is_flag=True, help="Trova lo stesso prodotto RIFOTOGRAFATO in scene diverse (SIFT, lento, richiede opencv) — oltre a foto identiche e misure")
+@click.option("--price-bands", "price_bands", default=None, help="Fasce prezzo per ricerche multiple, es: '5-15,15-30,30-60' — 1 ricerca (1 credito) per fascia, pool più grande e bilanciato")
 @click.option("--no-llm", is_flag=True, help="Salta AI ranking e comparazione")
 @click.option("--no-open", is_flag=True, help="Non aprire il browser")
 @click.option("--domain", default="IT", show_default=True, help="Marketplace Amazon (es: IT, DE, UK)")
@@ -55,7 +58,8 @@ def _parse_kv_list(raw: str | None) -> list[str]:
 @click.option("--log-summary", is_flag=True, help="Mostra riassunto log ed esci")
 @click.option("--clear-log", is_flag=True, help="Svuota log ed esci")
 def main(query, max_price, budget, min_stars, results, specs, dedup, make_montage,
-         criteria, junk, pull_asins, suggest_queries, category_defs, no_llm, no_open, domain,
+         criteria, junk, pull_asins, suggest_queries, category_defs, category_preset,
+         deep_dedup, price_bands, no_llm, no_open, domain,
          show_quota, show_cache, clear_cache, test, log_summary, clear_log):
     """Cerca prodotti su Amazon e apre i risultati nel browser."""
     from amazon_search import quota as q
@@ -119,7 +123,13 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
     junk_list = _parse_kv_list(junk)
     pull_list = _parse_kv_list(pull_asins)
     categories = None
-    if category_defs:
+    if category_preset:
+        from amazon_search.config_search import CATEGORY_PRESETS
+        categories = CATEGORY_PRESETS.get(category_preset)
+        if categories is None:
+            console.print(f"[red]Preset '{category_preset}' sconosciuto. Disponibili: {', '.join(CATEGORY_PRESETS)}[/red]")
+            sys.exit(1)
+    elif category_defs:
         categories = {}
         for chunk in category_defs.split("|"):
             if ":" not in chunk:
@@ -138,6 +148,9 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
                 pull_asins=pull_list or None,
                 suggest_queries=suggest_queries,
                 categories=categories,
+                deep_image_match=deep_dedup,
+                price_bands=[tuple(map(float, b.split("-"))) for b in price_bands.split(",")]
+                            if price_bands else None,
             )
         except Exception as e:
             console.print(f"[red]Errore ricerca: {e}[/red]")
@@ -153,6 +166,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
         n_flagged = sum(1 for f in result.families if f["spread"] and f["spread"] > 2)
         console.print(f"[dim]dedup: {len(result.families)} famiglie foto-simile, {n_flagged} con differenza di prezzo rilevante[/dim]")
 
+    montage_path = None
     if make_montage:
         from amazon_search import imagecache
         from amazon_search.montage import build_montage
@@ -165,7 +179,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
             price_lookup = {p.asin: p.price for p in result.products}
             items = [{"image": fp, "label": f"€{price_lookup.get(a) or '?'}"} for a, fp in paths.items()]
             montage_path = build_montage(items, out_dir / "montage.png", cols=5)
-            console.print(f"[dim]montage salvato: {montage_path}[/dim]")
+            console.print(f"[dim]montage salvato: {montage_path} (embedded nel report)[/dim]")
 
     # Print quick table
     table = Table(title=f"Amazon.{domain} — {query}", show_header=True, header_style="bold cyan")
@@ -193,7 +207,7 @@ def main(query, max_price, budget, min_stars, results, specs, dedup, make_montag
         console.print(f"\n[bold yellow]🤖 AI:[/bold yellow] {result.ai_summary}\n")
 
     with console.status("[bold]Generando HTML...[/bold]"):
-        html_path = generate_report(result)
+        html_path = generate_report(result, montage_path=montage_path)
 
     console.print(f"\n[green]✓ HTML salvato:[/green] {html_path}")
     console.print(f"[dim]{q.status_line()}[/dim]")

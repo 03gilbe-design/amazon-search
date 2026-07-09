@@ -37,22 +37,39 @@ def phash_families(images: dict[str, str], *, threshold: int = 8) -> list[dict]:
     import imagehash
     from PIL import Image, ImageOps
 
+    def _trim_white(im: "Image.Image", thresh: int = 240) -> "Image.Image":
+        """Croppa la cornice bianca prima dell'hash. Foto Amazon = prodotto su bianco;
+        lo stesso prodotto RIMESSO dentro una foto più grande (inset/angolo) misurava
+        dist 32-40 (invisibile) — dopo il trim torna a 0. Costo: un getbbox, ~ms."""
+        try:
+            mask = im.convert("L").point(lambda p: 255 if p < thresh else 0)
+            box = mask.getbbox()
+            return im.crop(box) if box else im
+        except Exception:
+            return im
+
+    # Misure reali (foto prodotto, soglia 8): resize=0, mirror=0 (con hash specchiato),
+    # rot 3°=2, inset/angolo=0 (dopo trim) — coperti. Rot 90/180/270 hashate a parte.
+    # Crop parziale resta fuori (dist ~24): lo copre il fingerprint numerico del titolo.
+    variants: dict[str, list["imagehash.ImageHash"]] = {}
     hashes: dict[str, "imagehash.ImageHash"] = {}
-    hashes_mirrored: dict[str, "imagehash.ImageHash"] = {}
     for item_id, path in images.items():
         try:
-            im = Image.open(path)
+            im = _trim_white(Image.open(path).convert("RGB"))
             hashes[item_id] = imagehash.phash(im)
-            hashes_mirrored[item_id] = imagehash.phash(ImageOps.mirror(im))
+            variants[item_id] = [
+                hashes[item_id],
+                imagehash.phash(ImageOps.mirror(im)),
+                imagehash.phash(im.rotate(90, expand=True)),
+                imagehash.phash(im.rotate(180)),
+                imagehash.phash(im.rotate(270, expand=True)),
+            ]
         except Exception:
             continue
 
     def _best_distance(a: str, b: str) -> int:
-        return min(
-            hashes[a] - hashes[b],
-            hashes[a] - hashes_mirrored[b],
-            hashes_mirrored[a] - hashes[b],
-        )
+        # tutte le varianti di A contro B com'è: copre ogni trasformazione relativa
+        return min(v - hashes[b] for v in variants[a])
 
     ids = list(hashes)
     seen: set[str] = set()
@@ -85,3 +102,204 @@ def price_spread(family_items: list[str], prices: dict[str, float]) -> float | N
     if len(vals) < 2:
         return None
     return max(vals) - min(vals)
+
+
+# --- numeric spec fingerprint: rebrand detection when the photo is DIFFERENT ---
+# pHash only catches relistings that reuse the same stock photo. Rebrands that shot
+# their own photo are invisible to it — but same-mold products quote the same exact
+# measurements in the title ("20.3x7.6 cm", "150kg", "72dB"). Numbers with units are
+# hard to fake accidentally: two listings sharing several of them are the same mold.
+
+import re as _re
+
+_NUM_UNIT_RX = _re.compile(
+    r"(\d+(?:[.,]\d+)?)\s*(x\s*\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?)?\s*"
+    r"(cm|mm|m|kg|g|w|watt|db|v|volt|ah|mah|hz|khz|ohm|Ω|pollici|inch|\"|'')(?![a-zà-ù])",
+    _re.IGNORECASE)
+
+
+def numeric_fingerprint(title: str) -> frozenset[str]:
+    """Normalized number+unit tokens from a title. '20,3 cm' and '20.3cm' -> same token.
+    Dimension chains (20x30x5 cm) are kept whole — they're the most identifying."""
+    toks = set()
+    for m in _NUM_UNIT_RX.finditer(title or ""):
+        num, dims, unit = m.group(1), m.group(2) or "", m.group(3)
+        tok = (num + dims).replace(",", ".").replace(" ", "").lower()
+        unit = {"watt": "w", "volt": "v", "ω": "ohm", "''": '"', "pollici": "inch"}.get(unit.lower(), unit.lower())
+        toks.add(f"{tok}{unit}")
+    return frozenset(toks)
+
+
+def spec_families(titles: dict[str, str], *, min_shared: int = 2,
+                  max_pool_ratio: float = 0.5) -> list[dict]:
+    """Group items whose titles share >= min_shared rare numeric tokens.
+
+    titles: {item_id: title}. Tokens present in more than max_pool_ratio of the pool
+    are generic for the query ("12v" on a car-audio search) and are ignored — only
+    discriminative numbers count. Returns [{"items": [...], "shared": [tokens]}],
+    singletons omitted. Greedy like phash_families; meant as a complementary,
+    lower-confidence tier (match="specs") after the photo-based one.
+    """
+    fps = {i: numeric_fingerprint(t) for i, t in titles.items()}
+    n = len(fps)
+    if n < 2:
+        return []
+    # drop tokens too common in this pool to identify anything
+    counts: dict[str, int] = {}
+    for fp in fps.values():
+        for t in fp:
+            counts[t] = counts.get(t, 0) + 1
+    cutoff = max(2, int(n * max_pool_ratio))
+    fps = {i: frozenset(t for t in fp if counts[t] <= cutoff) for i, fp in fps.items()}
+
+    ids = list(fps)
+    seen: set[str] = set()
+    families: list[dict] = []
+    for i, a in enumerate(ids):
+        if a in seen:
+            continue
+        group, shared = [a], set()
+        for b in ids[i + 1:]:
+            if b in seen:
+                continue
+            common = fps[a] & fps[b]
+            if len(common) >= min_shared:
+                group.append(b)
+                seen.add(b)
+                shared |= common
+        if len(group) > 1:
+            seen.add(a)
+            families.append({"items": group, "shared": sorted(shared)})
+    families.sort(key=lambda f: -len(f["shared"]))
+    return families
+
+
+# --- prodotto DENTRO un'altra foto (scene compositing) ---
+# Caso reale (test utente, collari neri): stesso prodotto rifotografato in una scena
+# con 3 copie + persona. pHash globale = cieco (nessun match a soglia 16), template
+# matching grayscale/edge non separa (prodotti scuri simili). SIFT + RANSAC sì:
+# misurato inliers veri {13,20,44} vs falsi ≤7 → soglia 10. Costo ~1s/coppia,
+# quindi opt-in e limitato a coppie candidate, mai sul prodotto cartesiano.
+
+def image_in_scene(template_path: str, scene_path: str, *, size: int = 500) -> int:
+    """Quanti feature-match geometricamente coerenti (RANSAC inliers) del prodotto
+    `template` si trovano dentro `scene`. >= 10 = il prodotto è in quella foto.
+    0 se opencv non è installato o le immagini non si leggono."""
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return 0
+    try:
+        def _gray(p):
+            im = cv2.imread(p)
+            sh = size / max(im.shape[:2])
+            return cv2.cvtColor(cv2.resize(im, None, fx=sh, fy=sh), cv2.COLOR_BGR2GRAY)
+        sift = cv2.SIFT_create(400)
+        k1, d1 = sift.detectAndCompute(_gray(template_path), None)
+        k2, d2 = sift.detectAndCompute(_gray(scene_path), None)
+        if d1 is None or d2 is None or len(k1) < 4:
+            return 0
+        pairs = cv2.BFMatcher(cv2.NORM_L2).knnMatch(d1, d2, k=2)
+        good = [m for m, n in (p for p in pairs if len(p) == 2) if m.distance < 0.75 * n.distance]
+        if len(good) < 8:
+            return 0
+        src = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+        dst = np.float32([k2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+        _, mask = cv2.findHomography(src, dst, cv2.RANSAC, 5.0)
+        return int(mask.sum()) if mask is not None else 0
+    except Exception:
+        return 0
+
+
+def scene_families(images: dict[str, str], *, threshold: int = 10,
+                   max_pairs: int = 150) -> list[dict]:
+    """Famiglie 'stesso prodotto in scene diverse' via image_in_scene, in entrambe
+    le direzioni per coppia. Cap a max_pairs (SIFT è lento): il chiamante passi solo
+    candidati sensati (stessa categoria, non già raggruppati da pHash/specs)."""
+    ids = list(images)
+    seen: set[str] = set()
+    families: list[dict] = []
+    pairs = 0
+    for i, a in enumerate(ids):
+        if a in seen:
+            continue
+        group = [a]
+        for b in ids[i + 1:]:
+            if b in seen or pairs >= max_pairs:
+                continue
+            pairs += 2
+            score = max(image_in_scene(images[a], images[b]),
+                        image_in_scene(images[b], images[a]))
+            if score >= threshold:
+                group.append(b)
+                seen.add(b)
+        if len(group) > 1:
+            seen.add(a)
+            families.append({"items": group, "match": "scene"})
+    return families
+
+
+# --- pseudo-brand signal (idea da AmazonBrandFilter, ★54: filtrare per brand noti) ---
+# I rebrand cinesi usano nomi generati per il registro marchi USA: consonanti a caso,
+# tutto maiuscolo ("XKJIYU", "BZDZMQM"). Un nome così + stesso stampo = rebrand quasi certo.
+
+_VOWELS = set("aeiou")
+
+
+def pseudo_brand_score(brand: str) -> float:
+    """0 = brand plausibile, 1 = quasi certamente nome-registro-marchi generato.
+    Euristica pura, niente liste esterne: rapporto vocali, digrammi impronunciabili,
+    tutto-maiuscolo. Da usare come segnale, mai come esclusione automatica."""
+    b = (brand or "").strip()
+    if not b or len(b) < 4:
+        return 0.0
+    letters = [c for c in b.lower() if c.isalpha()]
+    if not letters:
+        return 0.0
+    score = 0.0
+    vowel_ratio = sum(1 for c in letters if c in _VOWELS) / len(letters)
+    if vowel_ratio < 0.2:
+        score += 0.5
+    elif vowel_ratio < 0.3:
+        score += 0.25
+    # lettere rare in inglese/italiano ma comunissime nei nomi generati
+    rare_ratio = sum(1 for c in letters if c in "xkjqz") / len(letters)
+    if rare_ratio >= 0.4:
+        score += 0.4
+    elif rare_ratio >= 0.25:
+        score += 0.2
+    # 3+ consonanti consecutive rare in parole vere (y conta da vocale)
+    run = mx = 0
+    for c in letters:
+        run = run + 1 if c not in _VOWELS and c != "y" else 0
+        mx = max(mx, run)
+    if mx >= 4:
+        score += 0.35
+    elif mx == 3:
+        score += 0.15
+    if b.isupper() and len(b) >= 5:
+        score += 0.15
+    return min(score, 1.0)
+
+
+def rebrand_confidence(shared_tokens: list[str], brands: list[str]) -> float:
+    """Combina i segnali: token numerici condivisi (spec_families) + pseudo-brand.
+    >= 0.7 = mostralo come 'stesso stampo, brand diversi' con fiducia alta."""
+    base = min(len(shared_tokens) / 4.0, 0.7)  # 4+ token condivisi = tetto
+    pseudo = max((pseudo_brand_score(b) for b in brands), default=0.0)
+    return min(base + 0.3 * pseudo, 1.0)
+
+
+if __name__ == "__main__":  # self-check, no deps needed
+    titles = {
+        "A": "BRANDX Subwoofer Auto Slim 20.3x7.6x33 cm 150W attivo",
+        "B": "NoName Sub sottile per auto 20,3 x 7,6 x 33cm 150 W bass",
+        "C": "JBL BassPro SL2 125W subwoofer compatto",
+        "D": "Collare cervicale regolabile taglia unica",
+    }
+    fams = spec_families(titles)
+    assert len(fams) == 1 and set(fams[0]["items"]) == {"A", "B"}, fams
+    assert numeric_fingerprint("20,3 cm") == numeric_fingerprint("20.3cm")
+    assert spec_families({"A": titles["A"]}) == []
+    print("dedup spec_families self-check: PASS", fams)

@@ -56,24 +56,28 @@ def search_videos(queries: list[str], out_dir: str, *, target: int = 40,
         try:
             out = subprocess.run(
                 ["yt-dlp", f"ytsearch{per_query}:{q}", "--flat-playlist",
-                 "--print", "%(id)s\t%(title)s", "--no-warnings"],
+                 "--print", "%(id)s\t%(channel)s\t%(title)s", "--no-warnings"],
                 capture_output=True, text=True, timeout=120,
                 encoding="utf-8", errors="replace").stdout
         except Exception:
             continue
         for line in out.splitlines():
-            if "\t" not in line:
+            parts = line.split("\t", 2)
+            if len(parts) != 3:
                 continue
-            vid, title = line.split("\t", 1)
+            vid, channel, title = parts
             if vid and vid not in videos:
-                videos[vid] = {"query": q, "title": title.strip()}
+                videos[vid] = {"query": q, "title": title.strip(),
+                               "channel": channel.strip()}
         _save(videos_path, videos)
     return videos
 
 
 def _vtt_to_text(path: str) -> str:
     seen, out = set(), []
-    for line in open(path, encoding="utf-8", errors="replace"):
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    for line in lines:
         line = line.strip()
         if not line or "-->" in line or line.startswith(("WEBVTT", "Kind:", "Language:")):
             continue
@@ -85,10 +89,20 @@ def _vtt_to_text(path: str) -> str:
     return " ".join(out)
 
 
+# affiliate/shortlink patterns in a video description = the reviewer earns on the sale.
+# Not proof of dishonesty, but "N video, tutti con link affiliato" reads very differently
+# from independent coverage — so it's measured and shown, never silently judged.
+_AFFILIATE_RX = re.compile(
+    r"(amzn\.to/|amazon\.[a-z.]{2,6}/[^\s\"']*[?&]tag=|bit\.ly/|geni\.us/|howl\.me/|shop-links\.co/)",
+    re.I)
+
+
 def fetch_transcripts(out_dir: str, *, sub_langs: str = "en.*,it.*") -> int:
-    """Download auto-subs (no video/audio) for every collected id, resumable.
+    """Download auto-subs + description (no video/audio) for every collected id,
+    resumable. Marks videos whose description carries affiliate links.
     Returns count of newly fetched transcripts."""
-    videos = _load(os.path.join(out_dir, "videos.json"), {})
+    videos_path = os.path.join(out_dir, "videos.json")
+    videos = _load(videos_path, {})
     tdir = os.path.join(out_dir, "transcripts")
     os.makedirs(tdir, exist_ok=True)
     done = 0
@@ -99,12 +113,20 @@ def fetch_transcripts(out_dir: str, *, sub_langs: str = "en.*,it.*") -> int:
         try:
             subprocess.run(
                 ["yt-dlp", "--skip-download", "--write-auto-subs", "--write-subs",
-                 "--sub-langs", sub_langs, "--sub-format", "vtt",
+                 "--sub-langs", sub_langs, "--sub-format", "vtt", "--write-description",
                  "-o", os.path.join(tdir, "%(id)s.%(ext)s"),
                  f"https://www.youtube.com/watch?v={vid}", "--no-warnings"],
                 capture_output=True, text=True, timeout=120)
         except Exception:
             continue
+        desc_fp = os.path.join(tdir, f"{vid}.description")
+        if os.path.exists(desc_fp):
+            try:
+                desc = open(desc_fp, encoding="utf-8", errors="replace").read()
+                videos[vid]["affiliate"] = bool(_AFFILIATE_RX.search(desc))
+                _save(videos_path, videos)
+            except Exception:
+                pass
         cands = sorted(glob.glob(os.path.join(tdir, f"{vid}.*.vtt")))
         if not cands:
             open(txt, "w").close()  # placeholder: no subs, don't retry
@@ -186,6 +208,8 @@ def extract_claims(out_dir: str, *, products: list[str], attributes: list[str],
                 for c in found:
                     c["video"] = vid
                     c["title"] = videos[vid]["title"]
+                    c["channel"] = videos[vid].get("channel", "")
+                    c["affiliate"] = videos[vid].get("affiliate", False)
                     out.write(json.dumps(c, ensure_ascii=False) + "\n")
                     new += 1
             processed.add(vid)
@@ -218,18 +242,38 @@ def coverage(claims: list[dict]) -> dict[str, dict]:
     review coverage is real information, not noise. A product backed by a single video is
     a flag to look closer (could be new, could be sponsored) — not proof of anything either
     way, so callers should show it as a prompt to check, never as an auto-exclusion."""
+    _LISTICLE_RX = re.compile(r"\b(top\s*\d+|best|migliori?|classifica|ranking|vs\.?)\b", re.I)
     by_product: dict[str, dict] = {}
     for c in claims:
         product = c.get("product")
-        if not product or product == "generic":
+        if not product or product == "generic" or not c.get("video"):
             continue
-        entry = by_product.setdefault(product, {"videos": set(), "titles": {}})
+        entry = by_product.setdefault(product, {"videos": set(), "titles": {},
+                                                 "channels": set(), "dedicated": 0,
+                                                 "affiliate_videos": set()})
+        if c.get("affiliate"):
+            entry["affiliate_videos"].add(c["video"])
+        if c["video"] not in entry["videos"] and not _LISTICLE_RX.search(c.get("title", "")):
+            # a video ABOUT this product, not a "top 10" listicle: listicles copy each
+            # other's product lists, so they confirm popularity, not quality.
+            entry["dedicated"] += 1
         entry["videos"].add(c["video"])
         entry["titles"][c["video"]] = c.get("title", "")
-    return {
-        product: {
-            "video_count": len(info["videos"]),
+        if c.get("channel"):
+            entry["channels"].add(c["channel"])
+    out = {}
+    for product, info in by_product.items():
+        n_vid, n_ch = len(info["videos"]), len(info["channels"])
+        # many videos from ONE channel = one voice repeated, not independent coverage
+        single_source = n_vid >= 2 and n_ch == 1
+        n_aff = len(info["affiliate_videos"])
+        out[product] = {
+            "video_count": n_vid,
+            "channel_count": n_ch,
+            "dedicated_count": info["dedicated"],
+            "single_source": single_source,
+            "affiliate_count": n_aff,
+            "all_affiliate": n_vid >= 2 and n_aff == n_vid,
             "videos": [{"id": v, "title": info["titles"][v]} for v in info["videos"]],
         }
-        for product, info in by_product.items()
-    }
+    return out

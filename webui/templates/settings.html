@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% set active = 'settings' %}
+{% block title %}Settings — amazon·search{% endblock %}
+
+{% block body %}
+<div class="shell shell-narrow" style="padding-top:40px">
+
+  <div style="margin-bottom:36px">
+    <h1 style="font-size:1.4rem;font-weight:700;letter-spacing:-0.04em;margin-bottom:6px">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;margin-right:8px;color:var(--orange)">
+        <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      Settings
+    </h1>
+    <p style="font-size:0.72rem;color:var(--dim)">Default values for new searches. Saved to disk.</p>
+  </div>
+
+  <!-- Search defaults -->
+  <div class="glass settings-section">
+    <div class="settings-title">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Search defaults
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="row">
+        <div class="field">
+          <label class="field-label" for="s-domain">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 2c-2 2-2 8 0 12M8 2c2 2 2 8 0 12M2 8h12" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+            Default domain
+          </label>
+          <select id="s-domain">
+            {% for d in ['IT','COM','DE','FR','ES','CO.UK','NL','PL'] %}
+            <option value="{{ d }}" {% if (settings.domain or 'IT')==d %}selected{% endif %}>amazon.{{ d.lower() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="s-n">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Default results
+          </label>
+          <input type="number" id="s-n" value="{{ settings.n or 15 }}" min="1" max="40"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="s-criteria">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Default must-have features
+        </label>
+        <input type="text" id="s-criteria" value="{{ settings.default_criteria or '' }}" placeholder="e.g. noise cancelling, waterproof"/>
+      </div>
+      <div class="field">
+        <label class="field-label" for="s-junk">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Default exclude keywords
+        </label>
+        <input type="text" id="s-junk" value="{{ settings.default_junk or '' }}" placeholder="e.g. toy, refurbished"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI settings -->
+  <div class="glass settings-section" style="margin-top:16px">
+    <div class="settings-title">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      AI &amp; enrichment
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <label class="toggle">
+        <input type="checkbox" id="s-ai" {% if settings.get('ai_enabled', True) %}checked{% endif %}/>
+        <span class="toggle-track"></span>
+        <span class="toggle-label">
+          Enable AI ranking by default
+          <small>Uses GROQ_API_KEY for product comparison and summaries</small>
+        </span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="s-specs" {% if settings.get('specs_default') %}checked{% endif %}/>
+        <span class="toggle-track"></span>
+        <span class="toggle-label">
+          Fetch specs by default
+          <small>Uses CANOPY_KEY — costs extra API credits</small>
+        </span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="s-dedup" {% if settings.get('dedup_default', True) %}checked{% endif %}/>
+        <span class="toggle-track"></span>
+        <span class="toggle-label">
+          Image dedup by default
+          <small>Detects rebranded / same-mold products via pHash</small>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- API key status -->
+  <div class="glass settings-section" style="margin-top:16px">
+    <div class="settings-title">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <path d="M10 1a4 4 0 010 8H8v2H6v2H4v-2H2v-2H1v-3l5-5a4 4 0 014 0z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        <circle cx="11" cy="5" r="1" fill="currentColor"/>
+      </svg>
+      API keys
+    </div>
+    <p style="font-size:0.68rem;color:var(--muted);margin-bottom:14px">
+      Keys are managed via Replit Secrets (🔒 in the sidebar). They are never stored in code.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for key, label, note in [
+        ('SERPAPI_KEY', 'SERPAPI_KEY', 'Required — Amazon search'),
+        ('CANOPY_KEY', 'CANOPY_KEY', 'Optional — technical spec fetching'),
+        ('GROQ_API_KEY', 'GROQ_API_KEY', 'Optional — AI ranking & summaries'),
+      ] %}
+      {% set is_set = key in environ %}
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:4px;background:rgba(255,255,255,0.03);border:1px solid var(--border2)">
+        <span style="width:7px;height:7px;border-radius:50%;background:{{ 'var(--green)' if is_set else 'var(--muted)' }};flex-shrink:0"></span>
+        <span style="font-size:0.72rem;color:var(--text);flex:1">{{ label }}</span>
+        <span style="font-size:0.65rem;color:var(--dim)">{{ note }}</span>
+        <span style="font-size:0.62rem;color:{{ 'var(--green)' if is_set else 'var(--red)' }};font-weight:700">
+          {{ 'SET' if is_set else 'MISSING' }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- save -->
+  <div style="margin-top:20px;display:flex;align-items:center;gap:12px">
+    <button class="btn btn-primary" id="save-btn" onclick="saveSettings()">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <path d="M3 2h8l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="5" y="2" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M4 10h8v4H4z" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      Save settings
+    </button>
+    <span id="save-msg" style="font-size:0.68rem;color:var(--green);display:none">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">
+        <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Saved.
+    </span>
+  </div>
+
+  <footer class="footer" style="margin-top:48px">
+    <span>amazon·search — MIT</span>
+    <span>Settings saved to ~/.amazon_search_settings.json</span>
+  </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveSettings() {
+  const payload = {
+    domain:           document.getElementById('s-domain').value,
+    n:                parseInt(document.getElementById('s-n').value) || 15,
+    default_criteria: document.getElementById('s-criteria').value,
+    default_junk:     document.getElementById('s-junk').value,
+    ai_enabled:       document.getElementById('s-ai').checked,
+    specs_default:    document.getElementById('s-specs').checked,
+    dedup_default:    document.getElementById('s-dedup').checked,
+  };
+  fetch('/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).then(r => r.json()).then(() => {
+    const msg = document.getElementById('save-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 2000);
+  });
+}
+</script>
+{% endblock %}

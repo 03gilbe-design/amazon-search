@@ -41,6 +41,32 @@ class AmazonProduct:
     dedup_note: str | None = None  # set by --dedup: "same item also seen for €X less"
 
 
+# first word of a listing title that is NOT a brand — generic product/marketing words.
+# Deliberately conservative: a wrong brand is worse than no brand (grouping/filtering lie).
+_NOT_BRAND = {
+    "nuovo", "new", "set", "kit", "mini", "maxi", "smart", "auto", "per", "the",
+    "collare", "cuscino", "supporto", "subwoofer", "custodia", "cover", "cavo",
+    "caricatore", "caricabatterie", "batteria", "lampada", "luce", "led", "wireless",
+    "bluetooth", "portatile", "universale", "professionale", "premium", "original",
+    "originale", "upgrade", "confezione", "pezzi", "paia", "coppia", "adattatore",
+}
+
+
+def guess_brand(title: str) -> str | None:
+    """Best-effort brand from the title's first token. Amazon brands sit first
+    ("VELPEAU Collare...", "JBL BassPro..."); only fills the gap when the API gave
+    none — never overwrites. Returns None unless the token looks brand-like."""
+    tok = (title or "").split()[0] if (title or "").split() else ""
+    tok = tok.strip("®™,.:;-—()[]")
+    if not (2 <= len(tok) <= 20) or not tok[0].isalpha():
+        return None
+    if tok.lower() in _NOT_BRAND:
+        return None
+    if not (tok.isupper() or tok[0].isupper()):
+        return None
+    return tok
+
+
 def _parse_price(item: dict) -> tuple[float | None, str]:
     raw = item.get("price", "")
     extracted = item.get("extracted_price")
@@ -53,8 +79,11 @@ def _parse_price(item: dict) -> tuple[float | None, str]:
         return None, str(raw)
 
 
-def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonProduct] | None:
-    """Returns products or None on error."""
+def _serpapi_search(query: str, max_results: int, domain: str,
+                    price_range: tuple[float, float] | None = None) -> list[AmazonProduct] | None:
+    """Returns products or None on error. price_range=(min€, max€) usa il filtro
+    prezzo nativo Amazon (rh=p_36, centesimi): una ricerca per fascia = pool
+    bilanciato invece dei soliti primi organici tutti cheap."""
     key = os.environ.get("SERPAPI_KEY", "")
     if not key or not quota.check("serpapi"):
         return None
@@ -65,25 +94,41 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
     }.get(domain.upper(), f"amazon.{domain.lower()}")
 
     try:
-        quota.increment("serpapi")
+        # una pagina SerpAPI = ~15-22 organici = 1 credito; per pool grandi (100+)
+        # si pagina finché servono risultati. Stop a pagina vuota o quota esaurita.
+        raw: list[dict] = []
+        page = 1
         with httpx.Client(timeout=TIMEOUT) as client:
-            resp = client.get(
-                f"{SERPAPI_BASE}/search.json",
-                params={
+            while len(raw) < max_results and page <= 7:
+                if not quota.check("serpapi"):
+                    break
+                quota.increment("serpapi")
+                params = {
                     "engine": "amazon",
                     "k": query,
                     "amazon_domain": amazon_domain,
                     "api_key": key,
                     "num": max_results,
-                },
-            )
-            resp.raise_for_status()
+                    "page": page,
+                }
+                if price_range:
+                    lo, hi = price_range
+                    params["rh"] = f"p_36:{int(lo*100)}-{int(hi*100)}"
+                resp = client.get(f"{SERPAPI_BASE}/search.json", params=params)
+                resp.raise_for_status()
+                batch = resp.json().get("organic_results") or []
+                if not batch:
+                    break
+                raw.extend(batch)
+                page += 1
 
-        data = resp.json()
-        raw = data.get("organic_results") or []
-
+        seen_asins: set[str] = set()
         products = []
         for item in raw[:max_results]:
+            if item.get("asin"):
+                if item["asin"] in seen_asins:
+                    continue
+                seen_asins.add(item["asin"])
             price_val, price_str = _parse_price(item)
             asin = item.get("asin", "")
             link = item.get("link") or (f"https://{amazon_domain}/dp/{asin}" if asin else "#")
@@ -92,7 +137,7 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
             products.append(AmazonProduct(
                 title=item.get("title", ""),
                 asin=asin,
-                brand=None,
+                brand=item.get("brand") or guess_brand(item.get("title", "")),
                 price=price_val,
                 price_str=price_str,
                 stars=item.get("rating"),
@@ -107,6 +152,66 @@ def _serpapi_search(query: str, max_results: int, domain: str) -> list[AmazonPro
     except Exception as e:
         quota.decrement("serpapi")
         print(f"[SerpAPI error: {e}]")
+        return None
+
+
+_SCRAPE_UA = ("Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36")
+
+
+def _scrape_search(query: str, max_results: int, domain: str,
+                   price_range: tuple[float, float] | None = None) -> list[AmazonProduct] | None:
+    """SERP scraping diretto, zero API. Solo fallback quando la quota è finita:
+    dà ASIN/titolo/prezzo/immagine/stelle — abbastanza per un report base."""
+    import re as _rx
+    amazon_domain = {
+        "IT": "amazon.it", "DE": "amazon.de", "UK": "amazon.co.uk",
+        "FR": "amazon.fr", "ES": "amazon.es", "US": "amazon.com",
+    }.get(domain.upper(), f"amazon.{domain.lower()}")
+    params = {"k": query}
+    if price_range:
+        params["rh"] = f"p_36:{int(price_range[0]*100)}-{int(price_range[1]*100)}"
+    try:
+        r = httpx.get(f"https://www.{amazon_domain}/s", params=params,
+                      headers={"User-Agent": _SCRAPE_UA, "Accept-Language": "it-IT"},
+                      timeout=TIMEOUT, follow_redirects=True)
+        if r.status_code != 200 or "captcha" in r.text[:5000].lower():
+            return None
+        blocks = _rx.split(r'data-asin="(B0[A-Z0-9]{8})"', r.text)
+        products, seen = [], set()
+        for i in range(1, len(blocks) - 1, 2):
+            asin, chunk = blocks[i], blocks[i + 1][:20000]
+            if asin in seen or "Sponsorizzat" in chunk[:3000] or "Sponsored" in chunk[:3000]:
+                continue
+            img = _rx.search(r'<img[^>]+src="(https://m\.media-amazon\.com/images/I/[^"]+)"[^>]*alt="([^"]{15,300})"', chunk)
+            if not img:
+                continue
+            seen.add(asin)
+            pw = _rx.search(r'class="a-price-whole">([\d.,]+)', chunk)
+            pf = _rx.search(r'class="a-price-fraction">(\d+)', chunk)
+            price = None
+            if pw:
+                try:
+                    price = float(pw.group(1).replace(".", "").replace(",", "")) + (int(pf.group(1)) / 100 if pf else 0)
+                except ValueError:
+                    pass
+            st = _rx.search(r'(\d[,.]\d) su 5', chunk) or _rx.search(r'(\d[,.]\d) out of 5', chunk)
+            rv = _rx.search(r'da (\d[\d.,]*) recensioni', chunk)
+            title = img.group(2)
+            products.append(AmazonProduct(
+                title=title, asin=asin, brand=guess_brand(title),
+                price=price, price_str=f"{price:.2f} €".replace(".", ",") if price else None,
+                stars=float(st.group(1).replace(",", ".")) if st else None,
+                reviews=int(rv.group(1).replace(".", "").replace(",", "")) if rv else None,
+                thumbnail=img.group(1),
+                link=f"https://www.{amazon_domain}/dp/{asin}",
+                prime="a-icon-prime" in chunk, in_stock=True, source="scrape",
+            ))
+            if len(products) >= max_results:
+                break
+        return products or None
+    except Exception as e:
+        print(f"[scrape error: {e}]")
         return None
 
 
@@ -148,7 +253,7 @@ def _searchapi_search(query: str, max_results: int, domain: str) -> list[AmazonP
             products.append(AmazonProduct(
                 title=item.get("title", ""),
                 asin=asin,
-                brand=None,
+                brand=item.get("brand") or guess_brand(item.get("title", "")),
                 price=price_val,
                 price_str=price_str,
                 stars=item.get("rating"),
@@ -175,8 +280,11 @@ class AmazonSearcher:
         max_price: float | None = None,
         min_stars: float | None = None,
         domain: str = "IT",
+        price_range: tuple[float, float] | None = None,
     ) -> list[AmazonProduct]:
         start_time = time.time()
+        # la fascia prezzo fa parte dell'identità della ricerca (cache separata)
+        cache_query = f"{query}|band{price_range[0]}-{price_range[1]}" if price_range else query
         quota_before = {
             "serpapi": quota.used("serpapi"),
             "canopy": quota.used("canopy"),
@@ -184,7 +292,7 @@ class AmazonSearcher:
         }
 
         # 1. Check cache
-        cached = cache.get(query, domain, max_price, min_stars)
+        cached = cache.get(cache_query, domain, max_price, min_stars)
         if cached:
             products = []
             for item in cached:
@@ -214,7 +322,7 @@ class AmazonSearcher:
         source_used = None
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = {
-                executor.submit(_serpapi_search, query, max_results, domain): "serpapi",
+                executor.submit(_serpapi_search, query, max_results, domain, price_range): "serpapi",
             }
             if config_search.SEARCHAPI_ENABLED:
                 futures[executor.submit(_searchapi_search, query, max_results, domain)] = "searchapi"
@@ -228,6 +336,15 @@ class AmazonSearcher:
                     break
 
         if not products:
+            # ultima spiaggia GRATIS: GET diretto della SERP (0 crediti). Testato live:
+            # 200 senza captcha con UA mobile. Fragile per natura (HTML può cambiare,
+            # possibile rate-limit) — per questo è SOLO fallback, mai primo canale.
+            products = _scrape_search(query, max_results, domain, price_range) or []
+            if products:
+                source_used = "scrape"
+                print(f"[scrape fallback] {len(products)} prodotti (0 crediti, dati parziali)")
+
+        if not products:
             raise RuntimeError("Nessun risultato dalle API disponibili.")
 
         # 3. Apply filters
@@ -237,7 +354,7 @@ class AmazonSearcher:
             products = [p for p in products if p.stars is None or p.stars >= min_stars]
 
         # 4. Cache results
-        cache.set(query, domain, max_price, min_stars, products)
+        cache.set(cache_query, domain, max_price, min_stars, products)
 
         duration = time.time() - start_time
         quota_after = {

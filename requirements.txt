@@ -6,3 +6,4 @@ imagehash
 
 # video_review.py also needs the yt-dlp binary on PATH (not a pip import):
 #   pip install yt-dlp   (or winget/brew/apt install yt-dlp)
+flask

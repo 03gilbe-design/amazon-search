@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Loading … — amazon·search{% endblock %}
+{% block body %}
+<div class="loading-overlay">
+  <div class="loading-ring"></div>
+  <div style="text-align:center">
+    <div class="label" style="margin-bottom:6px">Search in progress</div>
+    <div style="font-size:0.68rem;color:var(--muted)" id="log-lbl">Connecting …</div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const JOB_ID = {{ job_id | tojson }};
+function poll() {
+  fetch('/status/' + JOB_ID).then(r => r.json()).then(d => {
+    const lines = d.log || [];
+    if (lines.length) document.getElementById('log-lbl').textContent = lines[lines.length-1];
+    if (d.status === 'done') {
+      window.location.href = '/report/' + JOB_ID;
+    } else if (d.status === 'error') {
+      document.getElementById('log-lbl').textContent = 'Error: ' + (d.error || 'unknown');
+    } else {
+      setTimeout(poll, 1200);
+    }
+  }).catch(() => setTimeout(poll, 2000));
+}
+poll();
+</script>
+{% endblock %}

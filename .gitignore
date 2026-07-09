@@ -14,3 +14,7 @@ heatmap_eyetrack.html
 test_buttons.html
 test_subwoofer_mock.py
 bass_quality.py
+.playwright-mcp/
+*.jpeg
+edge-profile/
+scratch_*.py
