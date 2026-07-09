@@ -1,0 +1,1 @@
+{"status": "RUNNING_INFINITE", "iteration": 250, "best_silhouette_score": 0.0939, "best_ensemble_params": {"max_features": 396, "k_kmeans": 25, "birch_th": 0.3802, "weight_text": 0.4899, "weight_price": 0.4522, "n_clusters_found": 2}}

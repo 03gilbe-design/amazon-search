@@ -95,7 +95,7 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
     stars_data = str(p.stars or 0)
 
     thumb_html = (
-        f'<img src="{thumb}" alt="" loading="lazy">'
+        f'<img src="{thumb}" alt="" loading="eager">'
         if thumb else '<div class="no-img">■</div>'
     )
 
@@ -116,7 +116,7 @@ def _card(p, idx: int, *, video_coverage: dict | None = None) -> str:
         # dedicated families section, instead of a text line — it's the same photo
         # file repeated, so stacking IS the honest way to show "N listings, 1 photo".
         stack_copies = "".join(
-            f'<img src="{thumb}" alt="" loading="lazy" style="--i:{i}">'
+            f'<img src="{thumb}" alt="" loading="eager" style="--i:{i}">'
             for i in range(min(3, len(siblings) + 1))
         )
         img_area = f'<div class="card-img card-img-stack">{stack_copies}</div>'
@@ -151,7 +151,7 @@ def _family_card(fam: dict) -> str:
         # spending screen space repeating an identical image per listing. Cheapest price
         # is the headline number; the rest is a compact list, not more images.
         cheapest_it = items[0]
-        img_html = (f'<img src="{html.escape(cheapest_it["thumbnail"] or "")}" alt="" loading="lazy">'
+        img_html = (f'<img src="{html.escape(cheapest_it["thumbnail"] or "")}" alt="" loading="eager">'
                     if cheapest_it["thumbnail"] else '<div class="no-img">■</div>')
         best_price = f'€{cheapest_it["price"]:.2f}' if cheapest_it["price"] is not None else "?"
         other_prices = ", ".join(
@@ -166,7 +166,7 @@ def _family_card(fam: dict) -> str:
         # similar but not byte-identical photos: small thumbnails clustered inside one
         # fixed-size rectangle (wraps/scrolls, never grows the card) with each price.
         thumbs = "".join(
-            f'<div class="fam-sim-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="lazy">'
+            f'<div class="fam-sim-item"><img src="{html.escape(it["thumbnail"] or "")}" alt="" loading="eager">'
             f'<div class="fam-sim-price">{("€" + format(it["price"], ".2f")) if it["price"] is not None else "?"}</div></div>'
             for it in items
         )
@@ -430,6 +430,7 @@ def generate_html(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="referrer" content="no-referrer">
 <title>{html.escape(query)}</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}

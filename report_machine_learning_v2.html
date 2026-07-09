@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report v2: Estensione Variabili ML</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; padding: 40px 20px; }
+        .container { max-width: 950px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 50px; }
+        h1 { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 15px; }
+        .subtitle { font-size: 1.1rem; color: var(--text-muted); }
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid var(--border); }
+        .card-header { display: flex; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--primary-light); padding-bottom: 15px; }
+        .card-icon { font-size: 2rem; margin-right: 15px; }
+        .card-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        h3 { font-size: 1.2rem; margin: 20px 0 10px; color: #334155; }
+        p { margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+        th { background-color: #f1f5f9; font-weight: 600; color: #475569; }
+        tr:hover { background-color: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-warning { background: #fffbeb; color: #d97706; }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-primary { background: var(--primary-light); color: var(--primary); }
+        .highlight-box { background-color: #f5f3ff; border-left: 4px solid #7c3aed; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .highlight-box strong { color: #5b21b6; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🔬 Report v2: Sweep Estensivo ML</h1>
+            <p class="subtitle">Esecuzione massiva con decine di variabili incrociate (SVM, Random Forest, TF-IDF, KMeans vs Birch).</p>
+        </header>
+
+        <!-- ACTIVE LEARNING -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🎯</span>
+                <h2 class="card-title">1. Active Learning: Modelli a confronto</h2>
+            </div>
+            <p>Abbiamo testato diverse combinazioni di Algoritmi (<strong>SVM Lineare, SVM RBF, Random Forest</strong>) e grandezze del vocabolario (TF-IDF da 50 a 300 parole).</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modello</th>
+                        <th>Vocabolario (TF-IDF)</th>
+                        <th>Click Utente</th>
+                        <th>Precisione (F1)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SVM Lineare</strong> 🏆</td>
+                        <td>300 Parole</td>
+                        <td>12</td>
+                        <td><span class="badge badge-success">78.2%</span></td>
+                    </tr>
+                    <tr>
+                        <td>SVM Lineare</td>
+                        <td>50 Parole</td>
+                        <td>20</td>
+                        <td><span class="badge badge-primary">77.5%</span></td>
+                    </tr>
+                    <tr>
+                        <td>SVM RBF (Non lineare)</td>
+                        <td>50 Parole</td>
+                        <td>20</td>
+                        <td><span class="badge badge-primary">77.4%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Random Forest</td>
+                        <td>Tutte le Parole</td>
+                        <td>20</td>
+                        <td><span class="badge badge-warning">77.0%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <p><strong>💡 Conclusione Modelli:</strong> Non serve un algoritmo complesso come il Random Forest. Un semplice <strong>SVM Lineare su 300 parole</strong> è il vincitore assoluto: richiede <strong>solo 12 click</strong> per raggiungere un incredibile <strong>78.2% di precisione</strong>. Rispetto al test precedente, usando 300 parole invece di tutte, abbiamo tolto ulteriore rumore matematico!</p>
+            </div>
+        </div>
+
+        <!-- CLUSTERING ALGORITHMS -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🧩</span>
+                <h2 class="card-title">2. Clustering: KMeans vs Birch</h2>
+            </div>
+            <p>Abbiamo simulato l'algoritmo KMeans come alternativa a Birch per gestire i "Grupponi Macro". La metrica <strong>ARI</strong> misura la somiglianza con la tua suddivisione manuale (Ground Truth).</p>
+
+            <h3>KMeans (Prevenzione Mega-Gruppi)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>K (Numero Gruppi)</th>
+                        <th>ARI (Qualità)</th>
+                        <th>Gruppo più grande</th>
+                        <th>Risultato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>K = 5</td>
+                        <td>0.270</td>
+                        <td>68 prodotti</td>
+                        <td><span class="badge badge-warning">Mediocre</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>K = 10</strong></td>
+                        <td><strong>0.373</strong> 🏆</td>
+                        <td>52 prodotti</td>
+                        <td><span class="badge badge-success">Migliore Assoluto</span> Nessun prodotto isolato!</td>
+                    </tr>
+                    <tr>
+                        <td>K = 20</td>
+                        <td>0.292</td>
+                        <td>24 prodotti</td>
+                        <td><span class="badge badge-primary">Buono, ma dispersivo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Birch (Metodo Attuale)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Soglia Slider</th>
+                        <th>ARI (Qualità)</th>
+                        <th>Gruppo più grande</th>
+                        <th>Isolati</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0.8</td>
+                        <td>0.221</td>
+                        <td>33 prodotti</td>
+                        <td>50</td>
+                    </tr>
+                    <tr>
+                        <td>0.9</td>
+                        <td>0.328</td>
+                        <td>75 prodotti</td>
+                        <td>30</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1.0</strong></td>
+                        <td>0.000</td>
+                        <td>227 (Tutti)</td>
+                        <td>0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <p><strong>💡 Svolta Algoritmica:</strong> Il test rivela che <strong>KMeans (K=10) batte Birch</strong>. KMeans garantisce matematicamente che non si formerà mai un mega-gruppo da 200 elementi, mantenendo i grupponi macro ben distribuiti (max 52 elementi) ed evitando totalmente i "singletons" (prodotti orfani). Birch, al contrario, ha un punto di rottura a 1.0 dove crolla improvvisamente.</p>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

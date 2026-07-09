@@ -1,0 +1,3646 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Mega Grid Search</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; padding: 40px; margin: 0; }
+        h1 { color: #0f172a; margin-bottom: 10px; }
+        .summary { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; border-left: 5px solid #3b82f6; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { text-align: left; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f8fafc; }
+        .top-rank { background-color: #ecfdf5; border-left: 4px solid #10b981; }
+        .badge { background: #e0e7ff; color: #4f46e5; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        .ari-score { font-weight: 800; color: #059669; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Mega Grid Search (100+ Test)</h1>
+    <div class="summary">
+        <p><strong>Totale Combinazioni Generate ed Eseguite:</strong> 360</p>
+        <p><strong>Tempo di Esecuzione Totale:</strong> 3.84 secondi (Circa 10.7 ms per iterazione)</p>
+        <p>I test includono l'incrocio di: 4 vocabolari testuali X 18 algoritmi di base X 5 strategie di Colla Visiva post-clustering.</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Base Dati (Testo)</th>
+                <th>Algoritmo Macro</th>
+                <th>Colla Visiva (Post-Aggregazione)</th>
+                <th>Qualità (ARI Score)</th>
+                <th>Gruppi Generati</th>
+                <th>Tempo</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr class="top-rank">
+                <td>#1</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">39.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#2</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">39.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#3</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">39.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#4</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">39.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#5</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">39.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#6</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">36.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#7</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">36.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#8</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">36.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#9</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">36.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#10</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">36.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#11</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">36.2%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#12</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">36.2%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#13</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">36.2%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#14</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">36.2%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="top-rank">
+                <td>#15</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">36.2%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#16</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">34.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#17</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">34.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#18</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">34.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#19</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">34.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#20</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">34.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#21</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">33.8%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#22</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">33.8%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#23</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">33.8%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#24</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">33.8%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#25</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">33.8%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#26</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">32.8%</td>
+                <td>55</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#27</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">32.8%</td>
+                <td>55</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#28</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">32.8%</td>
+                <td>55</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#29</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">32.8%</td>
+                <td>55</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#30</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">32.8%</td>
+                <td>55</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#31</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">32.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#32</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">32.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#33</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">32.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#34</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">32.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#35</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">32.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#36</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">31.5%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#37</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">31.5%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#38</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">31.5%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#39</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">31.5%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#40</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">31.5%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#41</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">30.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#42</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">30.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#43</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">30.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#44</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">30.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#45</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">30.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#46</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">30.2%</td>
+                <td>44</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#47</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">30.2%</td>
+                <td>44</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#48</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">30.2%</td>
+                <td>44</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#49</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">30.2%</td>
+                <td>44</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#50</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">30.2%</td>
+                <td>44</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#51</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">29.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#52</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#53</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#54</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#55</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#56</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">29.3%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#57</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#58</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#59</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#60</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">29.3%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#61</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">29.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">161 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#62</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">29.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#63</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">29.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#64</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">29.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#65</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">29.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#66</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">29.1%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#67</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">29.1%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#68</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">29.1%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#69</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">29.1%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#70</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">29.1%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#71</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">28.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#72</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">28.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#73</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">28.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#74</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">28.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#75</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">28.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#76</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">28.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#77</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">28.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#78</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">28.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#79</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">28.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#80</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">28.7%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#81</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">27.2%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#82</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">27.2%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#83</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">27.2%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#84</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">27.2%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#85</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">27.2%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#86</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">27.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#87</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">27.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#88</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">27.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#89</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">27.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#90</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">27.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#91</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">26.8%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#92</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">26.8%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#93</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">26.8%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#94</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">26.8%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#95</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">26.8%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#96</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">26.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#97</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">26.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#98</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">26.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">14 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#99</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">26.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#100</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=10)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">26.3%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#101</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">26.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#102</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">26.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#103</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">26.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#104</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">26.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#105</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">26.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#106</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">25.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#107</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">25.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#108</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">25.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#109</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">25.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#110</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=15)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">25.1%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#111</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">24.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#112</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">24.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#113</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">24.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#114</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">24.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#115</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">24.7%</td>
+                <td>15</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#116</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">24.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#117</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">24.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#118</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">24.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#119</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">24.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#120</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">24.2%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#121</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">23.5%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#122</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">23.5%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#123</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">23.5%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#124</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">23.5%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#125</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (ward)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">23.5%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#126</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">22.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#127</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">22.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#128</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">22.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#129</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">22.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">18 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#130</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=20)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">22.8%</td>
+                <td>20</td>
+                <td style="color:#64748b; font-size:0.9rem;">14 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#131</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">22.7%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#132</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">22.7%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#133</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">22.7%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#134</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">22.7%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#135</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">22.7%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#136</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">22.2%</td>
+                <td>79</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#137</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">22.2%</td>
+                <td>79</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#138</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">22.2%</td>
+                <td>79</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#139</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">22.2%</td>
+                <td>79</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#140</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">22.2%</td>
+                <td>79</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#141</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">22.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#142</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">22.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#143</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">22.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#144</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">22.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#145</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">22.0%</td>
+                <td>5</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#146</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">21.1%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#147</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#148</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#149</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#150</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#151</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">21.1%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#152</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#153</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#154</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#155</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">21.1%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#156</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">20.8%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">18 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#157</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">20.8%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#158</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">20.8%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">15 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#159</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">20.8%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#160</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">20.8%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#161</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">20.4%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#162</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">20.4%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#163</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">20.4%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#164</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">20.4%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#165</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=30)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">20.4%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#166</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">17.7%</td>
+                <td>52</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#167</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">17.7%</td>
+                <td>52</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#168</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">17.7%</td>
+                <td>52</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#169</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">17.7%</td>
+                <td>52</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#170</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">17.7%</td>
+                <td>52</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#171</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">17.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#172</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#173</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#174</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#175</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#176</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">17.0%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#177</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#178</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#179</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#180</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#181</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">17.0%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#182</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#183</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#184</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#185</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">17.0%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#186</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">16.5%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#187</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">16.5%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#188</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">16.5%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#189</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">16.5%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#190</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">16.5%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#191</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">16.3%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#192</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">16.3%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#193</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">16.3%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#194</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">16.3%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#195</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">16.3%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#196</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">15.8%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#197</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">15.8%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#198</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">15.8%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#199</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">15.8%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#200</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">15.8%</td>
+                <td>90</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#201</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">13.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#202</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">13.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">21 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#203</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">13.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#204</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">13.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#205</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">13.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#206</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#207</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#208</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#209</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#210</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#211</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#212</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#213</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#214</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#215</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">13.4%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#216</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">12.8%</td>
+                <td>131</td>
+                <td style="color:#64748b; font-size:0.9rem;">19 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#217</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">12.8%</td>
+                <td>131</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#218</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">12.8%</td>
+                <td>131</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#219</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">12.8%</td>
+                <td>131</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#220</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.8)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">12.8%</td>
+                <td>131</td>
+                <td style="color:#64748b; font-size:0.9rem;">23 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#221</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">12.6%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#222</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">12.6%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#223</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">12.6%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#224</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">12.6%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#225</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Agglomerative (average)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">12.6%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#226</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">9.4%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">1426 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#227</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">9.4%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#228</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">9.4%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#229</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">9.4%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#230</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>KMeans (K=2)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">9.4%</td>
+                <td>2</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#231</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">8.9%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#232</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">8.9%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#233</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">8.9%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#234</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">8.9%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#235</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">8.9%</td>
+                <td>31</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#236</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">7.3%</td>
+                <td>122</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#237</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">7.3%</td>
+                <td>122</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#238</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">7.3%</td>
+                <td>122</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#239</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">7.3%</td>
+                <td>122</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#240</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">7.3%</td>
+                <td>122</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#241</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">7.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#242</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">7.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#243</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">7.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#244</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">7.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#245</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Agglomerative (complete)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">7.0%</td>
+                <td>10</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#246</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">6.8%</td>
+                <td>135</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#247</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">6.8%</td>
+                <td>135</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#248</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">6.8%</td>
+                <td>135</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#249</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">6.8%</td>
+                <td>135</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#250</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">6.8%</td>
+                <td>135</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#251</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">4.9%</td>
+                <td>150</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#252</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>150</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#253</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>150</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#254</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>150</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#255</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>150</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#256</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">4.9%</td>
+                <td>161</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#257</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>161</td>
+                <td style="color:#64748b; font-size:0.9rem;">15 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#258</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>161</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#259</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>161</td>
+                <td style="color:#64748b; font-size:0.9rem;">20 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#260</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.6)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">4.9%</td>
+                <td>161</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#261</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">3.7%</td>
+                <td>169</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#262</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">3.7%</td>
+                <td>169</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#263</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">3.7%</td>
+                <td>169</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#264</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">3.7%</td>
+                <td>169</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#265</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">3.7%</td>
+                <td>169</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#266</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">3.6%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#267</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">3.6%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#268</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">3.6%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#269</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">3.6%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#270</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">3.6%</td>
+                <td>30</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#271</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">2.7%</td>
+                <td>188</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#272</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">2.7%</td>
+                <td>188</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#273</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">2.7%</td>
+                <td>188</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#274</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">2.7%</td>
+                <td>188</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#275</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">2.7%</td>
+                <td>188</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#276</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">2.2%</td>
+                <td>190</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#277</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">2.2%</td>
+                <td>190</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#278</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">2.2%</td>
+                <td>190</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#279</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">2.2%</td>
+                <td>190</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#280</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">2.2%</td>
+                <td>190</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#281</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">1.2%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#282</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">1.2%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">20 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#283</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">1.2%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#284</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">1.2%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">16 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#285</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.4)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">1.2%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">13 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#286</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">1.1%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">14 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#287</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">1.1%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#288</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">1.1%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#289</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">1.1%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#290</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">1.1%</td>
+                <td>210</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#291</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">0.7%</td>
+                <td>217</td>
+                <td style="color:#64748b; font-size:0.9rem;">19 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#292</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">0.7%</td>
+                <td>217</td>
+                <td style="color:#64748b; font-size:0.9rem;">11 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#293</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">0.7%</td>
+                <td>217</td>
+                <td style="color:#64748b; font-size:0.9rem;">29 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#294</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">0.7%</td>
+                <td>217</td>
+                <td style="color:#64748b; font-size:0.9rem;">12 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#295</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>Birch (Soglia 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">0.7%</td>
+                <td>217</td>
+                <td style="color:#64748b; font-size:0.9rem;">40 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#296</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">0.4%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#297</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">0.4%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#298</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">0.4%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#299</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">0.4%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#300</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">0.4%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#301</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">0.2%</td>
+                <td>26</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#302</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">0.2%</td>
+                <td>26</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#303</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">0.2%</td>
+                <td>26</td>
+                <td style="color:#64748b; font-size:0.9rem;">1 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#304</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">0.2%</td>
+                <td>26</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#305</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">0.2%</td>
+                <td>26</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#306</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">0.0%</td>
+                <td>1</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#307</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">0.0%</td>
+                <td>1</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#308</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">0.0%</td>
+                <td>1</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#309</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">0.0%</td>
+                <td>1</td>
+                <td style="color:#64748b; font-size:0.9rem;">4 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#310</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>Birch (Soglia 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">0.0%</td>
+                <td>1</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#311</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-0.0%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#312</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-0.0%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#313</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-0.0%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#314</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-0.0%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#315</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-0.0%</td>
+                <td>3</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#316</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-0.5%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#317</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-0.5%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#318</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-0.5%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#319</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-0.5%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#320</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-0.5%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#321</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-0.6%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#322</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-0.6%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">10 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#323</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-0.6%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#324</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-0.6%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#325</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-0.6%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#326</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-0.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#327</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-0.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#328</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-0.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#329</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-0.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#330</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-0.9%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#331</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-1.2%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#332</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#333</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#334</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#335</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.9)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>23</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#336</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-1.2%</td>
+                <td>21</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#337</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>21</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#338</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>21</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#339</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>21</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#340</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.5)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-1.2%</td>
+                <td>21</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#341</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-1.3%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#342</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-1.3%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#343</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-1.3%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#344</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-1.3%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">7 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#345</td>
+                <td><span class="badge">TFIDF-Illimitato</span></td>
+                <td><strong>DBSCAN (Eps 0.7)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-1.3%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">6 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#346</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-1.8%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">9 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#347</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-1.8%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#348</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-1.8%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#349</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-1.8%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#350</td>
+                <td><span class="badge">TFIDF-Top300</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-1.8%</td>
+                <td>8</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#351</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-1.9%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#352</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-1.9%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">5 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#353</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-1.9%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">3 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#354</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-1.9%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">2 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#355</td>
+                <td><span class="badge">TFIDF-Top50</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-1.9%</td>
+                <td>14</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#356</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Nessuna</td>
+                <td class="ari-score">-2.3%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#357</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 20 pt.</td>
+                <td class="ari-score">-2.3%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">8 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#358</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 40 pt.</td>
+                <td class="ari-score">-2.3%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#359</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 60 pt.</td>
+                <td class="ari-score">-2.3%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+            <tr class="">
+                <td>#360</td>
+                <td><span class="badge">TFIDF-Top100</span></td>
+                <td><strong>DBSCAN (Eps 0.3)</strong></td>
+                <td>Colla SIFT > 80 pt.</td>
+                <td class="ari-score">-2.3%</td>
+                <td>12</td>
+                <td style="color:#64748b; font-size:0.9rem;">0 ms</td>
+            </tr>
+
+        </tbody>
+    </table>
+</body>
+</html>

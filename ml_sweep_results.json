@@ -1,0 +1,396 @@
+{
+  "active_learning": [
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-Linear",
+      "clicks": 4,
+      "f1": 0.6116865194780698
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-Linear",
+      "clicks": 8,
+      "f1": 0.6476226134480908
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-Linear",
+      "clicks": 12,
+      "f1": 0.7370898111626968
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-Linear",
+      "clicks": 16,
+      "f1": 0.7729653203039715
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-Linear",
+      "clicks": 20,
+      "f1": 0.7751328379250682
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-RBF",
+      "clicks": 4,
+      "f1": 0.6451346230181704
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-RBF",
+      "clicks": 8,
+      "f1": 0.5564918899893538
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-RBF",
+      "clicks": 12,
+      "f1": 0.7510247768881573
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-RBF",
+      "clicks": 16,
+      "f1": 0.7591201351446639
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "SVM-RBF",
+      "clicks": 20,
+      "f1": 0.7741474986492476
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "RandomForest",
+      "clicks": 4,
+      "f1": 0.6247205065996659
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "RandomForest",
+      "clicks": 8,
+      "f1": 0.6034688190810338
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "RandomForest",
+      "clicks": 12,
+      "f1": 0.7052654419069977
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "RandomForest",
+      "clicks": 16,
+      "f1": 0.7398264119250635
+    },
+    {
+      "vectorizer": "TFIDF-50",
+      "model": "RandomForest",
+      "clicks": 20,
+      "f1": 0.7408958238422997
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-Linear",
+      "clicks": 4,
+      "f1": 0.6869011050396943
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-Linear",
+      "clicks": 8,
+      "f1": 0.6295591714343571
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-Linear",
+      "clicks": 12,
+      "f1": 0.7823999775021108
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-Linear",
+      "clicks": 16,
+      "f1": 0.7671609995058879
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-Linear",
+      "clicks": 20,
+      "f1": 0.7646131980028426
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-RBF",
+      "clicks": 4,
+      "f1": 0.623544781747612
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-RBF",
+      "clicks": 8,
+      "f1": 0.24864751755384623
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-RBF",
+      "clicks": 12,
+      "f1": 0.5920551024199336
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-RBF",
+      "clicks": 16,
+      "f1": 0.48559169601111307
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "SVM-RBF",
+      "clicks": 20,
+      "f1": 0.6841109418225276
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "RandomForest",
+      "clicks": 4,
+      "f1": 0.6276358392619217
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "RandomForest",
+      "clicks": 8,
+      "f1": 0.5498088442280091
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "RandomForest",
+      "clicks": 12,
+      "f1": 0.6375205287809855
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "RandomForest",
+      "clicks": 16,
+      "f1": 0.7035366696006543
+    },
+    {
+      "vectorizer": "TFIDF-300",
+      "model": "RandomForest",
+      "clicks": 20,
+      "f1": 0.7469247633970368
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-Linear",
+      "clicks": 4,
+      "f1": 0.6246638359452354
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-Linear",
+      "clicks": 8,
+      "f1": 0.5046207534461508
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-Linear",
+      "clicks": 12,
+      "f1": 0.6549049605127256
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-Linear",
+      "clicks": 16,
+      "f1": 0.6890792246433952
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-Linear",
+      "clicks": 20,
+      "f1": 0.7198385837824329
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-RBF",
+      "clicks": 4,
+      "f1": 0.6136921025398765
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-RBF",
+      "clicks": 8,
+      "f1": 0.17916387857664431
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-RBF",
+      "clicks": 12,
+      "f1": 0.5201781808462663
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-RBF",
+      "clicks": 16,
+      "f1": 0.30582014420266607
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "SVM-RBF",
+      "clicks": 20,
+      "f1": 0.5119928123650419
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "RandomForest",
+      "clicks": 4,
+      "f1": 0.5900396107070804
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "RandomForest",
+      "clicks": 8,
+      "f1": 0.5203448488442908
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "RandomForest",
+      "clicks": 12,
+      "f1": 0.6742950415318286
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "RandomForest",
+      "clicks": 16,
+      "f1": 0.7605852476941138
+    },
+    {
+      "vectorizer": "TFIDF-All",
+      "model": "RandomForest",
+      "clicks": 20,
+      "f1": 0.7700752104078749
+    }
+  ],
+  "clustering": [
+    {
+      "algo": "KMeans",
+      "param": "K=2",
+      "clusters": 2,
+      "ari": 0.09224522129147084,
+      "max_group": 185,
+      "singletons": 0
+    },
+    {
+      "algo": "KMeans",
+      "param": "K=5",
+      "clusters": 5,
+      "ari": 0.27019561481357934,
+      "max_group": 68,
+      "singletons": 0
+    },
+    {
+      "algo": "KMeans",
+      "param": "K=10",
+      "clusters": 10,
+      "ari": 0.3735715259413011,
+      "max_group": 52,
+      "singletons": 0
+    },
+    {
+      "algo": "KMeans",
+      "param": "K=20",
+      "clusters": 20,
+      "ari": 0.2929545232136883,
+      "max_group": 24,
+      "singletons": 0
+    },
+    {
+      "algo": "KMeans",
+      "param": "K=30",
+      "clusters": 30,
+      "ari": 0.2716353799418059,
+      "max_group": 28,
+      "singletons": 1
+    },
+    {
+      "algo": "KMeans",
+      "param": "K=50",
+      "clusters": 50,
+      "ari": 0.17247636845994854,
+      "max_group": 15,
+      "singletons": 2
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.2",
+      "clusters": 215,
+      "ari": 0.007732248198793794,
+      "max_group": 3,
+      "singletons": 204
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.3",
+      "clusters": 210,
+      "ari": 0.01128347473527701,
+      "max_group": 3,
+      "singletons": 195
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.4",
+      "clusters": 188,
+      "ari": 0.02712358371738744,
+      "max_group": 5,
+      "singletons": 160
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.5",
+      "clusters": 153,
+      "ari": 0.04488792830016501,
+      "max_group": 6,
+      "singletons": 104
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.6",
+      "clusters": 135,
+      "ari": 0.06781337591419151,
+      "max_group": 7,
+      "singletons": 89
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.7",
+      "clusters": 110,
+      "ari": 0.1516626705493159,
+      "max_group": 19,
+      "singletons": 70
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.8",
+      "clusters": 79,
+      "ari": 0.22179519635835285,
+      "max_group": 33,
+      "singletons": 50
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=0.9",
+      "clusters": 55,
+      "ari": 0.3283651076905286,
+      "max_group": 75,
+      "singletons": 30
+    },
+    {
+      "algo": "Birch",
+      "param": "Thresh=1.0",
+      "clusters": 1,
+      "ari": 0.0,
+      "max_group": 227,
+      "singletons": 0
+    }
+  ]
+}

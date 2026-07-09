@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report: Test Deep Learning & Scraping</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #3b82f6;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 15px;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin: 20px 0 10px;
+            color: #334155;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Tabelle */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-warning { background: #fffbeb; color: #d97706; }
+        .badge-success { background: var(--success-light); color: var(--success); }
+
+        .highlight-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📊 Report Analisi Machine Learning</h1>
+            <p class="subtitle">Risultati dei test in modalità DEEP su Active Learning, Clustering e Parità di Scraping.</p>
+        </header>
+
+        <!-- SEZIONE 1: ACTIVE LEARNING -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🧠</span>
+                <h2 class="card-title">1. Active Learning (Filtro Anti-Rumore)</h2>
+            </div>
+            <p>Abbiamo testato quanti "suggerimenti" manuali (feedback) servono all'algoritmo per capire cosa eliminare e cosa tenere.</p>
+            
+            <h3>Test A: Tenere SOLO i Morbidi (vs tutto il resto)</h3>
+            <p>Selezionando manualmente i prodotti morbidi e dicendo all'algoritmo di scartare smartwatch, cuscini, ecc.</p>
+            <ul>
+                <li><strong>4 click manuali:</strong> Precisione 11%</li>
+                <li><strong>8 click manuali:</strong> Precisione 30%</li>
+                <li><strong>16 click manuali:</strong> Precisione 42% (Massimo)</li>
+            </ul>
+            <p><em>Risultato:</em> L'algoritmo fa estrema fatica. Per un computer, la differenza testuale tra "collare morbido" e "cuscino morbido da viaggio" è quasi invisibile.</p>
+
+            <h3>Test B: Tenere TUTTO l'utile (Morbidi + Rigidi) vs Rumore Totale</h3>
+            <p>Insegniamo all'algoritmo a riconoscere un collare cervicale medico (qualsiasi tipo) scartando oggetti fuori contesto.</p>
+            <ul>
+                <li><strong>2 click manuali:</strong> Precisione 62%</li>
+                <li><strong>6 click manuali:</strong> Precisione 29% (Assestamento iniziale)</li>
+                <li><strong>12 click manuali:</strong> Precisione 66%</li>
+                <li><strong>14 click manuali:</strong> Precisione 73% (Picco di apprendimento)</li>
+            </ul>
+            
+            <div class="highlight-box">
+                <p><strong>💡 Conclusione UX:</strong> Chiedere all'utente di <strong>eliminare a mano 5-10 prodotti di rumore</strong> e confermare 5 prodotti "utili" è sufficiente per addestrare un modello on-the-fly che pulisca automaticamente il restante 73% dell'intero dataset.</p>
+            </div>
+        </div>
+
+        <!-- SEZIONE 2: CLUSTERING -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🗂️</span>
+                <h2 class="card-title">2. Analisi Clustering (Mega-Gruppi vs Divisi)</h2>
+            </div>
+            <p>Abbiamo simulato l'algoritmo BIRCH spostando lo Slider (Soglia) in background per capire matematicamente quando tutto collassa in un mega-gruppo o si divide troppo.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Posizione Slider</th>
+                        <th>N° di Gruppi Generati</th>
+                        <th>Gruppo più grande</th>
+                        <th>Valutazione</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>0.4</strong></td>
+                        <td>210 gruppi</td>
+                        <td>Max 4 prodotti</td>
+                        <td><span class="badge badge-danger">Troppo Frammentato</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.6</strong></td>
+                        <td>161 gruppi</td>
+                        <td>Max 6 prodotti</td>
+                        <td><span class="badge badge-warning">Medio</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.8</strong></td>
+                        <td>131 gruppi</td>
+                        <td>Max 15 prodotti</td>
+                        <td><span class="badge badge-success">Ideale (Bilanciato)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>1.0 in poi</strong></td>
+                        <td>1 MEGA-GRUPPO</td>
+                        <td>Tutti i 227 prodotti</td>
+                        <td><span class="badge badge-danger">Collasso Matematico</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <p><strong>💡 Conclusione UX:</strong> I testi convertiti in TF-IDF hanno una distanza matematica massima fissa. Appena lo slider supera quota <strong>0.9</strong>, la matematica considera "vicino" l'intero universo delle parole e collassa. Nell'app dovremmo <strong>limitare lo slider a 0.8 / 0.9 massimo</strong> per impedire fisicamente all'utente di generare "un mega gruppo con tutto".</p>
+            </div>
+        </div>
+
+        <!-- SEZIONE 3: SCRAPING -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🕷️</span>
+                <h2 class="card-title">3. Parità di Scraping (Online vs Offline)</h2>
+            </div>
+            <p>Confronto tra le API live e il dataset caricato localmente.</p>
+            
+            <ul>
+                <li><strong>Dataset Offline in memoria:</strong> 229 prodotti (molto profondo).</li>
+                <li><strong>Singola chiamata API Live (Online):</strong> ~84 prodotti estratti.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p><strong>💡 Conclusione tecnica:</strong> Il sistema offline attuale equivale ad uno scraping profondo che ha "sfogliato" almeno 4-5 pagine di Amazon consecutive in background. Una ricerca "Live" a freddo raccoglie solo le prime 2 pagine, lasciando indietro la coda lunga.</p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
