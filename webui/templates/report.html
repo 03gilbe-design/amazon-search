@@ -353,9 +353,33 @@
   </div>
 
   {% else %}
-  <!-- Multiple categories -->
+  <!-- Chip categorie: X = quella categoria si dissolve (negative sampling a click) -->
+  <div class="cat-chipbar" id="cat-chipbar">
+    {% for cat in cat_list %}
+    <span class="cat-chip" data-cat="{{ loop.index0 }}" style="border-color:{{ cat.color }}66">
+      <span class="cat-dot" style="background:{{ cat.color }}"></span>
+      {{ cat.name[:26] }} <b>{{ cat.prods|length }}</b>
+      <button class="cat-chip-x" title="Nascondi questa categoria" aria-label="Nascondi {{ cat.name }}">&times;</button>
+    </span>
+    {% endfor %}
+    <button id="chip-reset" class="cat-chip" style="display:none;border-style:dashed">mostra tutte</button>
+  </div>
+  <style>
+  .cat-chipbar { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 20px;
+    position:sticky; top:0; z-index:50; padding:10px 0; background:inherit; }
+  .cat-chip { display:inline-flex; align-items:center; gap:7px; font-size:0.74rem;
+    padding:6px 8px 6px 12px; border:1.5px solid var(--border); border-radius:99px;
+    background:rgba(255,255,255,.06); cursor:default; transition:opacity .45s, transform .45s, filter .45s; }
+  .cat-chip b { opacity:.65; font-weight:600 }
+  .cat-chip-x { border:none; background:none; color:inherit; opacity:.55; font-size:0.95rem;
+    cursor:pointer; padding:0 2px; line-height:1 }
+  .cat-chip-x:hover { opacity:1; color:#ef4444 }
+  /* dissolve "noise purge": si sfuma e si fonde col fondo, poi collassa */
+  .cat-dissolve { opacity:0; transform:scale(.92); filter:blur(2px); pointer-events:none }
+  .cat-section, .cat-chip { transition:opacity .45s, transform .45s, filter .45s }
+  </style>
   {% for cat in cat_list %}
-  <section class="cat-section">
+  <section class="cat-section" data-cat="{{ loop.index0 }}">
     <div class="cat-header" style="border-color:{{ cat.color }};color:{{ cat.color }}">
       <span class="cat-dot" style="background:{{ cat.color }}"></span>
       <span class="cat-name" style="color:{{ cat.color }}">{{ cat.name }}</span>
@@ -488,6 +512,33 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+// chip categorie: X dissolve la sezione; scelte ricordate per job in localStorage
+(function() {
+  const KEY = 'hidden_cats_' + (window.JOB_ID || location.pathname);
+  const hidden = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+  const apply = (idx, instant) => {
+    document.querySelectorAll('[data-cat="' + idx + '"]').forEach(el => {
+      if (instant) { el.style.display = 'none'; }
+      else {
+        el.classList.add('cat-dissolve');
+        setTimeout(() => { el.style.display = 'none'; }, 460);
+      }
+    });
+    document.getElementById('chip-reset').style.display = 'inline-flex';
+  };
+  hidden.forEach(i => apply(i, true));
+  document.querySelectorAll('.cat-chip-x').forEach(btn => btn.onclick = e => {
+    const idx = e.target.closest('.cat-chip').dataset.cat;
+    hidden.add(idx);
+    localStorage.setItem(KEY, JSON.stringify([...hidden]));
+    apply(idx, false);
+  });
+  const reset = document.getElementById('chip-reset');
+  if (reset) reset.onclick = () => { localStorage.removeItem(KEY); location.reload(); };
+})();
+</script>
+
 <script>
 // Refine search
 document.getElementById('refine-btn').addEventListener('click', () => {
