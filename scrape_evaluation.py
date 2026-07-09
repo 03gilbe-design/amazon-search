@@ -3,9 +3,9 @@ import os
 import json
 from pathlib import Path
 
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui")
+sys.path.append(rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui"))
 from app import JOBS, _build_dataset_job
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search")
+sys.path.append(rstr(Path.home() / "amazon_search"))
 from amazon_search.searcher import AmazonSearcher
 
 def run_scraping_test():

@@ -13,7 +13,7 @@ from sklearn.metrics import adjusted_rand_score
 from collections import defaultdict
 from sklearn.preprocessing import MinMaxScaler
 
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui")
+sys.path.append(rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui"))
 from app import JOBS, _build_dataset_job, _load_learned
 
 # --- Inizializzazione Globale ---

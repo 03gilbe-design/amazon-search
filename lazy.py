@@ -1,5 +1,6 @@
+from pathlib import Path
 import re
-path = r'C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui\templates\categorize.html'
+path = rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui", "templates", "categorize.html")
 text = open(path, 'r', encoding='utf-8').read()
 
 text = re.sub(r'<img (?![^>]*loading="lazy")', '<img loading="lazy" ', text)

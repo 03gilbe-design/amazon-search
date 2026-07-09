@@ -105,7 +105,7 @@ as real sections in the report (same-photo families, feature-fit chips, a collap
 list) — not hidden behind a badge. `montage.py` and `video_review.py` stay opt-in side tools
 (`--montage` writes a PNG for manual review; video claims need a separate `video_review` run,
 too slow/API-hungry to be automatic) — recovered and generalized from real product research
-(anti-snoring collars, smart rings) where text-only classification measured 53% precision
+(cervical collars, smart rings) where text-only classification measured 53% precision
 against a manually-labeled set (see `dedup.py`/`montage.py` docstrings — that number is one
 measured test on one product category, not a guarantee).
 

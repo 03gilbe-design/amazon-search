@@ -55,14 +55,14 @@ def get_inliers(img1_path, img2_path):
 def main():
     print("Avvio TEST INTENSIVO NOTTURNO: Tuning Image Detector (SIFT)")
     
-    downloads = Path(r"C:\Users\Gilberto Bizzo\Downloads")
+    downloads = Path(rstr(Path.home() / "Downloads"))
     test_images = [
         downloads / "immagine con coso O.jpg",
         downloads / "immagine con coso X.jpg",
         downloads / "immaagine con coso X (1).webp",
         downloads / "immaagine con coso Y.webp",
         downloads / "immaagine con coso Z.webp",
-        Path(r"C:\Users\Gilberto Bizzo\.claude\jobs\91d6642c\tmp\cosoO_amazon.jpg")
+        Path(rstr(Path.home() / ".claude", "jobs", "91d6642c", "tmp", "cosoO_amazon.jpg"))
     ]
     test_images = [p for p in test_images if p.exists()]
     print(f"Trovate {len(test_images)} immagini test ('coso').")

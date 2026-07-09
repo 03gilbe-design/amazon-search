@@ -7,7 +7,7 @@ import time
 import random
 import re
 
-dataset_file = Path("C:/Users/Gilberto Bizzo/.amazon_search_offline.json")
+dataset_file = Path(str(Path.home() / ".amazon_search_offline.json"))
 try:
     with open(dataset_file, 'r', encoding='utf-8') as f:
         data = json.load(f)

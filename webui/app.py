@@ -143,24 +143,27 @@ class _P:
         self.family_id = d.get("family_id")
 
 
-# dataset = solo prodotti sonno-correlati: la cache su disco è condivisa con
-# progetti non-sonno (subwoofer auto, occhiaie, smart ring generico...) — quel
-# rumore va escluso esplicitamente, un match debole non basta.
-_SLEEP_INCLUDE = ("sonno", "dormire", "notte", "sleep", "cervical", "collare",
-                  "neck", "russamento", "snor", "cpap", "apnea", "mascherina",
-                  "eye mask", "cuscino", "pillow", "guanciale", "materasso",
-                  "trazione", "anti-russ")
-_SLEEP_EXCLUDE = ("subwoofer", "altoparlante", "cassa acustica", "bluetooth speaker",
-                  "minoxidil", "occhiaie", "eye cream", "crema",
-                  "tongue", "lingua", "bite", "paradenti", "mouthpiece", "bocchino",
-                  "smart ring", "anello", "smartring", "oura")
+# topic filter for the "dataset" labeling pool: keyword lists live in a local
+# gitignored file (private/topic_keywords.json) so the repo stays generic —
+# without that file, no filtering happens (every cached product is included).
+def _topic_keywords() -> dict:
+    try:
+        p = Path(__file__).resolve().parent.parent / "private" / "topic_keywords.json"
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {"include": [], "exclude": []}
+
+
+_TOPIC = _topic_keywords()
+_SLEEP_INCLUDE = tuple(_TOPIC.get("include", []))
+_SLEEP_EXCLUDE = tuple(_TOPIC.get("exclude", []))
 
 
 def _is_sleep_related(title: str) -> bool:
     t = (title or "").lower()
     if any(kw in t for kw in _SLEEP_EXCLUDE):
         return False
-    return any(kw in t for kw in _SLEEP_INCLUDE)
+    return not _SLEEP_INCLUDE or any(kw in t for kw in _SLEEP_INCLUDE)
 
 
 def _async_calculate_phash_families(products):
@@ -348,7 +351,7 @@ def export_duplicates_api():
     # Run the export script
     script_path = Path(__file__).parent.parent.parent / "export_duplicates.py"
     if not script_path.exists():
-        script_path = Path(r"C:\Users\Gilberto Bizzo\amazon_search\export_duplicates.py")
+        script_path = Path(rstr(Path.home() / "amazon_search", "export_duplicates.py"))
         
     if script_path.exists():
         try:

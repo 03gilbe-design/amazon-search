@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 # Aggiungi cartella al path
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui")
+sys.path.append(rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui"))
 
 from app import JOBS, _build_dataset_job, _precalculate_offline
 

@@ -12,7 +12,7 @@ from sklearn.metrics import silhouette_score
 import sys
 
 # Per caricare il nuovo dataset
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui")
+sys.path.append(rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui"))
 from app import JOBS, _build_dataset_job, _load_learned
 
 print("Inizializzazione Ensemble Infinito...")

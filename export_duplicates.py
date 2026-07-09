@@ -5,7 +5,7 @@ from pathlib import Path
 import urllib.request
 
 DATA_FILE = Path.home() / ".amazon_search_offline.json"
-EXPORT_DIR = Path(r"C:\Users\Gilberto Bizzo\amazon_search\duplicates_export")
+EXPORT_DIR = Path(rstr(Path.home() / "amazon_search", "duplicates_export"))
 
 if EXPORT_DIR.exists():
     shutil.rmtree(EXPORT_DIR)

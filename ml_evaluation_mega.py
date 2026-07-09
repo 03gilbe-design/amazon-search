@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans, Birch, DBSCAN, AgglomerativeClustering
 from sklearn.metrics import adjusted_rand_score
 from collections import defaultdict
 
-sys.path.append(r"C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui")
+sys.path.append(rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui"))
 from app import JOBS, _build_dataset_job, _load_learned
 
 def run_mega_grid():
@@ -193,7 +193,7 @@ def run_mega_grid():
 </body>
 </html>
 '''
-    out_path = Path(r"C:\Users\Gilberto Bizzo\amazon_search\report_mega_grid.html")
+    out_path = Path(rstr(Path.home() / "amazon_search", "report_mega_grid.html"))
     out_path.write_text(html, encoding="utf-8")
     print(f"Report salvato in: {out_path.resolve()}")
 

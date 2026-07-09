@@ -1,7 +1,8 @@
+from pathlib import Path
 import sys
 import re
 
-path = r'C:\Users\Gilberto Bizzo\amazon_search\.claude\worktrees\amazon-improvements\webui\templates\categorize.html'
+path = rstr(Path.home() / "amazon_search", ".claude", "worktrees", "amazon-improvements", "webui", "templates", "categorize.html")
 with open(path, 'r', encoding='utf-8') as f:
     text = f.read()
 
