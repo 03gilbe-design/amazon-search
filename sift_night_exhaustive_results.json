@@ -1,0 +1,602 @@
+[
+  {
+    "batch": 0,
+    "timestamp": "2026-07-08T14:37:39.336384",
+    "matches_found": 0,
+    "status": "success"
+  },
+  {
+    "batch": 1,
+    "timestamp": "2026-07-08T14:37:44.349827",
+    "matches_found": 12,
+    "status": "success"
+  },
+  {
+    "batch": 2,
+    "timestamp": "2026-07-08T14:37:49.352231",
+    "matches_found": 24,
+    "status": "success"
+  },
+  {
+    "batch": 3,
+    "timestamp": "2026-07-08T14:37:54.360345",
+    "matches_found": 36,
+    "status": "success"
+  },
+  {
+    "batch": 4,
+    "timestamp": "2026-07-08T14:37:59.372632",
+    "matches_found": 48,
+    "status": "success"
+  },
+  {
+    "batch": 5,
+    "timestamp": "2026-07-08T14:38:04.380020",
+    "matches_found": 60,
+    "status": "success"
+  },
+  {
+    "batch": 6,
+    "timestamp": "2026-07-08T14:38:09.382553",
+    "matches_found": 72,
+    "status": "success"
+  },
+  {
+    "batch": 7,
+    "timestamp": "2026-07-08T14:38:14.386117",
+    "matches_found": 84,
+    "status": "success"
+  },
+  {
+    "batch": 8,
+    "timestamp": "2026-07-08T14:38:19.396011",
+    "matches_found": 96,
+    "status": "success"
+  },
+  {
+    "batch": 9,
+    "timestamp": "2026-07-08T14:38:24.407056",
+    "matches_found": 108,
+    "status": "success"
+  },
+  {
+    "batch": 10,
+    "timestamp": "2026-07-08T14:38:29.416400",
+    "matches_found": 120,
+    "status": "success"
+  },
+  {
+    "batch": 11,
+    "timestamp": "2026-07-08T14:38:34.431714",
+    "matches_found": 132,
+    "status": "success"
+  },
+  {
+    "batch": 12,
+    "timestamp": "2026-07-08T14:38:39.439322",
+    "matches_found": 144,
+    "status": "success"
+  },
+  {
+    "batch": 13,
+    "timestamp": "2026-07-08T14:38:44.452211",
+    "matches_found": 156,
+    "status": "success"
+  },
+  {
+    "batch": 14,
+    "timestamp": "2026-07-08T14:38:49.453623",
+    "matches_found": 168,
+    "status": "success"
+  },
+  {
+    "batch": 15,
+    "timestamp": "2026-07-08T14:38:54.465200",
+    "matches_found": 180,
+    "status": "success"
+  },
+  {
+    "batch": 16,
+    "timestamp": "2026-07-08T14:38:59.477479",
+    "matches_found": 192,
+    "status": "success"
+  },
+  {
+    "batch": 17,
+    "timestamp": "2026-07-08T14:39:04.491442",
+    "matches_found": 204,
+    "status": "success"
+  },
+  {
+    "batch": 18,
+    "timestamp": "2026-07-08T14:39:09.502648",
+    "matches_found": 216,
+    "status": "success"
+  },
+  {
+    "batch": 19,
+    "timestamp": "2026-07-08T14:39:14.515384",
+    "matches_found": 228,
+    "status": "success"
+  },
+  {
+    "batch": 20,
+    "timestamp": "2026-07-08T14:39:19.529378",
+    "matches_found": 240,
+    "status": "success"
+  },
+  {
+    "batch": 21,
+    "timestamp": "2026-07-08T14:39:24.590989",
+    "matches_found": 252,
+    "status": "success"
+  },
+  {
+    "batch": 22,
+    "timestamp": "2026-07-08T14:39:29.599969",
+    "matches_found": 264,
+    "status": "success"
+  },
+  {
+    "batch": 23,
+    "timestamp": "2026-07-08T14:39:34.612734",
+    "matches_found": 276,
+    "status": "success"
+  },
+  {
+    "batch": 24,
+    "timestamp": "2026-07-08T14:39:39.617041",
+    "matches_found": 288,
+    "status": "success"
+  },
+  {
+    "batch": 25,
+    "timestamp": "2026-07-08T14:39:44.620752",
+    "matches_found": 300,
+    "status": "success"
+  },
+  {
+    "batch": 26,
+    "timestamp": "2026-07-08T14:39:49.630904",
+    "matches_found": 312,
+    "status": "success"
+  },
+  {
+    "batch": 27,
+    "timestamp": "2026-07-08T14:39:54.640329",
+    "matches_found": 324,
+    "status": "success"
+  },
+  {
+    "batch": 28,
+    "timestamp": "2026-07-08T14:39:59.653828",
+    "matches_found": 336,
+    "status": "success"
+  },
+  {
+    "batch": 29,
+    "timestamp": "2026-07-08T14:40:04.666354",
+    "matches_found": 348,
+    "status": "success"
+  },
+  {
+    "batch": 30,
+    "timestamp": "2026-07-08T14:40:09.672057",
+    "matches_found": 360,
+    "status": "success"
+  },
+  {
+    "batch": 31,
+    "timestamp": "2026-07-08T14:40:14.677551",
+    "matches_found": 372,
+    "status": "success"
+  },
+  {
+    "batch": 32,
+    "timestamp": "2026-07-08T14:40:19.689765",
+    "matches_found": 384,
+    "status": "success"
+  },
+  {
+    "batch": 33,
+    "timestamp": "2026-07-08T14:40:24.690984",
+    "matches_found": 396,
+    "status": "success"
+  },
+  {
+    "batch": 34,
+    "timestamp": "2026-07-08T14:40:29.698350",
+    "matches_found": 408,
+    "status": "success"
+  },
+  {
+    "batch": 35,
+    "timestamp": "2026-07-08T14:40:34.711577",
+    "matches_found": 420,
+    "status": "success"
+  },
+  {
+    "batch": 36,
+    "timestamp": "2026-07-08T14:40:39.720770",
+    "matches_found": 432,
+    "status": "success"
+  },
+  {
+    "batch": 37,
+    "timestamp": "2026-07-08T14:40:44.729725",
+    "matches_found": 444,
+    "status": "success"
+  },
+  {
+    "batch": 38,
+    "timestamp": "2026-07-08T14:40:49.737583",
+    "matches_found": 456,
+    "status": "success"
+  },
+  {
+    "batch": 39,
+    "timestamp": "2026-07-08T14:40:54.753184",
+    "matches_found": 468,
+    "status": "success"
+  },
+  {
+    "batch": 40,
+    "timestamp": "2026-07-08T14:40:59.763771",
+    "matches_found": 480,
+    "status": "success"
+  },
+  {
+    "batch": 41,
+    "timestamp": "2026-07-08T14:41:04.778714",
+    "matches_found": 492,
+    "status": "success"
+  },
+  {
+    "batch": 42,
+    "timestamp": "2026-07-08T14:41:09.782221",
+    "matches_found": 504,
+    "status": "success"
+  },
+  {
+    "batch": 43,
+    "timestamp": "2026-07-08T14:41:14.798118",
+    "matches_found": 516,
+    "status": "success"
+  },
+  {
+    "batch": 44,
+    "timestamp": "2026-07-08T14:41:19.801637",
+    "matches_found": 528,
+    "status": "success"
+  },
+  {
+    "batch": 45,
+    "timestamp": "2026-07-08T14:41:24.806583",
+    "matches_found": 540,
+    "status": "success"
+  },
+  {
+    "batch": 46,
+    "timestamp": "2026-07-08T14:41:29.816370",
+    "matches_found": 552,
+    "status": "success"
+  },
+  {
+    "batch": 47,
+    "timestamp": "2026-07-08T14:41:34.831023",
+    "matches_found": 564,
+    "status": "success"
+  },
+  {
+    "batch": 48,
+    "timestamp": "2026-07-08T14:41:39.841928",
+    "matches_found": 576,
+    "status": "success"
+  },
+  {
+    "batch": 49,
+    "timestamp": "2026-07-08T14:41:44.857451",
+    "matches_found": 588,
+    "status": "success"
+  },
+  {
+    "batch": 50,
+    "timestamp": "2026-07-08T14:41:49.866490",
+    "matches_found": 600,
+    "status": "success"
+  },
+  {
+    "batch": 51,
+    "timestamp": "2026-07-08T14:41:54.868042",
+    "matches_found": 612,
+    "status": "success"
+  },
+  {
+    "batch": 52,
+    "timestamp": "2026-07-08T14:41:59.880943",
+    "matches_found": 624,
+    "status": "success"
+  },
+  {
+    "batch": 53,
+    "timestamp": "2026-07-08T14:42:04.887571",
+    "matches_found": 636,
+    "status": "success"
+  },
+  {
+    "batch": 54,
+    "timestamp": "2026-07-08T14:42:09.896402",
+    "matches_found": 648,
+    "status": "success"
+  },
+  {
+    "batch": 55,
+    "timestamp": "2026-07-08T14:42:14.906850",
+    "matches_found": 660,
+    "status": "success"
+  },
+  {
+    "batch": 56,
+    "timestamp": "2026-07-08T14:42:19.912229",
+    "matches_found": 672,
+    "status": "success"
+  },
+  {
+    "batch": 57,
+    "timestamp": "2026-07-08T14:42:24.923706",
+    "matches_found": 684,
+    "status": "success"
+  },
+  {
+    "batch": 58,
+    "timestamp": "2026-07-08T14:42:29.934590",
+    "matches_found": 696,
+    "status": "success"
+  },
+  {
+    "batch": 59,
+    "timestamp": "2026-07-08T14:42:34.943322",
+    "matches_found": 708,
+    "status": "success"
+  },
+  {
+    "batch": 60,
+    "timestamp": "2026-07-08T14:42:39.951154",
+    "matches_found": 720,
+    "status": "success"
+  },
+  {
+    "batch": 61,
+    "timestamp": "2026-07-08T14:42:44.962974",
+    "matches_found": 732,
+    "status": "success"
+  },
+  {
+    "batch": 62,
+    "timestamp": "2026-07-08T14:42:49.968042",
+    "matches_found": 744,
+    "status": "success"
+  },
+  {
+    "batch": 63,
+    "timestamp": "2026-07-08T14:42:54.977011",
+    "matches_found": 756,
+    "status": "success"
+  },
+  {
+    "batch": 64,
+    "timestamp": "2026-07-08T14:42:59.988975",
+    "matches_found": 768,
+    "status": "success"
+  },
+  {
+    "batch": 65,
+    "timestamp": "2026-07-08T14:43:04.993561",
+    "matches_found": 780,
+    "status": "success"
+  },
+  {
+    "batch": 66,
+    "timestamp": "2026-07-08T14:43:09.998853",
+    "matches_found": 792,
+    "status": "success"
+  },
+  {
+    "batch": 67,
+    "timestamp": "2026-07-08T14:43:15.013595",
+    "matches_found": 804,
+    "status": "success"
+  },
+  {
+    "batch": 68,
+    "timestamp": "2026-07-08T14:43:20.028502",
+    "matches_found": 816,
+    "status": "success"
+  },
+  {
+    "batch": 69,
+    "timestamp": "2026-07-08T14:43:25.044492",
+    "matches_found": 828,
+    "status": "success"
+  },
+  {
+    "batch": 70,
+    "timestamp": "2026-07-08T14:43:30.054827",
+    "matches_found": 840,
+    "status": "success"
+  },
+  {
+    "batch": 71,
+    "timestamp": "2026-07-08T14:43:35.061497",
+    "matches_found": 852,
+    "status": "success"
+  },
+  {
+    "batch": 72,
+    "timestamp": "2026-07-08T14:43:40.062263",
+    "matches_found": 864,
+    "status": "success"
+  },
+  {
+    "batch": 73,
+    "timestamp": "2026-07-08T14:43:45.067607",
+    "matches_found": 876,
+    "status": "success"
+  },
+  {
+    "batch": 74,
+    "timestamp": "2026-07-08T14:43:50.077983",
+    "matches_found": 888,
+    "status": "success"
+  },
+  {
+    "batch": 75,
+    "timestamp": "2026-07-08T14:43:55.082727",
+    "matches_found": 900,
+    "status": "success"
+  },
+  {
+    "batch": 76,
+    "timestamp": "2026-07-08T14:44:00.097904",
+    "matches_found": 912,
+    "status": "success"
+  },
+  {
+    "batch": 77,
+    "timestamp": "2026-07-08T14:44:05.111795",
+    "matches_found": 924,
+    "status": "success"
+  },
+  {
+    "batch": 78,
+    "timestamp": "2026-07-08T14:44:10.119592",
+    "matches_found": 936,
+    "status": "success"
+  },
+  {
+    "batch": 79,
+    "timestamp": "2026-07-08T14:44:15.133527",
+    "matches_found": 948,
+    "status": "success"
+  },
+  {
+    "batch": 80,
+    "timestamp": "2026-07-08T14:44:20.141825",
+    "matches_found": 960,
+    "status": "success"
+  },
+  {
+    "batch": 81,
+    "timestamp": "2026-07-08T14:44:25.144585",
+    "matches_found": 972,
+    "status": "success"
+  },
+  {
+    "batch": 82,
+    "timestamp": "2026-07-08T14:44:30.153447",
+    "matches_found": 984,
+    "status": "success"
+  },
+  {
+    "batch": 83,
+    "timestamp": "2026-07-08T14:44:35.159263",
+    "matches_found": 996,
+    "status": "success"
+  },
+  {
+    "batch": 84,
+    "timestamp": "2026-07-08T14:44:40.164719",
+    "matches_found": 1008,
+    "status": "success"
+  },
+  {
+    "batch": 85,
+    "timestamp": "2026-07-08T14:44:45.177410",
+    "matches_found": 1020,
+    "status": "success"
+  },
+  {
+    "batch": 86,
+    "timestamp": "2026-07-08T14:44:50.180185",
+    "matches_found": 1032,
+    "status": "success"
+  },
+  {
+    "batch": 87,
+    "timestamp": "2026-07-08T14:44:55.184448",
+    "matches_found": 1044,
+    "status": "success"
+  },
+  {
+    "batch": 88,
+    "timestamp": "2026-07-08T14:45:00.198073",
+    "matches_found": 1056,
+    "status": "success"
+  },
+  {
+    "batch": 89,
+    "timestamp": "2026-07-08T14:45:05.200868",
+    "matches_found": 1068,
+    "status": "success"
+  },
+  {
+    "batch": 90,
+    "timestamp": "2026-07-08T14:45:10.210687",
+    "matches_found": 1080,
+    "status": "success"
+  },
+  {
+    "batch": 91,
+    "timestamp": "2026-07-08T14:45:15.228542",
+    "matches_found": 1092,
+    "status": "success"
+  },
+  {
+    "batch": 92,
+    "timestamp": "2026-07-08T14:45:20.244618",
+    "matches_found": 1104,
+    "status": "success"
+  },
+  {
+    "batch": 93,
+    "timestamp": "2026-07-08T14:45:25.259188",
+    "matches_found": 1116,
+    "status": "success"
+  },
+  {
+    "batch": 94,
+    "timestamp": "2026-07-08T14:45:30.264672",
+    "matches_found": 1128,
+    "status": "success"
+  },
+  {
+    "batch": 95,
+    "timestamp": "2026-07-08T14:45:35.269517",
+    "matches_found": 1140,
+    "status": "success"
+  },
+  {
+    "batch": 96,
+    "timestamp": "2026-07-08T14:45:40.282520",
+    "matches_found": 1152,
+    "status": "success"
+  },
+  {
+    "batch": 97,
+    "timestamp": "2026-07-08T14:45:45.291507",
+    "matches_found": 1164,
+    "status": "success"
+  },
+  {
+    "batch": 98,
+    "timestamp": "2026-07-08T14:45:50.303299",
+    "matches_found": 1176,
+    "status": "success"
+  },
+  {
+    "batch": 99,
+    "timestamp": "2026-07-08T14:45:55.322137",
+    "matches_found": 1188,
+    "status": "success"
+  }
+]

@@ -28,7 +28,7 @@
 
   <div class="pcard-img-wrap">
     {% if p.thumbnail %}
-    <img class="pcard-img" src="{{ p.thumbnail }}" alt="" loading="lazy"
+    <img class="pcard-img" src="{{ p.thumbnail }}" alt="" loading="eager"
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
     <div class="pcard-img-ph" style="display:none">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
@@ -431,7 +431,7 @@
         {% for item in result.excluded %}
         <div class="excl-row">
           {% if item.get('thumbnail') %}
-          <img src="{{ item.thumbnail }}" style="width:36px;height:36px;object-fit:contain;border-radius:3px;flex-shrink:0" loading="lazy"/>
+          <img src="{{ item.thumbnail }}" style="width:36px;height:36px;object-fit:contain;border-radius:3px;flex-shrink:0" loading="eager"/>
           {% endif %}
           <span class="excl-title">{{ item.get('title', item.get('asin','—'))[:80] }}</span>
           {% if item.get('price_str') %}<span style="font-size:0.68rem;color:var(--dim)">{{ item.price_str }}</span>{% endif %}
