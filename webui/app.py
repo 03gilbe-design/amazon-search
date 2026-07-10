@@ -181,10 +181,19 @@ def report(job_id):
     # dict.get non è esposto come attributo in Jinja sui dict custom: uso dict veri
     families = [{"members": f["members"], "diff_image": f["diff_image"],
                  "min_distance": f["min_distance"]} for f in families]
+    # dati per il compare drawer (client-side): specs reali + stimate + materiali
+    cmp_data = {p.asin: {
+        "asin": p.asin, "title": (p.title or "")[:80], "thumbnail": p.thumbnail,
+        "price": p.price, "stars": getattr(p, "stars", None),
+        "reviews": getattr(p, "reviews", None), "brand": getattr(p, "brand", None),
+        "specs": getattr(p, "specs", None) or {},
+        "estimated_specs": getattr(p, "estimated_specs", None) or {},
+        "materials": getattr(p, "materials", None) or [],
+    } for p in result.products if p.asin}
     return render_template("report.html", result=result, job_id=job_id,
                            params=job.get("params", {}),
                            cat_list=cat_list, single_cat=len(cat_list) <= 1,
-                           families=families)
+                           families=families, cmp_data=cmp_data)
 
 
 # ---- niche knowledge (distilled from 1.2M ESCI products on Colab) ----

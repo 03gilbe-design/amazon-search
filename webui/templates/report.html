@@ -122,7 +122,10 @@
   </div>
 
   <div class="pcard-footer">
-    <span></span>
+    <button class="btn-compare" title="Add to compare" aria-label="Compare">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7l-4 6h8zM17 7l-4 6h8z"/><path d="M3 13a4 4 0 008 0M13 13a4 4 0 008 0"/></svg>
+      Compare
+    </button>
     <a class="btn-amazon" href="{{ p.link }}" target="_blank" rel="noopener" title="Open on Amazon">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6" fill="currentColor"/><circle cx="19" cy="21" r="1.6" fill="currentColor"/><path d="M1 2h3l3.2 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.5L23 7H6"/></svg>
       Amazon
@@ -520,6 +523,91 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="cmp-data" type="application/json">{{ cmp_data|tojson }}</script>
+<div id="cmp-drawer" style="display:none;position:fixed;bottom:0;right:0;left:var(--nav-w,15rem);z-index:80;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-top:2px solid var(--primary,#d97706);
+  box-shadow:0 -12px 40px rgba(0,0,0,.18)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid #eee6d9">
+    <h3 style="font-size:.82rem;margin:0">Compare (<span id="cmp-count">0</span>/4)</h3>
+    <div style="display:flex;gap:6px">
+      <button id="cmp-clear" class="btn btn-sm" style="border:1px solid #e0d9cc;background:#fff">Clear</button>
+      <button id="cmp-close" class="btn btn-sm" style="border:1px solid #e0d9cc;background:#fff">✕</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;max-height:46vh;overflow-y:auto">
+    <table id="cmp-table" style="width:100%;border-collapse:collapse;font-size:.72rem"></table>
+  </div>
+</div>
+<script>
+// ── compare drawer (design gen-2 CompareDrawer): max 4, best cell verde ──
+(function() {
+  const DATA = JSON.parse(document.getElementById('cmp-data').textContent || '{}');
+  const KEY = 'compare_' + location.pathname;
+  let sel = JSON.parse(localStorage.getItem(KEY) || '[]').filter(a => DATA[a]);
+  const save = () => localStorage.setItem(KEY, JSON.stringify(sel));
+  const drawer = document.getElementById('cmp-drawer');
+  const SPEC_LABELS = {battery_mah: 'Battery (mAh)', power_w: 'Power (W)', bluetooth: 'Bluetooth',
+    screen_in: 'Screen (in)', weight_g: 'Weight (g)', weight_kg: 'Weight (kg)',
+    hours_h: 'Battery life (h)', storage_gb: 'Storage (GB)'};
+
+  function render() {
+    document.getElementById('cmp-count').textContent = sel.length;
+    document.querySelectorAll('.btn-compare').forEach(b => {
+      const on = sel.includes(b.closest('.pcard').dataset.asin);
+      b.classList.toggle('on', on);
+    });
+    if (!sel.length) { drawer.style.display = 'none'; return; }
+    drawer.style.display = 'block';
+    const ps = sel.map(a => DATA[a]);
+    const specKeys = [...new Set(ps.flatMap(p => [...Object.keys(p.specs), ...Object.keys(p.estimated_specs)]))];
+    const rows = [];
+    // riga foto + titolo + rimuovi
+    rows.push('<tr><td style="position:sticky;left:0;background:#fff;min-width:110px"></td>' + ps.map(p =>
+      `<td style="padding:8px;text-align:center;min-width:150px;border-left:1px solid #f0eadd">
+        <img src="${p.thumbnail || ''}" style="width:62px;height:62px;object-fit:contain;background:#fff;border-radius:8px"/>
+        <div style="font-size:.62rem;line-height:1.25;margin:4px 0">${p.title}</div>
+        <button data-rm="${p.asin}" style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:.62rem">remove</button>
+      </td>`).join('') + '</tr>');
+    const row = (label, vals, best) => rows.push(
+      `<tr><td style="position:sticky;left:0;background:#fff;padding:6px 12px;color:#8a8378;font-weight:600">${label}</td>` +
+      vals.map(v => `<td style="padding:6px 8px;text-align:center;border-left:1px solid #f0eadd;font-weight:600;${v.best ? 'background:#e8f7ee;color:#1d7a45' : ''}">${v.html}</td>`).join('') + '</tr>');
+    const num = (key, label, lower) => {
+      const vals = ps.map(p => p[key]);
+      const nums = vals.filter(v => typeof v === 'number');
+      const best = nums.length >= 2 ? (lower ? Math.min(...nums) : Math.max(...nums)) : null;
+      row(label, vals.map(v => ({html: v == null ? '—' : (key === 'price' ? '€' + v.toFixed(2) : v.toLocaleString()), best: v === best && best != null})));
+    };
+    num('price', 'Price', true);
+    num('stars', 'Stars', false);
+    num('reviews', 'Reviews', false);
+    row('Brand', ps.map(p => ({html: p.brand || '—', best: false})));
+    specKeys.forEach(k => {
+      const vals = ps.map(p => p.specs[k] != null ? {v: p.specs[k], est: false}
+                              : p.estimated_specs[k] != null ? {v: p.estimated_specs[k], est: true} : null);
+      const nums = vals.filter(Boolean).map(x => x.v);
+      const best = nums.length >= 2 ? (k.startsWith('weight') ? Math.min(...nums) : Math.max(...nums)) : null;
+      row(SPEC_LABELS[k] || k, vals.map(x => ({
+        html: x == null ? '—' : (x.v + (x.est ? ' <span style="color:#b08e3f" title="estimated from twin product">*</span>' : '')),
+        best: x != null && x.v === best && best != null})));
+    });
+    row('Materials', ps.map(p => ({html: p.materials.length ? p.materials.join(', ') : '—', best: false})));
+    document.getElementById('cmp-table').innerHTML = rows.join('');
+    document.querySelectorAll('#cmp-table [data-rm]').forEach(b => b.onclick = () => {
+      sel = sel.filter(a => a !== b.dataset.rm); save(); render();
+    });
+  }
+  document.querySelectorAll('.btn-compare').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const asin = b.closest('.pcard').dataset.asin;
+    if (sel.includes(asin)) sel = sel.filter(a => a !== asin);
+    else { if (sel.length >= 4) return alert('Max 4 products'); sel.push(asin); }
+    save(); render();
+  });
+  document.getElementById('cmp-clear').onclick = () => { sel = []; save(); render(); };
+  document.getElementById('cmp-close').onclick = () => { drawer.style.display = 'none'; };
+  render();
+})();
+</script>
 <script>
 // click su foto/titolo -> pagina prodotto interna (stile Amazon)
 (function() {
