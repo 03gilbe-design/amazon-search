@@ -21,7 +21,10 @@
 
 {# ── Macro: product card ────────────────────────────────────────────────── #}
 {% macro pcard(rank, p) %}
-<div class="glass pcard">
+<div class="glass pcard" data-asin="{{ p.asin }}"{% if p.family_id %} data-family="{{ p.family_id }}"{% endif %}>
+  <button class="pcard-x" title="Remove from report" aria-label="Remove">
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
 
   <div class="pcard-img-wrap">
     {% if p.thumbnail %}
@@ -516,6 +519,39 @@
 
 {% block scripts %}
 <script>
+// X sulle card: rimuovi, evidenzia simili (stessa famiglia), ricorda per job
+(function() {
+  const KEY = 'removed_' + location.pathname;
+  const removed = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+  const hide = asin => { const c = document.querySelector('.pcard[data-asin="' + asin + '"]');
+    if (c) { c.classList.add('pcard-removing'); setTimeout(() => c.style.display = 'none', 420); } };
+  removed.forEach(a => { const c = document.querySelector('.pcard[data-asin="' + a + '"]'); if (c) c.style.display = 'none'; });
+  const save = () => localStorage.setItem(KEY, JSON.stringify([...removed]));
+  document.querySelectorAll('.pcard-x').forEach(btn => btn.onclick = e => {
+    e.stopPropagation();
+    const card = btn.closest('.pcard');
+    const asin = card.dataset.asin, fam = card.dataset.family;
+    const sims = fam ? [...document.querySelectorAll('.pcard[data-family="' + fam + '"]')].filter(c => c !== card && c.style.display !== 'none') : [];
+    document.querySelectorAll('.sim-ask').forEach(el => el.remove());
+    if (!sims.length) { removed.add(asin); save(); hide(asin); return; }
+    sims.forEach(c => c.classList.add('pcard-similar'));
+    const ask = document.createElement('div');
+    ask.className = 'sim-ask';
+    ask.append('similar found —');
+    const b1 = document.createElement('button'); b1.textContent = 'Only this';
+    b1.style.cssText = 'background:#e47911;color:#fff';
+    const b2 = document.createElement('button'); b2.textContent = 'All similar';
+    b2.style.cssText = 'background:#c0392b;color:#fff';
+    const clean = () => { sims.forEach(c => c.classList.remove('pcard-similar')); ask.remove(); };
+    b1.onclick = () => { removed.add(asin); save(); hide(asin); clean(); };
+    b2.onclick = () => { removed.add(asin); sims.forEach(c => removed.add(c.dataset.asin)); save();
+      hide(asin); sims.forEach(c => hide(c.dataset.asin)); clean(); };
+    ask.append(b1, b2);
+    card.appendChild(ask);
+    setTimeout(clean, 6000);
+  });
+})();
+
 // paginazione: dentro ogni griglia >24 card, mostra 24 per pagina con frecce
 document.querySelectorAll('.product-grid').forEach(grid => {
   const cards = [...grid.children];

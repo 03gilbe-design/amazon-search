@@ -639,6 +639,11 @@ function currentGroup() {
   return [seed, ...same, ...pool.filter(p => p !== seed && !same.includes(p))].slice(0, n);
 }
 
+// ponytail: HQ image only for the big center image; thumbnails stay light
+function hqUrl(url) {
+  return url ? url.replace(/\._AC_UL\d+_\.jpg$/, '._SL1000_.jpg') : url;
+}
+
 function renderGroupCenter(group) {
   const wrap = document.getElementById('sf-img-wrap');
   wrap.querySelectorAll('.sf-group-img').forEach(el => el.remove());
@@ -971,7 +976,8 @@ function renderCurrentProduct() {
   const img = document.getElementById('sf-img');
   const ph  = document.getElementById('sf-ph');
   if (p.thumbnail) {
-    img.src = p.thumbnail;
+    img.onerror = () => { img.onerror = null; img.src = p.thumbnail; };
+    img.src = hqUrl(p.thumbnail);
     img.style.display = 'block';
     ph.style.display  = 'none';
   } else {
