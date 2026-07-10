@@ -1358,6 +1358,19 @@ def api_image(asin):
     return "Not found", 404
 
 
+@app.route("/api/dataset_info")
+def dataset_info():
+    try:
+        uni = Path(__file__).resolve().parent.parent / "private" / "unified_dataset.json"
+        data = json.loads(uni.read_text(encoding="utf-8"))
+        prods = [d for d in (data.get("products") or []) if d.get("thumbnail")]
+        labeled = sum(1 for d in prods if d.get("category"))
+        return jsonify({"count": len(prods), "labeled": labeled,
+                        "built_at": data.get("built_at")})
+    except Exception:
+        return jsonify({"count": 0})
+
+
 @app.route("/api/searches")
 def api_searches():
     """Ricerche in cache su disco (query + file), per la lista nella UI."""
