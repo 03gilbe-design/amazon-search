@@ -100,35 +100,37 @@ body { background:#e9e6e0; }
       </div>
     </div>
 
-    <!-- Tab di Navigazione ed Esportazione -->
-    <div style="display:flex; align-items:center; gap:6px" id="view-tabs-container">
-      <button class="btn btn-orange btn-sm" id="btn-view-sunflower" onclick="switchView('sunflower')">🌻 Girasole</button>
-      <button id="btn-view-kanban" class="btn btn-outline btn-sm" onclick="switchView('kanban')" style="margin-left: 20px;">Kanban</button>
-      <button id="btn-view-scene" class="btn btn-outline btn-sm" onclick="switchView('scene')">📸 Image Detector</button>
-      <button id="btn-view-terms" class="btn btn-outline btn-sm" onclick="switchView('terms')" style="margin-left: 20px; border-color:#8e44ad; color:#8e44ad;">Distribuzione Parole</button>
-      <div style="flex:1"></div><button class="btn btn-outline btn-sm" id="btn-view-playground" onclick="switchView('playground')">Clustering</button>
+    <!-- Tab in ordine di flusso -->
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap" id="view-tabs-container">
+      <button class="btn btn-orange btn-sm" id="btn-view-playground" onclick="switchView('playground')" title="See automatic groups, apply a category to a whole group"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Clusters</button>
+      <button class="btn btn-outline btn-sm" id="btn-view-sunflower" onclick="switchView('sunflower')" title="Refine one product at a time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg> Sunflower</button>
+      <button class="btn btn-outline btn-sm" id="btn-view-kanban" onclick="switchView('kanban')" title="Drag products between columns"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5.5" height="18" rx="1.5"/><rect x="9.2" y="3" width="5.5" height="12" rx="1.5"/><rect x="15.5" y="3" width="5.5" height="15" rx="1.5"/></svg> Kanban</button>
+      <button class="btn btn-outline btn-sm" id="btn-view-terms" onclick="switchView('terms')" title="Words that define each category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg> Words</button>
+      <button class="btn btn-outline btn-sm" id="btn-view-scene" onclick="switchView('scene')" title="Find the same product inside other photos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.4"/><path d="M8 5l1.5-2h5L16 5"/></svg> Detector</button>
       <span style="width:1px; height:18px; background:var(--border); margin:0 4px"></span>
-      <a class="btn btn-outline btn-sm" href="/report/{{ job_id }}" title="Torna al Report">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="vertical-align:middle"><path d="M10 2h4v4M14 2L8 8M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a class="btn btn-outline btn-sm" href="/report/{{ job_id }}" title="Back to report">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M10 2h4v4M14 2L8 8M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a class="btn btn-outline btn-sm" href="/export/{{ job_id }}.json" download id="save-btn" title="Esporta Backup JSON (Download)">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="vertical-align:middle"><path d="M8 1v9m0 0l-3-3m3 3l3-3M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a class="btn btn-outline btn-sm" href="/export/{{ job_id }}.json" download id="save-btn" title="Download JSON backup">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 1v9m0 0l-3-3m3 3l3-3M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
     </div>
   </div>
   
-  <!-- Status Line (Usage e Contesto) -->
-  <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(245, 247, 250, 0.65) 100%); border:1px solid var(--border); border-radius:10px; padding:11px 20px; margin-top:14px; margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--sub); backdrop-filter:blur(10px); box-shadow:0 3px 12px rgba(0,0,0,0.04); z-index:100; position:relative; transition: all 0.3s ease;">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <span class="pulse-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#2ecc71;"></span>
-      <span><b>Contesto:</b> Ricerca locale pre-compilata</span>
-      <span style="color:var(--muted)">|</span>
-      <span><b>Dati caricati:</b> <span id="status-products-count" style="font-weight:bold; color:var(--orange);">0</span> prodotti totali</span>
-    </div>
-    <div style="font-style:italic; color:var(--dim); font-weight: 500;" id="status-usage-tip">
-      Caricamento indicazioni d'uso...
-    </div>
-  </div>
+  <!-- What you can do -->
+  <details id="howto" style="background:#fff;border:1px solid var(--border2);border-radius:10px;padding:10px 16px;margin:12px 0 20px">
+    <summary style="cursor:pointer;font-size:0.74rem;color:var(--sub);list-style:none;display:flex;align-items:center;gap:8px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e47911" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      What you can do here &middot; <b id="status-products-count" style="color:#e47911">0</b>&nbsp;products loaded
+    </summary>
+    <ol style="margin:10px 0 4px 20px;font-size:0.74rem;color:var(--sub);line-height:1.9">
+      <li><b>Clusters</b> &mdash; look at the groups, pick a category, hit <b>Apply</b> to label a whole group at once <span style="color:#e47911">(fastest &mdash; start here)</span></li>
+      <li><b>Sunflower</b> &mdash; refine one product at a time; drag a photo to the red zone to <b>discard</b> it</li>
+      <li><b>Kanban</b> &mdash; drag products between category columns</li>
+      <li><b>Words / Detector</b> &mdash; words per category; same product inside other photos</li>
+      <li><b>Export</b> &mdash; JSON download top right. Every click auto-saves.</li>
+    </ol>
+  </details>
 
   <!-- ── SUNFLOWER VIEW ────────────────────────────────────────────────── -->
   <div id="view-sunflower" style="display:none; position:relative;">
@@ -145,6 +147,13 @@ body { background:#e9e6e0; }
     <div class="cat-layout" style="display:flex;gap:20px;align-items:stretch">
 
       <!-- Sunflower: prende TUTTO lo spazio rimasto (vero flex item, non overlay) -->
+      <!-- drag a photo here to discard it -->
+      <div id="discard-zone" style="width:86px;flex-shrink:0;border:2px dashed #d9948a;border-radius:12px;
+           display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#b3564a;
+           font-size:0.66rem;transition:all .2s;min-height:560px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>
+        Discard
+      </div>
       <div class="sunflower-wrap" id="sunflower" style="flex:1;position:relative;min-height:560px;min-width:0; background: linear-gradient(90deg, rgba(231,76,60,0.03) 0%, rgba(231,76,60,0.03) 50%, rgba(46,204,113,0.03) 50%, rgba(46,204,113,0.03) 100%); transition: background 0.3s ease;" ondragover="event.preventDefault()" ondrop="handleSunflowerDrop(event)">
         <!-- Zone Icons Background -->
         <div id="sf-bg-icons" style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; pointer-events:none; z-index:0; opacity:0.1;">
@@ -587,6 +596,20 @@ function fitSunflower() {
 }
 window.addEventListener('resize', fitSunflower);
 fitSunflower();
+
+
+// discard zone: drop = special category '_discarded'
+(function() {
+  const z = document.getElementById('discard-zone');
+  if (!z) return;
+  z.addEventListener('dragover', e => { e.preventDefault(); z.style.background = '#fdeeec'; z.style.borderColor = '#c0392b'; });
+  z.addEventListener('dragleave', () => { z.style.background = ''; z.style.borderColor = '#d9948a'; });
+  z.addEventListener('drop', e => {
+    e.preventDefault(); z.style.background = ''; z.style.borderColor = '#d9948a';
+    const asin = e.dataTransfer.getData('text/plain');
+    if (asin) assignCategory(asin, '_discarded').then(() => renderCurrentProduct());
+  });
+})();
 
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
@@ -1383,7 +1406,18 @@ async function renderVennDiagram(bubbles) {
   const div = d3.select("#venn-diagram-target");
   div.datum(data).call(chart);
   
-  div.selectAll("text").style("fill", "white").style("font-size", "11px").style("font-weight", "bold");
+  div.selectAll("text").style("fill", "var(--text, #2b2723)").style("font-size", "12px").style("font-weight", "bold");
+  // representative photo inside each circle
+  div.selectAll("g.venn-circle").each(function(d) {
+    const word = (d.sets && d.sets[0]) || '';
+    const prod = ALL_PRODUCTS.find(p => p.thumbnail && (p.title||'').toLowerCase().includes(String(word).toLowerCase()));
+    if (!prod) return;
+    const sel = d3.select(this);
+    const txt = sel.select('text');
+    const x = parseFloat(txt.attr('x') || 0), y = parseFloat(txt.attr('y') || 0);
+    sel.append('image').attr('href', prod.thumbnail).attr('x', x - 22).attr('y', y + 8)
+       .attr('width', 44).attr('height', 44).attr('preserveAspectRatio', 'xMidYMid slice');
+  });
   div.selectAll(".venn-intersection text").each(function(d) {
         const bbox = this.getBBox();
         d3.select(this.parentNode).insert("rect", "text")
@@ -1405,7 +1439,7 @@ async function renderTermsDistribution() {
   
   try {
   if (!window.cachedTermsBubbles || window.lastThreshold !== threshold || window.lastMaxNiche !== maxNiche) {
-    cont.innerHTML = '<div style="text-align:center; padding:40px;"><div class="loading-ring" style="width:40px;height:40px;display:inline-block;border-width:4px;"></div><br/><br/><span style="font-weight:bold; color:var(--text);">Elaborazione intersezioni nel browser...</span></div>';
+    cont.innerHTML = '<div style="text-align:center; padding:40px;"><img src="/static/anim/clustering.svg" width="74" height="74" alt=""><br/><br/><span style="font-weight:bold; color:var(--text);">Elaborazione intersezioni nel browser...</span></div>';
     
     // Calcolo locale istantaneo in Javascript!
     await new Promise(r => setTimeout(r, 10)); // Piccolo yield per il DOM
@@ -2338,7 +2372,7 @@ async function runClustering() {
   window.__opDone = opDone;
   const container = document.getElementById('playground-clusters-container');
   // Inserisci spinner di caricamento visibile!
-  container.innerHTML = '<div style="text-align:center; padding:60px;"><div class="loading-ring" style="width:50px;height:50px;display:inline-block;border-width:4px;"></div><br/><br/><h3 style="color:var(--orange);">Generazione raggruppamenti in corso...</h3></div>';
+  container.innerHTML = '<div style="text-align:center; padding:60px;"><div class="loading-ring" style="width:50px;height:50px;display:inline-block;border-width:4px;"></div><br/><br/><h3 style="color:var(--orange);">Building groups…</h3></div>';
   container.style.opacity = '1';
   container.style.pointerEvents = 'none';
 
