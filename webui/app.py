@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import threading
 import uuid
+from collections import Counter
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
@@ -125,12 +127,22 @@ def status(job_id):
 @app.route("/report/<job_id>")
 def report(job_id):
     if job_id == "dataset":
-        from flask import redirect
-        return redirect("/categorize/dataset")
+        _build_dataset_job()   # il dataset completo è visibile anche come report
     job = JOBS.get(job_id)
     if not job or job["status"] != "done":
         return render_template("loading.html", job_id=job_id)
     result = job["result"]
+    # duplicati stesso-thumbnail + stesso-prezzo: inutili da mostrare (direttiva),
+    # tieni il primo — vale per OGNI report, non solo per il dataset unificato
+    seen_tp = set()
+    kept = []
+    for prod in result.products:
+        key = (prod.thumbnail, prod.price)
+        if prod.thumbnail and prod.price is not None and key in seen_tp:
+            continue
+        seen_tp.add(key)
+        kept.append(prod)
+    result.products = kept
     # il template raggruppa per categoria: cat_list/single_cat/families vanno
     # costruiti qui (il template li ha sempre pretesi, nessuno li passava — report vuoto)
     colors = ["#e47911", "#4a9eff", "#3dba6a", "#9b6dff", "#c8a84b", "#ff66aa", "#00ccbb", "#c0392b"]
@@ -283,6 +295,13 @@ class _P:
         self.price = d.get("price")
         self.price_str = d.get("price_str")
         self.brand = d.get("brand")
+        self.stars = d.get("stars")
+        self.reviews = d.get("reviews")
+        self.prime = d.get("prime", False)
+        self.in_stock = d.get("in_stock", False)
+        self.dedup_note = d.get("dedup_note") or (
+            f"visto a €{abs(d['saving_vs_duplicate']):.2f} in meno"
+            if d.get("saving_vs_duplicate") else None)
         self.link = d.get("link") or (f"https://www.amazon.it/dp/{self.asin}" if self.asin else "#")
         self.category = cat
         self.family_id = d.get("family_id")
@@ -369,17 +388,21 @@ def _build_dataset_job() -> None:
                 pr.materials = d.get("materials") or d.get("estimated_materials") or []
                 pr.estimated_specs = d.get("estimated_specs") or {}
                 pr.duplicate_of = d.get("duplicate_of")
+            # famiglie pHash in background anche qui (il detector le mostra)
+            threading.Thread(target=_async_calculate_phash_families,
+                             args=(products,), daemon=True).start()
             JOBS["dataset"] = {"status": "done", "log": [], "error": None,
                                "result": _DatasetResult(products), "params": {}}
             return
         except Exception:
-            pass
+            import traceback
+            print("unified dataset load FAILED, fallback offline:")
+            traceback.print_exc()
     if "dataset" in JOBS and JOBS["dataset"].get("status") == "done":
         return
         
     import glob
     import os
-    import threading
     
     OFFLINE_PATH = Path.home() / ".amazon_search_offline.json"
     cache_files = glob.glob(str(Path.home() / ".amazon_search_cache" / "*.json"))
@@ -460,7 +483,6 @@ def _build_dataset_job() -> None:
     products = [_P(d, lookup.get(a)) for a, d in deduped.items()]
     
     # Calcola famiglie pHash in background per non bloccare il caricamento della pagina (scarica prima le foto a bassa qualità)
-    import threading
     threading.Thread(target=_async_calculate_phash_families, args=(products,), daemon=True).start()
     
     # Salva offline per i successivi riavvii veloci
@@ -474,7 +496,6 @@ def _build_dataset_job() -> None:
                        "result": _DatasetResult(products), "params": {}}
     
     # Avvia precalcolo RANSAC offline in background
-    import threading
     threading.Thread(target=_precalculate_offline, args=(JOBS["dataset"],), daemon=True).start()
 
 
@@ -856,9 +877,23 @@ def run_clustering():
                     lbl = item_to_sub.get(u["asin"], 0)
                     sub_dict.setdefault(int(lbl), []).append(u)
                     
+                # keywords del sottogruppo: parole frequenti QUI ma non in tutto il cluster
+                _sub_stop = {"della", "delle", "dello", "degli", "with", "para",
+                             "anti", "this", "that", "from", "your", "sono"}
+                cluster_wc = Counter()
+                for u in unique_items:
+                    cluster_wc.update(set(re.findall(r"[a-zà-ù]{4,}", (u.get("title") or "").lower())))
                 for s_id, s_items in sub_dict.items():
+                    wc = Counter()
+                    for u in s_items:
+                        wc.update(set(re.findall(r"[a-zà-ù]{4,}", (u.get("title") or "").lower())))
+                    distinctive = sorted(
+                        (w for w, c in wc.items()
+                         if c >= max(2, len(s_items) // 2) and w not in _sub_stop),
+                        key=lambda w: (cluster_wc[w] / max(len(unique_items), 1), -wc[w]))
                     subs.append({
                         "id": f"{label}_{s_id}",
+                        "terms": distinctive[:3],
                         "unique_products": s_items
                     })
             else:
