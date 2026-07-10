@@ -45,10 +45,10 @@ SPEC_RX = {
     "hours_h": r"(\d{1,3})\s*(?:hours|ore|hrs|h)\b",
     "days_d": r"(\d{1,3})\s*giorni\b",
     "storage_gb": r"(\d{2,4})\s*gb\b",
-    "modes_n": r"(\d{1,2})\s*(?:modalità|livelli|posizioni|strati|velocità|modes|levels|speeds)",
+    "modes_n": r"(\d{1,2})\s*(?:modalità|livelli|posizioni|strati|velocità|modes|levels|speeds)\b",
     "pieces_n": r"(\d{1,3})\s*(?:pezzi|pcs|pz|pieces|pack|count|ct)\b",
     "lumen_lm": r"(\d{2,5})\s*lm\b",
-    "temp_c": r"(\d{1,3})\s*°\s*c",
+    "temp_c": r"(\d{1,3})\s*°\s*c\b",
 }
 MATERIALS = ("memory foam", "gel", "cotone", "cotton", "poliestere", "polyester",
              "silicone", "lattice", "latex", "schiuma", "foam", "velluto", "velvet",
@@ -78,6 +78,42 @@ ATTR_RX = {k: re.compile(v) for k, v in ATTR_RX.items()}
 def extract_attrs(text):
     t = (text or "").lower()
     return [a for a, rx in ATTR_RX.items() if rx.search(t)]
+
+
+# ── scoperta unita' AUTOMATICA: niente liste hardcoded ──────────────────
+# A: scan generico "numero + token"; B: un token e' un'unita' se quando appare
+# e' quasi sempre attaccato a un numero (num_ratio) e ricorre nel pool;
+# B x C: la lista risultante e' specifica di QUESTO pool di prodotti.
+_NUM_TOKEN_RX = re.compile(r"(\d+(?:[.,]\d+)?)\s*([a-zà-ù%°\"]{1,12})\b")
+_TOKEN_RX = re.compile(r"[a-zà-ù%°\"]{1,12}")
+
+
+def discover_units(texts, min_count=3, num_ratio=0.65):
+    """Token che nel pool compaiono quasi solo preceduti da un numero = unita'.
+    'cm' passa (30/30 volte dopo numero), 'collare' no (4/100)."""
+    with_num = Counter()
+    total = Counter()
+    for t in texts:
+        tl = (t or "").lower()
+        for m in _NUM_TOKEN_RX.finditer(tl):
+            with_num[m.group(2)] += 1
+        for tok in _TOKEN_RX.findall(tl):
+            total[tok] += 1
+    return {u for u, c in with_num.items()
+            if c >= min_count and c / max(total[u], 1) >= num_ratio}
+
+
+def extract_specs_auto(text, units):
+    t = (text or "").lower()
+    out = {}
+    for m in _NUM_TOKEN_RX.finditer(t):
+        num, unit = m.group(1), m.group(2)
+        if unit in units and unit not in out:
+            try:
+                out[unit] = float(num.replace(",", "."))
+            except ValueError:
+                pass
+    return out
 
 
 def extract_specs(text: str) -> dict:
@@ -198,9 +234,11 @@ def main():
                     records[a]["saving_vs_duplicate"] = round(p - kp, 2)
                     marked_savings += 1
 
-    # enrichment
+    # enrichment — unita' scoperte automaticamente da QUESTO pool
+    pool_units = discover_units(r.get("title", "") for r in records.values())
+    print(f"unita' scoperte dal pool: {sorted(pool_units)}")
     for r in records.values():
-        r["specs"] = extract_specs(r.get("title", ""))
+        r["specs"] = extract_specs_auto(r.get("title", ""), pool_units)
         mats = extract_materials(r.get("title", ""))
         if mats:
             r["materials"] = mats
