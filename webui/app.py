@@ -189,6 +189,7 @@ def report(job_id):
         "specs": getattr(p, "specs", None) or {},
         "estimated_specs": getattr(p, "estimated_specs", None) or {},
         "materials": getattr(p, "materials", None) or [],
+        "attrs": getattr(p, "attrs", None) or [],
     } for p in result.products if p.asin}
     return render_template("report.html", result=result, job_id=job_id,
                            params=job.get("params", {}),
@@ -292,10 +293,11 @@ def product_page(job_id, asin):
     if fam_id:
         similar = [p for p in result.products
                    if getattr(p, "family_id", None) == fam_id and p.asin != asin][:8]
+    attrs = list(getattr(prod, "attrs", []) or [])
     return render_template("product.html", p=prod, job_id=job_id, rows=rows,
                            niche=niche, niche_n=(kb or {}).get("n"),
                            niche_rows=niche_rows, materials=materials,
-                           mats_estimated=mats_estimated, similar=similar)
+                           mats_estimated=mats_estimated, similar=similar, attrs=attrs)
 
 
 class _DatasetResult:
@@ -405,6 +407,7 @@ def _build_dataset_job() -> None:
             for pr, d in zip(products, prods):
                 pr.specs = d.get("specs") or {}
                 pr.materials = d.get("materials") or d.get("estimated_materials") or []
+                pr.attrs = d.get("attrs") or []
                 pr.estimated_specs = d.get("estimated_specs") or {}
                 pr.duplicate_of = d.get("duplicate_of")
             # famiglie pHash in background anche qui (il detector le mostra)
@@ -504,9 +507,18 @@ def _build_dataset_job() -> None:
     # Calcola famiglie pHash in background per non bloccare il caricamento della pagina (scarica prima le foto a bassa qualità)
     threading.Thread(target=_async_calculate_phash_families, args=(products,), daemon=True).start()
     
-    # Salva offline per i successivi riavvii veloci
+    # Salva offline per i successivi riavvii veloci — MAI rimpicciolire il file
+    # esistente (un fallback degradato una volta ha sovrascritto 61 prodotti con 14)
     try:
+        old_n = 0
+        if OFFLINE_PATH.exists():
+            try:
+                old_n = len(json.loads(OFFLINE_PATH.read_text(encoding="utf-8")).get("products", []))
+            except Exception:
+                pass
         products_data = {"products": [p.__dict__ for p in products]}
+        if len(products) < old_n:
+            raise RuntimeError(f"refusing to shrink offline cache {old_n} -> {len(products)}")
         OFFLINE_PATH.write_text(json.dumps(products_data, ensure_ascii=False, indent=1), encoding="utf-8")
     except Exception as e:
         print("Errore salvataggio offline cache dataset:", e)
