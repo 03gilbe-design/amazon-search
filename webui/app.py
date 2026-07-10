@@ -124,6 +124,9 @@ def status(job_id):
 
 @app.route("/report/<job_id>")
 def report(job_id):
+    if job_id == "dataset":
+        from flask import redirect
+        return redirect("/categorize/dataset")
     job = JOBS.get(job_id)
     if not job or job["status"] != "done":
         return render_template("loading.html", job_id=job_id)
@@ -143,7 +146,13 @@ def report(job_id):
                 rank_of[prod.asin] = (r, prod)
     families = []
     for fam in (result.families or []):
-        members = [rank_of[it["asin"]] for it in fam.get("items", []) if it.get("asin") in rank_of]
+        if not isinstance(fam, dict):
+            continue
+        members = []
+        for it in (fam.get("items") or []):
+            asin = it.get("asin") if isinstance(it, dict) else it
+            if asin in rank_of:
+                members.append(rank_of[asin])
         if len(members) > 1:
             families.append({"members": members, "get": fam.get,
                              "diff_image": fam.get("diff_image", True),

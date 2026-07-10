@@ -866,8 +866,10 @@ function renderSunflower() {
       circle.textContent = '+';
       circle.title = 'Add new category';
       holder.onclick = () => {
-        document.getElementById('sf-overlay').classList.remove('collapsed');
-        document.getElementById('new-cat-input').focus();
+        const ov = document.getElementById('sf-overlay');
+        if (ov) ov.classList.remove('collapsed');
+        const inp = document.getElementById('new-cat-input');
+        if (inp) { inp.scrollIntoView({block: 'center'}); setTimeout(() => { inp.focus(); inp.select(); }, 60); }
       };
     } else {
       circle.textContent = cat;
