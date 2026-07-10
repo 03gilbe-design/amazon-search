@@ -28,7 +28,7 @@
 
   <div class="pcard-img-wrap">
     {% if p.thumbnail %}
-    <img class="pcard-img" src="{{ p.thumbnail|replace('_AC_UL320_', '_AC_SL500_')|replace('_AC_UY218_', '_AC_SL500_') }}"
+    <img class="pcard-img" src="{{ p.thumbnail|hq_img }}"
          alt="" loading="eager" data-thumb="{{ p.thumbnail }}"
          onerror="if(this.src!==this.dataset.thumb){this.src=this.dataset.thumb}else{this.style.display='none';this.nextElementSibling.style.display='flex'}"/>
     <div class="pcard-img-ph" style="display:none">

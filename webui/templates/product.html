@@ -12,7 +12,7 @@
     {# ── left: big image, Amazon-style white stage ── #}
     <div class="prod-stage">
       {% if p.thumbnail %}
-      <img src="{{ p.thumbnail|replace('_AC_UL320_', '_SL1000_')|replace('_AC_UY218_', '_SL1000_') }}"
+      <img src="{{ p.thumbnail|hq_img|replace('_AC_SL500_', '_AC_SL1000_') }}"
            alt="" onerror="this.src='{{ p.thumbnail }}'"/>
       {% endif %}
     </div>

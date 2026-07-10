@@ -33,6 +33,15 @@ def _regex_price(note: str) -> str:
     m = _r.search(r"€\s?([\d.,]+)", note or "")
     return ("-€" + m.group(1)) if m else "↓"  # edit a template, refresh, done — no restart
 
+@app.template_filter("hq_img")
+def _hq_img(url: str) -> str:
+    """Amazon image URL -> high-res: swap ANY size modifier (_AC_SX148_...,
+    _AC_UL320_, ...) with _AC_SL500_. Non-Amazon/odd URLs pass through."""
+    if not url or "media-amazon" not in url:
+        return url or ""
+    return re.sub(r"\._[^./]+\.(jpg|jpeg|png|webp)$", r"._AC_SL500_.\1", url)
+
+
 JOBS: dict[str, dict] = {}  # job_id -> {status, log, error, result}
 SETTINGS_PATH = Path.home() / ".amazon_search_ui_settings.json"
 
