@@ -30,15 +30,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PRIV = ROOT / "private"
 
+# unita' scelte DAI DATI (scan titoli reali 2026-07-11): cm=30, V=25,
+# modalita'/livelli/posizioni=26, pezzi=20, giorni=8, mm, lm, gradi C
 SPEC_RX = {
     "battery_mah": r"(\d{3,6})\s*mah",
     "power_w": r"(\d{1,4}(?:[.,]\d)?)\s*w(?:att)?s?\b",
+    "voltage_v": r"(\d{1,3}(?:[.,]\d)?)\s*v(?:olt)?s?\b",
     "bluetooth": r"bluetooth\s*(\d\.\d)",
     "screen_in": r"(\d{1,2}(?:[.,]\d)?)\s*(?:inch|pollici)\b",
+    "size_cm": r"(\d{1,3}(?:[.,]\d)?)\s*cm\b",
+    "size_mm": r"(\d{1,3}(?:[.,]\d)?)\s*mm\b",
     "weight_g": r"(\d{2,5})\s*g(?:rammi|rams?)?\b",
     "weight_kg": r"(\d{1,3}(?:[.,]\d{1,2})?)\s*kg\b",
     "hours_h": r"(\d{1,3})\s*(?:hours|ore|hrs|h)\b",
+    "days_d": r"(\d{1,3})\s*giorni\b",
     "storage_gb": r"(\d{2,4})\s*gb\b",
+    "modes_n": r"(\d{1,2})\s*(?:modalità|livelli|posizioni|strati|velocità|modes|levels|speeds)",
+    "pieces_n": r"(\d{1,3})\s*(?:pezzi|pcs|pz|pieces|pack|count|ct)\b",
+    "lumen_lm": r"(\d{2,5})\s*lm\b",
+    "temp_c": r"(\d{1,3})\s*°\s*c",
 }
 MATERIALS = ("memory foam", "gel", "cotone", "cotton", "poliestere", "polyester",
              "silicone", "lattice", "latex", "schiuma", "foam", "velluto", "velvet",
