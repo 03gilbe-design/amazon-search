@@ -23,7 +23,7 @@ noise_tree = {
         "noise_regex": r"(?i)\b(elettri|usb|massaggiator|shiatsu|crema|pomata|gel|cerott|scaldacollo|termic|riscald|smartwatch)\b"
     },
     "Level_3_Function": {
-        "description": "Scarta supporti non ortopedici (Viaggio, Gonfiabili, Russamento)",
+        "description": "Scarta supporti non ortopedici (viaggio, gonfiabili)",
         "noise_regex": r"(?i)\b(gonfiabil|viaggio|aereo|tappi|notturno)\b"
     }
 }
