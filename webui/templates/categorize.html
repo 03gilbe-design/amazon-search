@@ -1397,8 +1397,8 @@ document.getElementById('view-scene').insertAdjacentHTML('afterend', `
     <i>Hover (or click) a word to preview the matching product photos.</i>
   </p>
   
+  <div id="venn-container" style="margin-bottom:34px;"></div>
   <div id="terms-hierarchy-container" style="display:flex; flex-direction:column; gap:30px;"></div>
-  <div id="venn-container" style="margin-top:40px; margin-bottom:40px;"></div>
 </div>
 `);
 
@@ -1489,75 +1489,53 @@ function autoTuneTerms() {
 }
 
 async function renderVennDiagram(bubbles) {
+  // Incroci parole CON FOTO (al posto del venn.js astratto): per ogni coppia
+  // di parole top, una card con le foto dei prodotti che le hanno ENTRAMBE.
   const container = document.getElementById('venn-container');
   if (!container || !Array.isArray(bubbles)) return;
-  container.innerHTML = '<h3 style="margin-top:20px; color:#8e44ad;">Diagrammi di Venn (Incroci Parole)</h3><div id="venn-diagram-target" style="width:100%; height:400px; display:flex; justify-content:center; align-items:center;"></div>';
-
-  const target = document.getElementById('venn-diagram-target');
-
-  // Raccogli tutte le parole e i set
-  let allWords = {};
-  bubbles.forEach(b => {
-    (b.macro || []).forEach(m => {
-      const w = m.word;
-      if(!allWords[w]) allWords[w] = { count: 0, asins: new Set() };
-      allWords[w].count += m.count;
-      (m.thumbs || []).forEach(thumb => {
-          const p = ALL_PRODUCTS.find(x => x.thumbnail === thumb);
-          if (p) allWords[w].asins.add(p.asin);
-      });
+  const words = {};
+  bubbles.forEach(b => (b.macro || []).forEach(m => {
+    const w = m.word;
+    if (!words[w]) words[w] = new Set();
+    ALL_PRODUCTS.forEach(p => {
+      if (p.thumbnail && (p.title || '').toLowerCase().includes(w.toLowerCase())) words[w].add(p.asin);
     });
+  }));
+  const top = Object.keys(words).sort((a, b) => words[b].size - words[a].size).slice(0, 8);
+  const pairs = [];
+  for (let i = 0; i < top.length; i++)
+    for (let j = i + 1; j < top.length; j++) {
+      const inter = [...words[top[i]]].filter(a => words[top[j]].has(a));
+      if (inter.length >= 2) pairs.push({a: top[i], b: top[j], asins: inter});
+    }
+  pairs.sort((x, y) => y.asins.length - x.asins.length);
+  if (!pairs.length) { container.innerHTML = ''; return; }
+  container.innerHTML = '<h3 style="margin:20px 0 4px; font-size:0.95rem; color:var(--text)">Word crossings — products having BOTH words</h3>'
+    + '<p style="font-size:0.68rem; color:var(--dim); margin:0 0 14px">Click a photo to open the product.</p>';
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px';
+  pairs.slice(0, 9).forEach(pr => {
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border,#e6e0d6);border-radius:12px;background:#fff;padding:12px';
+    const chip = w => '<span style="font-size:0.7rem;font-weight:700;background:#f3ead9;color:#7a5b18;border-radius:99px;padding:3px 10px">' + w + '</span>';
+    card.innerHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:9px">' + chip(pr.a)
+      + '<span style="color:var(--dim);font-size:0.72rem">&#8745;</span>' + chip(pr.b)
+      + '<span style="margin-left:auto;font-size:0.68rem;font-weight:800;color:var(--orange)">' + pr.asins.length + '</span></div>';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;overflow-x:auto;padding-bottom:4px';
+    pr.asins.slice(0, 8).forEach(asin => {
+      const prod = ALL_PRODUCTS.find(x => x.asin === asin);
+      if (!prod || !prod.thumbnail) return;
+      const im = document.createElement('img');
+      im.src = prod.thumbnail; im.title = prod.title;
+      im.style.cssText = 'width:56px;height:56px;object-fit:contain;background:#faf8f4;border-radius:8px;cursor:pointer;flex:0 0 auto';
+      im.onclick = () => window.open('/product/' + JOB_ID + '/' + asin, '_blank');
+      row.appendChild(im);
+    });
+    card.appendChild(row);
+    grid.appendChild(card);
   });
-
-  const topWords = Object.keys(allWords).sort((a,b) => allWords[b].count - allWords[a].count).slice(0, 5);
-  if(topWords.length === 0) {
-     container.innerHTML = '<div style="padding:40px; color:var(--dim)">Nessun dato Venn disponibile.</div>';
-     return;
-  }
-
-  // Costruisci l'array data per venn.js
-  let data = [];
-  // I nodi singoli
-  topWords.forEach(w => {
-    data.push({sets: [w], size: allWords[w].asins.size || 1});
-  });
-  // Le intersezioni (solo coppie per non appesantire)
-  for(let i=0; i<topWords.length; i++){
-     for(let j=i+1; j<topWords.length; j++){
-         const w1 = topWords[i];
-         const w2 = topWords[j];
-         let intersectionSize = 0;
-         allWords[w1].asins.forEach(asin => {
-             if(allWords[w2].asins.has(asin)) intersectionSize++;
-         });
-         if(intersectionSize > 0) {
-             data.push({sets: [w1, w2], size: intersectionSize});
-         }
-     }
-  }
-
-  const chart = venn.VennDiagram().width(container.clientWidth || 800).height(400);
-  const div = d3.select("#venn-diagram-target");
-  div.datum(data).call(chart);
-  
-  div.selectAll("text").style("fill", "var(--text, #2b2723)").style("font-size", "12px").style("font-weight", "bold");
-  // representative photo inside each circle
-  div.selectAll("g.venn-circle").each(function(d) {
-    const word = (d.sets && d.sets[0]) || '';
-    const prod = ALL_PRODUCTS.find(p => p.thumbnail && (p.title||'').toLowerCase().includes(String(word).toLowerCase()));
-    if (!prod) return;
-    const sel = d3.select(this);
-    const txt = sel.select('text');
-    const x = parseFloat(txt.attr('x') || 0), y = parseFloat(txt.attr('y') || 0);
-    sel.append('image').attr('href', prod.thumbnail).attr('x', x - 22).attr('y', y + 8)
-       .attr('width', 44).attr('height', 44).attr('preserveAspectRatio', 'xMidYMid slice');
-  });
-  div.selectAll(".venn-intersection text").each(function(d) {
-        const bbox = this.getBBox();
-        d3.select(this.parentNode).insert("rect", "text")
-          .attr("x", bbox.x - 4).attr("y", bbox.y - 2).attr("width", bbox.width + 8)
-          .attr("height", bbox.height + 4).attr("fill", "rgba(0,0,0,0.6)").attr("rx", "4");
-  });
+  container.appendChild(grid);
 }
 
 async function renderTermsDistribution() {

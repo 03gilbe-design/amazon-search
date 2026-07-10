@@ -82,7 +82,7 @@ def main():
             return
         r = records.setdefault(asin, {"asin": asin, "source_queries": []})
         for k in ("title", "price", "price_str", "stars", "reviews", "thumbnail",
-                  "link", "brand"):
+                  "link", "brand", "family_id"):
             v = item.get(k)
             if v is not None and v != "":
                 r[k] = v
