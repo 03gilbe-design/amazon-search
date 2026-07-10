@@ -172,7 +172,14 @@ def main():
         for a in asins[1:]:
             p = records[a].get("price")
             if p is not None and kp is not None and abs(p - kp) < 0.01:
-                # stesso prodotto, stesso prezzo: non interessante — via
+                # stesso prodotto, stesso prezzo: non interessante a schermo — ma
+                # PRIMA di buttarlo fondi i suoi dati nel keeper (un listing puo'
+                # mostrare cio' che l'altro nasconde: l'obiettivo e' la scheda completa)
+                ku = records[keeper]
+                for fld in ("stars", "reviews", "brand"):
+                    if not ku.get(fld) and records[a].get(fld):
+                        ku[fld] = records[a][fld]
+                ku.setdefault("merged_listings", []).append(a)
                 del records[a]
                 dropped_same_price += 1
             else:
@@ -206,6 +213,42 @@ def main():
                 if src.get("materials") and not dst.get("materials"):
                     dst["estimated_materials"] = src["materials"]
 
+        # fusione dati nelle famiglie confermate dall'utente come STESSO prodotto
+    # (verdetti Same dal report): specs/materiali/attrs passano tra i membri
+    verd_path = Path.home() / ".amazon_search_family_verdicts.json"
+    merged_from_verdicts = 0
+    try:
+        verd = json.loads(verd_path.read_text(encoding="utf-8"))
+    except Exception:
+        verd = {}
+    for key, v in verd.items():
+        if (v or {}).get("verdict") != "same":
+            continue
+        members = [records[x] for x in key.split("|") if x in records]
+        if len(members) < 2:
+            continue
+        for fld in ("specs", "materials", "attrs"):
+            pool = {}
+            for m in members:
+                vals = m.get(fld)
+                if isinstance(vals, dict):
+                    pool.update(vals)
+                elif isinstance(vals, list):
+                    pool = {x: True for x in list(pool) + vals}
+            for m in members:
+                cur = m.get(fld)
+                if isinstance(pool, dict) and not isinstance(cur, list):
+                    extra = {k2: v2 for k2, v2 in pool.items()
+                             if v2 is not True and k2 not in (cur or {})}
+                    if extra:
+                        m.setdefault("estimated_specs", {}).update(extra)
+                        merged_from_verdicts += len(extra)
+                elif pool:
+                    lst = sorted(set((cur or []) + [k2 for k2, v2 in pool.items() if v2 is True]))
+                    if lst != (cur or []):
+                        m[fld] = lst
+                        merged_from_verdicts += 1
+
     PRIV.mkdir(exist_ok=True)
     out = PRIV / "unified_dataset.json"
     out.write_text(json.dumps({"built_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -228,6 +271,7 @@ def main():
         f"- con materiali: {with_mats} ({with_mats/max(n,1):.0%})",
         f"- con attributi qualitativi: {with_attrs} ({with_attrs/max(n,1):.0%})",
         f"- con specs/materiali STIMATI dal gemello stesso-stampo: {with_est} (trasferimenti: {transferred})",
+        f"- fusioni da verdetti-Same dell'utente: {merged_from_verdicts}",
         f"- output: {out}",
     ]
     (PRIV / "unified_dataset_stats.md").write_text("\n".join(stats), encoding="utf-8")
