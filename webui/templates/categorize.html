@@ -491,13 +491,48 @@ let currentView = 'playground';
 // ── Helpers ──────────────────────────────────────────────────────────────
 function catColor(i) { return CAT_COLORS[i % CAT_COLORS.length]; }
 
+// autoSuggest v2 — data-driven: impara dalle etichette date (i prodotti già
+// categorizzati sono esempi positivi, il cestino noise è il MEGA-GRUPPO di
+// esempi negativi: parole frequenti lì penalizzano ogni suggerimento).
+let _sugCache = null, _sugStamp = '';
+function _suggestModel() {
+  const stamp = ALL_PRODUCTS.map(p => p.category || '').join(',');
+  if (_sugCache && stamp === _sugStamp) return _sugCache;
+  _sugStamp = stamp;
+  const tok = t => [...new Set((t || '').toLowerCase().match(/[a-zà-ù]{4,}/g) || [])];
+  const catW = {}, catN = {}, noiseW = {};
+  let noiseN = 0;
+  ALL_PRODUCTS.forEach(p => {
+    if (!p.category) return;
+    const ws = tok(p.title + ' ' + (p.brand || ''));
+    if (p.category === 'noise') { noiseN++; ws.forEach(w => noiseW[w] = (noiseW[w] || 0) + 1); return; }
+    catN[p.category] = (catN[p.category] || 0) + 1;
+    const d = catW[p.category] = catW[p.category] || {};
+    ws.forEach(w => d[w] = (d[w] || 0) + 1);
+  });
+  return _sugCache = {tok, catW, catN, noiseW, noiseN};
+}
 function autoSuggest(product) {
-  const text = (product.title + ' ' + product.brand).toLowerCase();
+  const m = _suggestModel();
+  const ws = m.tok(product.title + ' ' + (product.brand || ''));
+  let best = null, bestScore = 0;
   for (const cat of categories) {
-    const words = cat.toLowerCase().split(/[\s,]+/);
-    if (words.some(w => w.length > 3 && text.includes(w))) return cat;
+    if (cat === 'noise') continue;
+    let score = 0;
+    const d = m.catW[cat], n = m.catN[cat] || 0;
+    if (d && n >= 2) {
+      // evidenza dalle etichette: P(parola|categoria) - penalità noise
+      ws.forEach(w => {
+        if (d[w]) score += d[w] / n;
+        if (m.noiseW[w] && m.noiseN >= 2) score -= 0.7 * m.noiseW[w] / m.noiseN;
+      });
+    }
+    // fallback: nome categoria dentro il titolo (come prima)
+    const nameWords = cat.toLowerCase().split(/[\s,]+/);
+    if (nameWords.some(w => w.length > 3 && ws.includes(w))) score += 0.6;
+    if (score > bestScore) { bestScore = score; best = cat; }
   }
-  return null;
+  return bestScore >= 0.5 ? best : null;
 }
 
 
