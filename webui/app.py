@@ -254,6 +254,25 @@ def _async_calculate_phash_families(products):
 
 
 def _build_dataset_job() -> None:
+    # dataset unificato (build_local_dataset.py): pulito, dedup stesso-prezzo,
+    # specs/materiali estratti — se c'è, è LA fonte (basta fusioni al volo doppie)
+    uni = Path(__file__).resolve().parent.parent / "private" / "unified_dataset.json"
+    if uni.exists():
+        try:
+            data = json.loads(uni.read_text(encoding="utf-8"))
+            prods = [d for d in (data.get("products") or []) if d.get("thumbnail")]
+            lookup = _load_learned().get("_global", {})
+            products = [_P(d, d.get("category") or lookup.get(d.get("asin"))) for d in prods]
+            for pr, d in zip(products, prods):
+                pr.specs = d.get("specs") or {}
+                pr.materials = d.get("materials") or d.get("estimated_materials") or []
+                pr.estimated_specs = d.get("estimated_specs") or {}
+                pr.duplicate_of = d.get("duplicate_of")
+            JOBS["dataset"] = {"status": "done", "log": [], "error": None,
+                               "result": _DatasetResult(products), "params": {}}
+            return
+        except Exception:
+            pass
     if "dataset" in JOBS and JOBS["dataset"].get("status") == "done":
         return
         
