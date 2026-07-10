@@ -170,24 +170,27 @@ class _P:
         self.family_id = d.get("family_id")
 
 
-# dataset = solo prodotti sonno-correlati: la cache su disco è condivisa con
-# progetti non-sonno (subwoofer auto, occhiaie, smart ring generico...) — quel
-# rumore va escluso esplicitamente, un match debole non basta.
-_SLEEP_INCLUDE = ("sonno", "dormire", "notte", "sleep", "cervical", "collare",
-                  "neck", "russamento", "snor", "cpap", "apnea", "mascherina",
-                  "eye mask", "cuscino", "pillow", "guanciale", "materasso",
-                  "trazione", "anti-russ")
-_SLEEP_EXCLUDE = ("subwoofer", "altoparlante", "cassa acustica", "bluetooth speaker",
-                  "minoxidil", "occhiaie", "eye cream", "crema",
-                  "tongue", "lingua", "bite", "paradenti", "mouthpiece", "bocchino",
-                  "smart ring", "anello", "smartring", "oura")
+# topic filter for the "dataset" labeling pool: keyword lists live in a local
+# gitignored file (private/topic_keywords.json) — repo stays generic; without
+# the file no include-filtering happens.
+def _topic_keywords() -> dict:
+    try:
+        pth = Path(__file__).resolve().parent.parent / "private" / "topic_keywords.json"
+        return json.loads(pth.read_text(encoding="utf-8"))
+    except Exception:
+        return {"include": [], "exclude": []}
+
+
+_TOPIC = _topic_keywords()
+_SLEEP_INCLUDE = tuple(_TOPIC.get("include", []))
+_SLEEP_EXCLUDE = tuple(_TOPIC.get("exclude", []))
 
 
 def _is_sleep_related(title: str) -> bool:
     t = (title or "").lower()
     if any(kw in t for kw in _SLEEP_EXCLUDE):
         return False
-    return any(kw in t for kw in _SLEEP_INCLUDE)
+    return not _SLEEP_INCLUDE or any(kw in t for kw in _SLEEP_INCLUDE)
 
 
 def _async_calculate_phash_families(products):
