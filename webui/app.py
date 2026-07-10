@@ -21,7 +21,15 @@ from flask import Flask, jsonify, render_template, request
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 app = Flask(__name__)
-app.config["TEMPLATES_AUTO_RELOAD"] = True  # edit a template, refresh, done — no restart
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+
+@app.template_filter("regex_price")
+def _regex_price(note: str) -> str:
+    """Estrae '-€4.49' da 'Same item also seen for €4.49 less' (badge compatto)."""
+    import re as _r
+    m = _r.search(r"€\s?([\d.,]+)", note or "")
+    return ("-€" + m.group(1)) if m else "↓"  # edit a template, refresh, done — no restart
 
 JOBS: dict[str, dict] = {}  # job_id -> {status, log, error, result}
 SETTINGS_PATH = Path.home() / ".amazon_search_ui_settings.json"

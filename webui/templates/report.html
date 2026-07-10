@@ -53,6 +53,11 @@
     <div class="pcard-price-row">
       {% if p.price is not none %}
       <span class="pcard-price">{{ p.price_str or ('€' + '%.2f'|format(p.price)) }}</span>
+      {% if p.dedup_note %}
+      <span class="price-drop" title="{{ p.dedup_note }}">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12l7 7 7-7"/></svg>{% set m = p.dedup_note|regex_price %}{{ m }}
+      </span>
+      {% endif %}
       {% else %}
       <span class="pcard-price-na">Price N/A</span>
       {% endif %}
@@ -86,12 +91,7 @@
         Out of stock
       </span>
       {% endif %}
-      {% if p.dedup_note %}
-      <span class="badge b-dedup">
-        <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/></svg>
-        {{ p.dedup_note }}
-      </span>
-      {% endif %}
+
       {% for hit in (p.ff_hits or {}).keys() %}
       <span class="badge b-fit">
         <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -118,9 +118,7 @@
   </div>
 
   <div class="pcard-footer">
-    <span style="font-size:0.62rem;color:var(--dim);display:inline-flex;align-items:center;gap:4px">
-      {% if p.reviews %}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.8-.9L3 21l2-4.2a8.4 8.4 0 1116-5.3z"/></svg>{{ "{:,}".format(p.reviews) }} reviews{% endif %}
-    </span>
+    <span></span>
     <a class="btn-amazon" href="{{ p.link }}" target="_blank" rel="noopener" title="Open on Amazon">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6" fill="currentColor"/><circle cx="19" cy="21" r="1.6" fill="currentColor"/><path d="M1 2h3l3.2 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.5L23 7H6"/></svg>
       Amazon

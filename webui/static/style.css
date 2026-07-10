@@ -529,3 +529,8 @@ details[open] > summary .arr { transform: rotate(90deg); }
   .sunflower-wrap { width: 320px; height: 320px; }
   .sf-center { width: 120px; height: 120px; }
 }
+
+/* mini-badge prezzo più basso visto altrove */
+.price-drop { display:inline-flex; align-items:center; gap:3px; font-size:0.66rem;
+  font-weight:700; color:#1c7c3c; background:#e7f6ec; border:1px solid #bfe6cc;
+  padding:2px 7px; border-radius:99px; cursor:help; }
