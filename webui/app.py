@@ -388,7 +388,7 @@ def export_duplicates_api():
     # Run the export script
     script_path = Path(__file__).parent.parent.parent / "export_duplicates.py"
     if not script_path.exists():
-        script_path = Path(r"C:\Users\Gilberto Bizzo\amazon_search\export_duplicates.py")
+        script_path = Path(__file__).resolve().parent.parent / "export_duplicates.py"
         
     if script_path.exists():
         try:
