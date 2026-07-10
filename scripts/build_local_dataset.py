@@ -236,6 +236,14 @@ def main():
 
     # enrichment — unita' scoperte automaticamente da QUESTO pool
     pool_units = discover_units(r.get("title", "") for r in records.values())
+    # prior da ESCI (1.2M prodotti, scoperto su Colab): unita' note che nel nostro
+    # pool sono troppo rare per superare la soglia locale, ma valide comunque
+    try:
+        esci_units = json.loads((PRIV / "esci_discovered_units.json").read_text(encoding="utf-8"))
+        prior = {u for loc in esci_units.values() for u in loc}
+        pool_units |= prior
+    except Exception:
+        pass
     print(f"unita' scoperte dal pool: {sorted(pool_units)}")
     for r in records.values():
         r["specs"] = extract_specs_auto(r.get("title", ""), pool_units)
