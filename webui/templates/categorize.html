@@ -235,10 +235,10 @@ body { background:#e9e6e0; }
           <!-- prev / skip / skip assigned -->
           <div style="display:flex;gap:8px">
             <button class="btn btn-outline btn-sm" onclick="prevProduct()" title="Torna al prodotto previous">
-              ← Precedente
+              ← Previous
             </button>
             <button class="btn btn-outline btn-sm" onclick="skipCurrent()" title="Salta il prodotto corrente">
-              Passa al Prossimo →
+              Next →
             </button>
             <button class="btn btn-outline btn-sm" id="skip-assigned-btn" onclick="toggleSkipAssigned()">
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
@@ -748,12 +748,18 @@ function renderStacks(sf, cat, ccx, ccy, angle, color, CS) {
     im.title = p.title || '';
     im.draggable = true;
     im.dataset.cat = cat;
-    const along = base + i * SPACING;
-    const side = (i % 2 ? 1 : -1) * Math.round(SZ * 0.3);
+    // fillotassi attorno al cerchio della categoria: raggio crescente, angolo
+    // aureo — niente file, niente ammassi
+    const theta = angle + i * 2.39996;
+    const rad = CS / 2 + SZ * 0.55 * Math.sqrt(i + 1) + 14;
+    let px = ccx + Math.cos(theta) * rad - SZ / 2;
+    let py = ccy + Math.sin(theta) * rad * 0.8 - SZ / 2;
+    // fuori canvas? NIENTE clamp al bordo (creava le pile): rientra verso il centro
+    for (let g = 0; g < 24 && (px < 4 || py < 4 || px > W - SZ - 4 || py > H - SZ - 4); g++) {
+      px += (W / 2 - SZ / 2 - px) * 0.14;
+      py += (H / 2 - SZ / 2 - py) * 0.14;
+    }
     const jit = (h => (h % 9) - 4)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
-    // perpendicular alla direzione: sparse, non in fila unica
-    const px = Math.min(Math.max(ccx + dirx * along - diry * side - SZ / 2, 4), W - SZ - 4);
-    const py = Math.min(Math.max(ccy + diry * along + dirx * side - SZ / 2, 4), H - SZ - 4);
 
     // Salviamo posizioni originali
     im.dataset.origLeft = px;
@@ -2514,96 +2520,87 @@ async function runClustering() {
 function renderPlaygroundClusters(clusters) {
   const container = document.getElementById('playground-clusters-container');
   container.innerHTML = '';
-  
   if (!clusters || clusters.length === 0) {
-    container.innerHTML = `<div style="padding:20px;text-align:center;font-size:0.7rem;color:var(--dim)">Nessun cluster generato.</div>`;
+    container.innerHTML = `<div style="padding:20px;text-align:center;font-size:0.7rem;color:var(--dim)">No clusters generated.</div>`;
     return;
   }
-  
-  // Impostiamo il container come un unico flex-wrap globale fluido senza scatole interne
-  container.style.display = 'flex';
-  container.style.flexWrap = 'wrap';
-  container.style.gap = '4px';
-  container.style.alignItems = 'center';
-  container.style.alignContent = 'flex-start';
-  container.style.width = '100%';
-  
-  // Palette di colori accesi ma eleganti per distinguere i gruppi adiacenti
+  // ClustersTab (gen-2 UI): card grid, color strip, count pill, photo mini-grid, cohesion bar
+  container.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;width:100%;align-items:start';
   const colors = ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', '#F15BB5', '#00BBF9', '#00F5D4', '#E07A5F', '#3D405B', '#81B29A', '#F2CC8F'];
-  
+  const maxN = Math.max(1, ...clusters.map(c => (c.unique_products || []).length));
+
   clusters.forEach((c, idx) => {
-    const termsStr = c.terms && c.terms.length > 0 ? c.terms.slice(0, 5).join(', ') : 'Misto';
     const col = colors[idx % colors.length];
-    
-    // Etichetta (Pillola) Inline
-    const pill = document.createElement('div');
-    pill.style.display = 'inline-flex';
-    pill.style.alignItems = 'center';
-    pill.style.justifyContent = 'space-between';
-    pill.style.height = '72px'; // Stessa altezza esatta delle foto grandi
-    pill.style.padding = '0 12px 0 16px';
-    pill.style.borderRadius = '36px';
-    pill.style.backgroundColor = col + '55'; // colore pieno leggero
-    pill.style.boxSizing = 'border-box';
-    pill.style.margin = '2px';
-    
-    pill.innerHTML = `
-      <div style="display:flex; flex-direction:column; justify-content:center; max-width:200px; margin-right:12px">
-        <span style="font-size:0.6rem; font-weight:900; color:#333; text-transform:uppercase; line-height:1.2">Gruppo</span>
-        <span style="font-size:0.75rem; font-weight:700; color:var(--text); line-height:1.2; white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical" title="${termsStr}">${termsStr}</span>
-      </div>
-      <div style="position:relative; width:28px; height:28px">
-        <select class="cluster-cat-select" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" onchange="assignWholeCluster(${c.id}, ${JSON.stringify(c.products.map(p => p.asin))}, this.value)">
-          <option value="">--</option>
-          ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
-        </select>
-      </div>
-    `;
-    container.appendChild(pill);
-    
-    // Se l'API restituisce i sottogruppi
-    const subs = c.subgroups && c.subgroups.length > 0 ? c.subgroups : [{id: c.id + '_0', unique_products: c.unique_products || []}];
-    
+    const items = c.unique_products || [];
+    const name = (c.terms && c.terms.length) ? c.terms.slice(0, 3).join(' · ') : 'Mixed';
+    const cohesion = Math.round(100 * items.length / maxN);
+    const card = document.createElement('div');
+    card.style.cssText = 'border-radius:14px;border:1px solid ' + col + '40;background:#fff;overflow:hidden;'
+      + 'box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .25s;'
+      + (items.length <= 2 ? 'transform:scale(.94);transform-origin:top left;' : '');
+    card.onmouseenter = () => card.style.boxShadow = '0 10px 28px rgba(0,0,0,.12)';
+    card.onmouseleave = () => card.style.boxShadow = '0 1px 3px rgba(0,0,0,.05)';
+    card.innerHTML = '<div style="height:7px;background:' + col + '"></div>';
+
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:12px 14px;display:flex;flex-direction:column;gap:10px';
+
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
+    head.innerHTML = '<h3 style="font-size:0.78rem;font-weight:700;margin:0;line-height:1.3" title="'
+      + (c.terms || []).join(', ') + '">' + name + '</h3>'
+      + '<span style="font-size:0.68rem;font-weight:800;padding:2px 9px;border-radius:99px;color:#fff;background:' + col + '">' + items.length + '</span>';
+    body.appendChild(head);
+
+    // subgroups: sezione con label keywords; senza subgroups = un blocco unico
+    const subs = c.subgroups && c.subgroups.length > 0 ? c.subgroups : [{id: c.id + '_0', unique_products: items}];
     subs.forEach((sub, sIdx) => {
-        // Se c'è più di un sottogruppo, aggiungi una piccola pillola separatrice per il sottogruppo
-        if (subs.length > 1) {
-            const subPill = document.createElement('div');
-            subPill.style.display = 'inline-flex';
-            subPill.style.alignItems = 'center';
-            subPill.style.justifyContent = 'center';
-            subPill.style.height = '40px'; 
-            subPill.style.padding = '0 12px';
-            subPill.style.borderRadius = '20px';
-            subPill.style.border = `2px dashed ${col}`;
-            subPill.style.margin = '2px 8px';
-            subPill.style.fontSize = '0.7rem';
-            subPill.style.fontWeight = 'bold';
-            subPill.style.color = 'var(--text)';
-            subPill.textContent = (sub.terms && sub.terms.length) ? sub.terms.join(' · ') : `Sub ${sIdx + 1}`;
-            container.appendChild(subPill);
-        }
-        
-        // Foto del gruppo/sottogruppo (inline)
-        const itemsList = sub.unique_products || [];
-        itemsList.forEach(p => {
-          const localProd = ALL_PRODUCTS.find(lp => lp.asin === p.asin) || p;
-          const isAssigned = !!localProd.category;
-          
-          const card = document.createElement('div');
-          card.className = 'cluster-prod-card' + (isAssigned ? ' assigned' : '');
-          card.title = `${localProd.title} ${localProd.category ? '[' + localProd.category + ']' : ''}`;
-          
-          card.style.margin = '2px';
-          card.style.backgroundColor = col + '55'; // Colore a riempimento come il pill
-          card.style.border = 'none'; // Nessun contorno
-          card.style.boxSizing = 'border-box';
-          
-          card.innerHTML = `
-            <img loading="lazy" referrerpolicy="no-referrer" src="${p.thumbnail || ''}" alt=""/>
-          `;
-          container.appendChild(card);
-        });
+      const sItems = sub.unique_products || [];
+      if (!sItems.length) return;
+      if (subs.length > 1) {
+        const lab = document.createElement('div');
+        lab.style.cssText = 'font-size:0.62rem;font-weight:700;color:' + col + ';border-top:1px dashed ' + col + '55;padding-top:7px';
+        lab.textContent = (sub.terms && sub.terms.length) ? sub.terms.join(' · ') : ('Sub ' + (sIdx + 1));
+        body.appendChild(lab);
+      }
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px';
+      sItems.slice(0, 8).forEach(p => {
+        const localProd = ALL_PRODUCTS.find(lp => lp.asin === p.asin) || p;
+        const w = document.createElement('div');
+        w.className = 'cluster-prod-card' + (localProd.category ? ' assigned' : '');
+        w.title = localProd.title + (localProd.category ? ' [' + localProd.category + ']' : '');
+        w.style.cssText = 'aspect-ratio:1;border-radius:9px;background:#faf8f4;overflow:hidden;border:none;margin:0';
+        w.innerHTML = '<img loading="lazy" referrerpolicy="no-referrer" src="' + (p.thumbnail || '')
+          + '" alt="" style="width:100%;height:100%;object-fit:contain"/>';
+        grid.appendChild(w);
+      });
+      if (sItems.length > 8) {
+        const more = document.createElement('div');
+        more.style.cssText = 'aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;'
+          + 'font-size:0.7rem;font-weight:800;color:' + col + ';background:' + col + '18';
+        more.textContent = '+' + (sItems.length - 8);
+        grid.appendChild(more);
+      }
+      body.appendChild(grid);
     });
+
+    // cohesion bar + apply select
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:0.62rem;color:var(--dim)';
+    foot.innerHTML = '<div style="flex:1;height:6px;border-radius:99px;background:#eee9e0;overflow:hidden">'
+      + '<div style="height:100%;border-radius:99px;width:' + cohesion + '%;background:' + col + '"></div></div>'
+      + '<span>' + cohesion + '%</span>';
+    const sel = document.createElement('select');
+    sel.className = 'cluster-cat-select';
+    sel.style.cssText = 'font-size:0.66rem;padding:3px 6px;border-radius:6px;border:1px solid var(--border);cursor:pointer;max-width:110px';
+    sel.innerHTML = '<option value="">Apply to…</option>' + categories.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('');
+    sel.onchange = () => assignWholeCluster(c.id, (c.products || items).map(p => p.asin), sel.value);
+    foot.appendChild(sel);
+    body.appendChild(foot);
+
+    card.appendChild(body);
+    container.appendChild(card);
   });
 }
 
