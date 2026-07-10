@@ -206,14 +206,29 @@
           {% endif %}
         </div>
       </div>
-      <!-- New search btn -->
-      <a class="btn btn-outline btn-sm" href="/">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-          <path d="M1 8a7 7 0 1012.5-4.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M10 2l4 2-2 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        New search
-      </a>
+      <!-- barra ricerca diretta, stile Amazon: cerca senza tornare alla home -->
+      <form id="hdr-search" style="display:flex;background:#fff;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;min-width:300px;max-width:420px;flex:1">
+        <input name="q" placeholder="Search Amazon…" style="flex:1;border:none;outline:none;padding:9px 12px;font-size:0.82rem;background:transparent;color:var(--text)"/>
+        <button type="submit" style="border:none;background:#e47911;color:#fff;padding:0 15px;cursor:pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+        </button>
+      </form>
+      <script>
+      document.getElementById('hdr-search').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const q = this.q.value.trim(); if (!q) return;
+        const btn = this.querySelector('button'); btn.style.opacity = '.5';
+        fetch('/search', {method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({query: q, results: 60, no_llm: true})})
+          .then(r => r.json()).then(d => {
+            if (!d.job_id) { alert(d.error || 'Search failed'); btn.style.opacity = '1'; return; }
+            const t = setInterval(() => fetch('/status/' + d.job_id).then(r => r.json()).then(st => {
+              if (st.status === 'done') { clearInterval(t); location.href = '/report/' + d.job_id; }
+              if (st.status === 'error') { clearInterval(t); btn.style.opacity = '1'; alert(st.error || 'Search failed — API quota or network. Try the cached searches on the home page.'); }
+            }), 900);
+          });
+      });
+      </script>
     </div>
 
     <!-- Refine search -->
@@ -391,7 +406,7 @@
         <rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
         <path d="M5 4V3a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"/>
       </svg>
-      <span class="section-head-label" style="color:var(--purple)">Duplicate families</span>
+      <img src="/static/anim/dup_merge.svg" width="26" height="26" alt="" style="vertical-align:middle;margin-right:4px"><span class="section-head-label" style="color:var(--purple)">Duplicate families</span>
       <span class="section-head-count" style="color:var(--purple)">{{ families|length }} group{{ 's' if families|length != 1 else '' }}</span>
     </div>
     <p style="font-size:0.7rem;color:var(--muted);margin-bottom:16px">
