@@ -133,13 +133,14 @@ body { background:#e9e6e0; }
   <!-- ── SUNFLOWER VIEW ────────────────────────────────────────────────── -->
   <div id="view-sunflower" style="display:none; position:relative;">
     
-    <!-- Sidebar Ricerche -->
-    <div id="sf-searches-sidebar" style="position:absolute; top:20px; left:20px; width:280px; background:rgba(255,255,255,0.9); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:12px; padding:15px; z-index:100; box-shadow:0 8px 30px rgba(0,0,0,0.1); max-height:80vh; overflow-y:auto;">
-      <h3 style="margin-top:0; font-size:1rem; color:var(--orange);">Lista Ricerche</h3>
-      <div id="searches-list-container" style="display:flex; flex-direction:column; gap:10px;">
-        <div style="font-size:0.8rem; color:var(--dim);">Caricamento ricerche...</div>
-      </div>
-    </div>
+    <!-- Ricerche salvate: drawer in flusso, mai sopra il contenuto -->
+    <details id="sf-searches-sidebar" style="margin-bottom:14px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 14px;">
+      <summary style="cursor:pointer; font-size:0.78rem; color:var(--sub); display:flex; align-items:center; gap:7px; list-style:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e47911" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Saved searches <span style="color:var(--muted)">▾</span>
+      </summary>
+      <div id="searches-list-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
+    </details>
 
     <div class="cat-layout" style="display:flex;gap:20px;align-items:stretch">
 
@@ -444,8 +445,13 @@ window.addEventListener('DOMContentLoaded', updateCartUI);
 let categories = {{ existing_cats | tojson }};
 // le categorie create sopravvivono al reload (per job)
 try {
+  // ripristina solo categorie ancora sensate per QUESTO dataset: quelle vuote
+  // salvate da sessioni su altri dataset non devono riapparire
   const saved = JSON.parse(localStorage.getItem('cats_' + JOB_ID) || '[]');
-  saved.forEach(c => { if (!categories.includes(c)) categories.push(c); });
+  saved.forEach(c => {
+    if (!categories.includes(c) && ALL_PRODUCTS.some(p => p.category === c)) categories.push(c);
+  });
+  localStorage.setItem('cats_' + JOB_ID, JSON.stringify(categories));
 } catch (e) {}
 function persistCats() { localStorage.setItem('cats_' + JOB_ID, JSON.stringify(categories)); }
 if (categories.length === 0) categories = ['Other'];
@@ -465,6 +471,41 @@ function autoSuggest(product) {
   return null;
 }
 
+
+// un punto solo di refresh: qualunque cambiamento ridisegna la vista attiva,
+// così kanban/parole/cluster non restano mai stantii
+
+// timer live: ogni operazione mostra quanto sta impiegando, aggiornato ogni 100ms
+let _opTimer = null;
+function opStart(label) {
+  let el = document.getElementById('op-timer');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'op-timer';
+    el.style.cssText = 'position:fixed;bottom:18px;right:18px;background:#26221e;color:#f2efe9;'
+      + 'padding:8px 14px;border-radius:9px;font-size:0.72rem;z-index:9999;display:flex;'
+      + 'align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+    document.body.appendChild(el);
+  }
+  const t0 = performance.now();
+  clearInterval(_opTimer);
+  el.style.display = 'flex';
+  const tick = () => { el.textContent = label + ' — ' + ((performance.now() - t0) / 1000).toFixed(1) + 's'; };
+  tick();
+  _opTimer = setInterval(tick, 100);
+  return () => { clearInterval(_opTimer);
+    el.textContent = label + ' ✓ ' + ((performance.now() - t0) / 1000).toFixed(1) + 's';
+    setTimeout(() => { el.style.display = 'none'; }, 2500); };
+}
+
+function _closeOp() { if (window.__opDone) { window.__opDone(); window.__opDone = null; } }
+function renderAll() {
+  renderCatList();
+  if (currentView === 'sunflower') renderCurrentProduct();
+  else if (currentView === 'kanban') renderKanban();
+  else if (currentView === 'terms') renderTermsDistribution();
+  else if (currentView === 'playground') runClustering();
+}
 async function assignCategory(asin, cat, skipHistory) {
   const p = ALL_PRODUCTS.find(x => x.asin === asin);
   if (!skipHistory) HISTORY.push({ asin, prevCat: p ? p.category : null });
@@ -474,6 +515,7 @@ async function assignCategory(asin, cat, skipHistory) {
     body: JSON.stringify({ job_id: JOB_ID, asin, category: cat }),
   });
   if (p) p.category = cat;
+  if (typeof renderTermsDistribution === 'function' && currentView === 'terms') renderTermsDistribution();
 }
 
 // ── Sunflower ─────────────────────────────────────────────────────────────
@@ -2292,6 +2334,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function runClustering() {
+  const opDone = opStart('Clustering');
+  window.__opDone = opDone;
   const container = document.getElementById('playground-clusters-container');
   // Inserisci spinner di caricamento visibile!
   container.innerHTML = '<div style="text-align:center; padding:60px;"><div class="loading-ring" style="width:50px;height:50px;display:inline-block;border-width:4px;"></div><br/><br/><h3 style="color:var(--orange);">Generazione raggruppamenti in corso...</h3></div>';
@@ -2333,10 +2377,12 @@ async function runClustering() {
     renderPlaygroundClusters(data.clusters);
     container.style.opacity = '1';
     container.style.pointerEvents = 'auto';
+    _closeOp();
   } catch (e) {
     container.style.opacity = '1';
     container.style.pointerEvents = 'auto';
     container.innerHTML = `<div style="color:red;padding:20px;font-size:0.75rem">Errore di rete: ${e}</div>`;
+    _closeOp();
   }
 }
 
@@ -2626,26 +2672,41 @@ function generateMockVennData() {
 function fetchSearches() {
   fetch('/api/searches').then(r => r.json()).then(data => {
     const c = document.getElementById('searches-list-container');
-    if(!c) return;
+    if (!c) return;
     c.innerHTML = '';
-    data.forEach(s => {
-      // Create search item with progress bar
-      // Il calcolo in comune non lo abbiamo al momento, mettiamo una dummy bar
-      let div = document.createElement('div');
-      div.style.cssText = 'padding:10px; background:#f8f9fa; border:1px solid #ddd; border-radius:8px; cursor:pointer;';
-      div.innerHTML = `
-        <div style="font-weight:bold; font-size:0.8rem; color:#333;">${s.query}</div>
-        <div style="font-size:0.65rem; color:#777; margin-top:2px;">${s.file}</div>
-        <div style="width:100%; height:4px; background:#eee; margin-top:6px; border-radius:2px; overflow:hidden; display:flex;">
-          <div style="width:40%; background:var(--orange); height:100%;"></div>
-          <div style="width:20%; background:#2ecc71; height:100%;"></div>
-        </div>
-      `;
-      // Clicking a search should probably reload the app for that file
-      div.onclick = () => { alert("Integrazione da fare: ricaricare la pagina puntando a " + s.file); };
-      c.appendChild(div);
+    if (!Array.isArray(data) || !data.length) {
+      const d = document.createElement('div');
+      d.style.cssText = 'font-size:0.72rem;color:var(--dim)';
+      d.textContent = 'No cached searches yet — run one from the home page.';
+      c.appendChild(d);
+      return;
+    }
+    data.forEach(sr => {
+      // chip pulito, testo via textContent (query = dato non fidato), click = apre
+      // quel dataset nel categorizer rilanciando la ricerca (cache -> istantanea)
+      const chip = document.createElement('button');
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;font-size:0.74rem;'
+        + 'padding:6px 12px;background:#fff;border:1px solid var(--border);border-radius:99px;'
+        + 'cursor:pointer;color:var(--sub)';
+      const n = document.createElement('b'); n.textContent = sr.count;
+      n.style.cssText = 'color:#e47911;font-weight:700';
+      const q = document.createElement('span'); q.textContent = sr.query;
+      chip.append(q, n);
+      chip.onclick = () => {
+        chip.disabled = true; chip.style.opacity = '.5';
+        fetch('/search', {method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({query: sr.query, results: 60, no_llm: true})})
+          .then(r => r.json()).then(d => {
+            if (!d.job_id) return;
+            const t = setInterval(() => fetch('/status/' + d.job_id).then(r => r.json()).then(st => {
+              if (st.status === 'done') { clearInterval(t); location.href = '/categorize/' + d.job_id; }
+              if (st.status === 'error') { clearInterval(t); chip.disabled = false; chip.style.opacity = '1'; }
+            }), 900);
+          });
+      };
+      c.appendChild(chip);
     });
-  }).catch(e => console.error(e));
+  }).catch(() => {});
 }
 
 window.exportDuplicates = function() {

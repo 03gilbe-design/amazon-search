@@ -503,6 +503,31 @@
 
 {% block scripts %}
 <script>
+// paginazione: dentro ogni griglia >24 card, mostra 24 per pagina con frecce
+document.querySelectorAll('.product-grid').forEach(grid => {
+  const cards = [...grid.children];
+  const PER = 24;
+  if (cards.length <= PER) return;
+  let page = 0;
+  const pages = Math.ceil(cards.length / PER);
+  const pager = document.createElement('div');
+  pager.className = 'pager';
+  const prev = document.createElement('button'); prev.textContent = '‹'; prev.title = 'Previous page';
+  const info = document.createElement('span'); info.className = 'pager-info';
+  const next = document.createElement('button'); next.textContent = '›'; next.title = 'Next page';
+  pager.append(prev, info, next);
+  grid.after(pager);
+  const show = () => {
+    cards.forEach((c, i) => c.style.display =
+      (i >= page * PER && i < (page + 1) * PER) ? '' : 'none');
+    info.textContent = (page + 1) + ' / ' + pages;
+    prev.disabled = page === 0; next.disabled = page === pages - 1;
+  };
+  prev.onclick = () => { page = Math.max(0, page - 1); show(); grid.scrollIntoView({behavior: 'smooth'}); };
+  next.onclick = () => { page = Math.min(pages - 1, page + 1); show(); grid.scrollIntoView({behavior: 'smooth'}); };
+  show();
+});
+
 // chip categorie: X dissolve la sezione; scelte ricordate per job in localStorage
 (function() {
   const KEY = 'hidden_cats_' + (window.JOB_ID || location.pathname);

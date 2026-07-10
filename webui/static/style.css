@@ -219,7 +219,17 @@ select option { background: #111; }
   transition: border-color 0.15s, transform 0.15s;
   overflow: hidden;
 }
-.pcard:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-1px); }
+.pcard { box-shadow: 0 1px 3px rgba(60,52,40,.07); }
+.pcard:hover { border-color: #e47911; transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(60,52,40,.13); transition: all .18s; }
+/* paginazione prodotti */
+.pager { display:flex; align-items:center; justify-content:center; gap:14px; margin:18px 0 30px; }
+.pager button { border:1px solid var(--border); background:#fff; color:var(--sub);
+  width:38px; height:38px; border-radius:50%; font-size:1.1rem; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; transition:all .15s; }
+.pager button:hover:not(:disabled) { border-color:#e47911; color:#e47911; }
+.pager button:disabled { opacity:.3; cursor:default; }
+.pager .pager-info { font-size:0.74rem; color:var(--dim); }
 
 .pcard-rank { display: none;  /* il rank non serve all'utente */
   position: absolute; top: 10px; left: 10px;
@@ -253,7 +263,7 @@ select option { background: #111; }
 .pcard-brand { color: var(--dim); font-weight: 400; }
 
 .pcard-price-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.pcard-price { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.pcard-price { font-size: 1.15rem; font-weight: 800; color: #c1560b; }
 .pcard-price-na { font-size: 0.72rem; color: var(--muted); }
 
 .pcard-badges { display: flex; flex-wrap: wrap; gap: 4px; }
