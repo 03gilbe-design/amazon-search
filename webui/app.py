@@ -252,6 +252,10 @@ def _niche_info(title: str):
 
 
 _SPEC_LABELS = {"battery_mah": ("Batteria", "mAh"), "power_w": ("Potenza", "W"),
+                "voltage_v": ("Voltaggio", "V"), "size_cm": ("Dimensione", "cm"),
+                "size_mm": ("Dimensione", "mm"), "days_d": ("Autonomia", "giorni"),
+                "modes_n": ("Modalità", ""), "pieces_n": ("Pezzi", ""),
+                "lumen_lm": ("Luminosità", "lm"), "temp_c": ("Temperatura", "°C"),
                 "bluetooth": ("Bluetooth", ""), "screen_in": ("Schermo", "\""),
                 "weight_g": ("Peso", "g"), "weight_kg": ("Peso", "kg"),
                 "hours_h": ("Autonomia", "h"), "hours": ("Autonomia", "h"),

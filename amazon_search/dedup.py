@@ -114,7 +114,7 @@ import re as _re
 
 _NUM_UNIT_RX = _re.compile(
     r"(\d+(?:[.,]\d+)?)\s*(x\s*\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?)?\s*"
-    r"(cm|mm|m|kg|g|w|watt|db|v|volt|ah|mah|hz|khz|ohm|Ω|pollici|inch|\"|'')(?![a-zà-ù])",
+    r"(cm|mm|m|kg|g|gb|w|watt|db|v|volt|ah|mah|hz|khz|ore|lm|ohm|Ω|pollici|inch|\"|'')(?![a-zà-ù])",
     _re.IGNORECASE)
 
 
