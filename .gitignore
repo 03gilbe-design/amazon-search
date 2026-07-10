@@ -18,3 +18,7 @@ bass_quality.py
 *.jpeg
 edge-profile/
 scratch_*.py
+
+# personal/local files
+private/
+private_*.md

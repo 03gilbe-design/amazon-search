@@ -50,7 +50,7 @@ TEST_QUERIES = [
 
 
 # --- Preset categorie (deterministiche, keyword su titolo+bullet) ---
-# Le 13 categorie della ricerca neck/anti-russamento, definite dall'utente.
+# Esempio: 13 sotto-categorie per la nicchia supporti cervicali.
 # ORDINE = priorità: le categorie più specifiche stanno PRIMA (un "massaggiatore
 # cervicale gonfiabile" deve finire in Massaggiatore, non in Trazione gonfiabile).
 # Uso: --categorize-preset neck  (oppure copiare/adattare per altre ricerche)

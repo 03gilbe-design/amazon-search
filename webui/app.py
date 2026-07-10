@@ -21,7 +21,15 @@ from flask import Flask, jsonify, render_template, request
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 app = Flask(__name__)
-app.config["TEMPLATES_AUTO_RELOAD"] = True  # edit a template, refresh, done — no restart
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+
+@app.template_filter("regex_price")
+def _regex_price(note: str) -> str:
+    """Estrae '-€4.49' da 'Same item also seen for €4.49 less' (badge compatto)."""
+    import re as _r
+    m = _r.search(r"€\s?([\d.,]+)", note or "")
+    return ("-€" + m.group(1)) if m else "↓"  # edit a template, refresh, done — no restart
 
 JOBS: dict[str, dict] = {}  # job_id -> {status, log, error, result}
 SETTINGS_PATH = Path.home() / ".amazon_search_ui_settings.json"
@@ -170,24 +178,27 @@ class _P:
         self.family_id = d.get("family_id")
 
 
-# dataset = solo prodotti sonno-correlati: la cache su disco è condivisa con
-# progetti non-sonno (subwoofer auto, occhiaie, smart ring generico...) — quel
-# rumore va escluso esplicitamente, un match debole non basta.
-_SLEEP_INCLUDE = ("sonno", "dormire", "notte", "sleep", "cervical", "collare",
-                  "neck", "russamento", "snor", "cpap", "apnea", "mascherina",
-                  "eye mask", "cuscino", "pillow", "guanciale", "materasso",
-                  "trazione", "anti-russ")
-_SLEEP_EXCLUDE = ("subwoofer", "altoparlante", "cassa acustica", "bluetooth speaker",
-                  "minoxidil", "occhiaie", "eye cream", "crema",
-                  "tongue", "lingua", "bite", "paradenti", "mouthpiece", "bocchino",
-                  "smart ring", "anello", "smartring", "oura")
+# topic filter for the "dataset" labeling pool: keyword lists live in a local
+# gitignored file (private/topic_keywords.json) — repo stays generic; without
+# the file no include-filtering happens.
+def _topic_keywords() -> dict:
+    try:
+        pth = Path(__file__).resolve().parent.parent / "private" / "topic_keywords.json"
+        return json.loads(pth.read_text(encoding="utf-8"))
+    except Exception:
+        return {"include": [], "exclude": []}
+
+
+_TOPIC = _topic_keywords()
+_SLEEP_INCLUDE = tuple(_TOPIC.get("include", []))
+_SLEEP_EXCLUDE = tuple(_TOPIC.get("exclude", []))
 
 
 def _is_sleep_related(title: str) -> bool:
     t = (title or "").lower()
     if any(kw in t for kw in _SLEEP_EXCLUDE):
         return False
-    return any(kw in t for kw in _SLEEP_INCLUDE)
+    return not _SLEEP_INCLUDE or any(kw in t for kw in _SLEEP_INCLUDE)
 
 
 def _async_calculate_phash_families(products):
