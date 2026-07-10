@@ -519,6 +519,17 @@
 
 {% block scripts %}
 <script>
+// click su foto/titolo -> pagina prodotto interna (stile Amazon)
+(function() {
+  const job = location.pathname.split('/').pop();
+  document.querySelectorAll('.pcard').forEach(card => {
+    ['.pcard-img-wrap', '.pcard-title'].forEach(sel => {
+      const el = card.querySelector(sel);
+      if (el) { el.style.cursor = 'pointer';
+        el.addEventListener('click', () => location.href = '/product/' + job + '/' + card.dataset.asin); }
+    });
+  });
+})();
 // X sulle card: rimuovi, evidenzia simili (stessa famiglia), ricorda per job
 (function() {
   const KEY = 'removed_' + location.pathname;

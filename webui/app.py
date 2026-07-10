@@ -166,6 +166,107 @@ def report(job_id):
                            families=families)
 
 
+# ---- niche knowledge (distilled from 1.2M ESCI products on Colab) ----
+_NICHE_STOP = set("the a an for with and or of to in on new set pack pcs pieces "
+                  "mens womens kids de la el para con y los las un una per il lo "
+                  "i gli le di da".split())
+_NICHE_KB: dict | None = None
+
+
+def _niche_kb() -> dict:
+    global _NICHE_KB
+    if _NICHE_KB is None:
+        try:
+            pth = Path(__file__).resolve().parent.parent / "private" / "esci_niche_knowledge.json"
+            _NICHE_KB = json.loads(pth.read_text(encoding="utf-8"))
+        except Exception:
+            _NICHE_KB = {}
+    return _NICHE_KB
+
+
+def _niche_info(title: str):
+    """First title keyword that exists in the knowledge base -> (niche, entry)."""
+    kb = _niche_kb()
+    if not kb:
+        return None, None
+    import re as _re
+    fallback = None
+    for w in _re.findall(r"[a-z]{4,}", (title or "").lower()):
+        if w in _NICHE_STOP or w not in kb:
+            continue
+        entry = kb[w]
+        # a word that is also a top brand of its own niche is a BRAND, not a
+        # product type ("xiaomi") — its specs mix unrelated products, skip it
+        if w in {b.lower() for b in (entry.get("brands") or {})}:
+            continue
+        if entry.get("specs"):
+            return w, entry
+        if fallback is None and entry.get("materials"):
+            fallback = (w, entry)
+    return fallback or (None, None)
+
+
+_SPEC_LABELS = {"battery_mah": ("Batteria", "mAh"), "power_w": ("Potenza", "W"),
+                "bluetooth": ("Bluetooth", ""), "screen_in": ("Schermo", "\""),
+                "weight_g": ("Peso", "g"), "weight_kg": ("Peso", "kg"),
+                "hours_h": ("Autonomia", "h"), "hours": ("Autonomia", "h"),
+                "storage_gb": ("Memoria", "GB"), "capacity_l": ("Capacità", "L")}
+
+
+@app.route("/product/<job_id>/<asin>")
+def product_page(job_id, asin):
+    if job_id == "dataset":
+        _build_dataset_job()
+    job = JOBS.get(job_id)
+    if not job or job["status"] != "done":
+        return render_template("loading.html", job_id=job_id)
+    result = job["result"]
+    prod = next((p for p in result.products if p.asin == asin), None)
+    if not prod:
+        return "prodotto non trovato in questo job", 404
+    specs = dict(getattr(prod, "specs", {}) or {})
+    est = dict(getattr(prod, "estimated_specs", {}) or {})
+    materials = list(getattr(prod, "materials", []) or [])
+    # spec rows: real first, then twin-estimated, then niche typical range for the rest
+    niche, kb = _niche_info(prod.title)
+    rows = []
+    for k, v in specs.items():
+        lab, unit = _SPEC_LABELS.get(k, (k, ""))
+        rows.append({"label": lab, "value": f"{v:g} {unit}".strip(), "kind": "real"})
+    for k, v in est.items():
+        if k in specs:
+            continue
+        lab, unit = _SPEC_LABELS.get(k, (k, ""))
+        rows.append({"label": lab, "value": f"~{v:g} {unit}".strip(), "kind": "twin"})
+    niche_rows = []
+    if kb:
+        for k, s in (kb.get("specs") or {}).items():
+            if k in specs or k in est:
+                continue
+            lab, unit = _SPEC_LABELS.get(k, (k, ""))
+            niche_rows.append({"label": lab,
+                               "value": f"{s['min']:g}–{s['max']:g} {unit}".strip(),
+                               "median": f"{s['median']:g}"})
+        if not materials:
+            materials = [m for m, _ in sorted((kb.get("materials") or {}).items(),
+                                              key=lambda x: -x[1])[:4]]
+            mats_estimated = bool(materials)
+        else:
+            mats_estimated = False
+    else:
+        mats_estimated = False
+    # same family = similar products
+    similar = []
+    fam_id = getattr(prod, "family_id", None)
+    if fam_id:
+        similar = [p for p in result.products
+                   if getattr(p, "family_id", None) == fam_id and p.asin != asin][:8]
+    return render_template("product.html", p=prod, job_id=job_id, rows=rows,
+                           niche=niche, niche_n=(kb or {}).get("n"),
+                           niche_rows=niche_rows, materials=materials,
+                           mats_estimated=mats_estimated, similar=similar)
+
+
 class _DatasetResult:
     """Job sintetico: l'intero archivio prodotti come pool da etichettare."""
     def __init__(self, products):
