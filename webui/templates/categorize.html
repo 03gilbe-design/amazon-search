@@ -87,16 +87,16 @@ body { background:#e9e6e0; }
 
   <!-- Barra superiore ultra-compatta -->
   <div style="margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border2); padding-bottom:8px">
-    <button onclick="window.history.back()" style="padding:6px 12px; border-radius:5px; border:none; background:#34495e; color:white; cursor:pointer; font-weight:bold; font-size:0.8rem; margin-right:10px;">← Indietro</button>
+    <button onclick="window.history.back()" style="padding:6px 12px; border-radius:5px; border:none; background:#34495e; color:white; cursor:pointer; font-weight:bold; font-size:0.8rem; margin-right:10px;">← Back</button>
     <!-- Titolo + Indicatore di stato visivo -->
     <div style="display:flex; align-items:center; gap:12px">
       <h1 style="font-size:1.1rem; font-weight:700; letter-spacing:-0.03em; margin:0; color:var(--text)">
-        Categorizzazione — <span style="color:var(--orange)">"{{ query }}"</span>
+        Categorize — <span style="color:var(--orange)">"{{ query }}"</span>
       </h1>
       <!-- Indicatore Autosave Visivo con cerchietto verde -->
       <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border2); padding:3px 8px; border-radius:15px; font-size:0.58rem; color:var(--sub)">
         <span style="display:inline-block; width:6px; height:6px; background:#3dba6a; border-radius:50%; box-shadow:0 0 6px #3dba6a"></span>
-        <span style="font-weight:700">Autosalvataggio</span>
+        <span style="font-weight:700">Autosave</span>
       </div>
     </div>
 
@@ -234,7 +234,7 @@ body { background:#e9e6e0; }
 
           <!-- prev / skip / skip assigned -->
           <div style="display:flex;gap:8px">
-            <button class="btn btn-outline btn-sm" onclick="prevProduct()" title="Torna al prodotto precedente">
+            <button class="btn btn-outline btn-sm" onclick="prevProduct()" title="Torna al prodotto previous">
               ← Precedente
             </button>
             <button class="btn btn-outline btn-sm" onclick="skipCurrent()" title="Salta il prodotto corrente">
@@ -272,16 +272,16 @@ body { background:#e9e6e0; }
         <fieldset class="ctl-group">
           <legend>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Raggruppamento
+            Grouping
           </legend>
           <div class="ctl-row">
             <select id="method-select" onchange="runClustering()">
-              <option value="kmeans" selected>K-Means — gruppi bilanciati</option>
-              <option value="birch">BIRCH — gruppi per densità</option>
-              <option value="hybrid">Ibrido — testo + foto</option>
+              <option value="kmeans" selected>K-Means — balanced groups</option>
+              <option value="birch">BIRCH — density groups</option>
+              <option value="hybrid">Hybrid — text + photos</option>
             </select>
             <label class="ctl-slider">
-              <span>Sensibilità</span>
+              <span>Sensitivity</span>
               <input type="range" id="threshold-slider" min="0.1" max="1.5" step="0.05" value="0.65" oninput="document.getElementById('threshold-val').textContent=this.value; runClustering();"/>
               <b id="threshold-val">0.65</b>
             </label>
@@ -292,15 +292,15 @@ body { background:#e9e6e0; }
         <fieldset class="ctl-group">
           <legend>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.5 8.5l7 7"/></svg>
-            Sottogruppi
+            Subgroups
           </legend>
           <div class="ctl-row">
             <label class="ctl-check">
               <input type="checkbox" id="subgroups-check" onchange="document.getElementById('sub-slider-container').style.display = this.checked ? 'flex' : 'none'; runClustering();">
-              <span>Attiva (visibili nel girasole)</span>
+              <span>Enable (shown in the sunflower)</span>
             </label>
             <label class="ctl-slider" id="sub-slider-container" style="display:none">
-              <span>Sensibilità</span>
+              <span>Sensitivity</span>
               <input type="range" id="sub-threshold-slider" min="0.1" max="1.5" step="0.05" value="0.40" oninput="document.getElementById('sub-threshold-val').textContent=this.value; runClustering();"/>
               <b id="sub-threshold-val">0.40</b>
             </label>
@@ -311,24 +311,24 @@ body { background:#e9e6e0; }
         <fieldset class="ctl-group ctl-actions">
           <legend>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
-            Azioni
+            Actions
           </legend>
           <div class="ctl-row">
             <button class="btn btn-orange btn-sm" onclick="runClustering()">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.6-6.4M21 3v6h-6"/></svg>
-              Ricalcola
+              Recalculate
             </button>
-            <button class="btn btn-sm ctl-ghost" onclick="applyAutoML()" title="Imposta i parametri consigliati e ricalcola">
+            <button class="btn btn-sm ctl-ghost" onclick="applyAutoML()" title="Apply recommended settings and recalculate">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
-              Parametri consigliati
+              Recommended settings
             </button>
             <span class="ctl-sep"></span>
-            <input type="text" id="play-new-cat-input" placeholder="Nuova categoria…" onkeydown="if(event.key==='Enter') addPlaygroundCategory()"/>
-            <button class="btn btn-sm ctl-ghost" onclick="addPlaygroundCategory()">Crea</button>
+            <input type="text" id="play-new-cat-input" placeholder="New category…" onkeydown="if(event.key==='Enter') addPlaygroundCategory()"/>
+            <button class="btn btn-sm ctl-ghost" onclick="addPlaygroundCategory()">Create</button>
             <span class="ctl-sep"></span>
-            <button class="btn btn-sm ctl-ghost" id="drop-zone" onclick="document.getElementById('file-input').click()" title="Cerca per foto: carica un'immagine e trova i prodotti visivamente simili">
+            <button class="btn btn-sm ctl-ghost" id="drop-zone" onclick="document.getElementById('file-input').click()" title="Search by photo: upload an image and find visually similar products">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-              Cerca per foto
+              Search by photo
             </button>
             <input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadImage(this.files[0])"/>
             <span id="upload-status" style="font-size:0.62rem; color:var(--dim); display:none"></span>
@@ -355,7 +355,7 @@ body { background:#e9e6e0; }
 
       <!-- Riga Spiegazione Metodo Dinamica -->
       <div id="method-desc-box" class="glass" style="padding:10px 16px; font-size:0.7rem; color:var(--sub); border-radius:8px; margin-bottom:12px; border-color:var(--border2); font-weight:600; background:rgba(255,255,255,0.85); display:block; clear:both;">
-        Caricamento metodo...
+        Loading method...
       </div>
 
       <!-- Anteprime Upload -->
@@ -374,9 +374,9 @@ body { background:#e9e6e0; }
 
       <!-- Tabella dei Cluster (Visione dall'alto) -->
       <div class="glass" style="padding:16px; border-radius:10px">
-        <h2 style="font-size:0.85rem; font-weight:700; margin:0 0 4px; color:var(--text)">Visione d'Insieme dei Cluster</h2>
+        <h2 style="font-size:0.85rem; font-weight:700; margin:0 0 4px; color:var(--text)">Clusters overview</h2>
         <p style="font-size:0.62rem; color:var(--dim); margin:0 0 16px">
-          I prodotti sono suddivisi in base alle impostazioni selezionate. Scegli una categoria e clicca "Applica" per categorizzare l'intero gruppo in un colpo solo. Passa con il mouse sulle miniature per visualizzare i dettagli.
+          Products are grouped by the settings above. Pick a category and click "Apply" to label the whole group at once. Hover a thumbnail for details.
         </p>
 
         <div id="playground-clusters-container" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; align-content: flex-start;">
@@ -389,8 +389,8 @@ body { background:#e9e6e0; }
   </div>
 
   <footer class="footer" style="margin-top:40px">
-    <span>Categorizzazione — {{ query }}</span>
-    <a href="/report/{{ job_id }}" style="color:var(--dim);text-decoration:none">Torna al report →</a>
+    <span>Categorize — {{ query }}</span>
+    <a href="/report/{{ job_id }}" style="color:var(--dim);text-decoration:none">Back to report →</a>
   </footer>
 </div>
 {% endblock %}
@@ -727,36 +727,74 @@ function renderStacks(sf, cat, ccx, ccy, angle, color, CS) {
           items.push(p);
       }
   }
-  const thumbs = items.slice(-6);
+  // spazio usato DINAMICAMENTE: poche categorie = foto piu' grandi, piu' sparse
+  // e se ne mostrano di piu'; tante categorie = compatte (le ULTIME assegnate)
+  const nCats = Math.max(1, categories.filter(c => c !== 'noise').length);
+  const SZ = nCats <= 4 ? 80 : nCats <= 7 ? 66 : 56;
+  const SHOW = nCats <= 4 ? 10 : nCats <= 7 ? 7 : 5;
+  const SPACING = Math.round(SZ * 0.82);
+  const thumbs = items.slice(-SHOW);
   // nodi in alto/basso: ventaglio appiattito verso l'orizzontale, cosi' non buca
   // il bordo dello schermo; poi comunque clamp dentro il contenitore
   let dirx = Math.cos(angle), diry = Math.sin(angle) * 0.45;
   const L = Math.hypot(dirx, diry) || 1; dirx /= L; diry /= L;
   const base = CS / 2 + 38;
   const W = sf.clientWidth || 900, H = sf.clientHeight || 640;
-  
+
   thumbs.forEach((p, i) => {
     const im = document.createElement('img');
     im.className = 'sf-circle sf-stack-img';
     im.src = p.thumbnail;
-    im.title = 'Clicca per vedere tutti i prodotti di questa categoria in dettaglio';
+    im.title = p.title || '';
     im.draggable = true;
     im.dataset.cat = cat;
-    const along = base + i * 25;
-    const side = (i % 2 ? 1 : -1) * 10;
+    const along = base + i * SPACING;
+    const side = (i % 2 ? 1 : -1) * Math.round(SZ * 0.3);
     const jit = (h => (h % 9) - 4)([...p.asin].reduce((a, c) => a + c.charCodeAt(0), 0));
-    const px = Math.min(Math.max(ccx + dirx * along - 29, 4), W - 62);
-    const py = Math.min(Math.max(ccy + diry * along - 29, 4), H - 62);
-    
+    // perpendicular alla direzione: sparse, non in fila unica
+    const px = Math.min(Math.max(ccx + dirx * along - diry * side - SZ / 2, 4), W - SZ - 4);
+    const py = Math.min(Math.max(ccy + diry * along + dirx * side - SZ / 2, 4), H - SZ - 4);
+
     // Salviamo posizioni originali
     im.dataset.origLeft = px;
     im.dataset.origTop = py;
     im.dataset.origRot = jit;
-    
-    im.style.cssText = 'position:absolute;width:58px;height:58px;object-fit:contain;cursor:grab;'
+
+    im.style.cssText = 'position:absolute;width:' + SZ + 'px;height:' + SZ + 'px;object-fit:contain;cursor:grab;'
       + 'transition:transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);'
       + 'left:' + px + 'px;top:' + py + 'px;'
       + 'transform:rotate(' + jit + 'deg);z-index:' + (8 + i);
+
+    // X (togli -> noise) e ✓ (conferma) al passaggio sul nodo
+    let nodeTools = null;
+    im.addEventListener('mouseenter', () => {
+      if (nodeTools) return;
+      nodeTools = document.createElement('div');
+      nodeTools.style.cssText = 'position:absolute;left:' + (px + SZ - 20) + 'px;top:' + (py - 10) + 'px;'
+        + 'display:flex;gap:3px;z-index:9000;';
+      const mk = (html, title, bg, fn) => {
+        const b = document.createElement('button');
+        b.innerHTML = html; b.title = title;
+        b.style.cssText = 'width:22px;height:22px;border-radius:11px;border:none;cursor:pointer;'
+          + 'display:flex;align-items:center;justify-content:center;color:#fff;background:' + bg
+          + ';box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:0.72rem;padding:0';
+        b.onclick = e => { e.stopPropagation(); fn(); };
+        return b;
+      };
+      nodeTools.append(
+        mk('&#10003;', 'Keep here (confirm)', '#2ecc71', () => {
+          assignCategory(p.asin, cat).then(() => { im.style.outline = '3px solid #2ecc71'; setTimeout(() => im.style.outline = '', 600); });
+        }),
+        mk('&times;', 'Remove (noise bin)', '#c0392b', () => {
+          assignCategory(p.asin, 'noise').then(() => { im.remove(); nodeTools?.remove(); nodeTools = null; if (typeof updateNoiseCount === 'function') updateNoiseCount(); });
+        }));
+      sf.appendChild(nodeTools);
+      const cleanup = () => setTimeout(() => {
+        if (nodeTools && !nodeTools.matches(':hover') && !im.matches(':hover')) { nodeTools.remove(); nodeTools = null; }
+      }, 350);
+      im.addEventListener('mouseleave', cleanup);
+      nodeTools.addEventListener('mouseleave', cleanup);
+    });
       
     // Scrollable Popup animation on hover
     let popupTimeout;
@@ -777,7 +815,7 @@ function renderStacks(sf, cat, ccx, ccy, angle, color, CS) {
         // Aggiungi titolo
         const pTitle = document.createElement('div');
         pTitle.style.cssText = 'width:100%; font-weight:bold; font-size:0.8rem; color:var(--orange); margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px;';
-        pTitle.textContent = cat + ' (' + items.length + ' foto)';
+        pTitle.textContent = cat + ' (' + items.length + ' photos)';
         popup.appendChild(pTitle);
 
         items.forEach(pObj => {
@@ -847,7 +885,7 @@ function handleSunflowerDrop(e) {
     const asin = e.dataTransfer.getData('text/plain');
     if (!asin) return;
     
-    let defaultCatName = isLeft ? 'Scartati (Nuova)' : 'Promossi (Nuova)';
+    let defaultCatName = isLeft ? 'Discarded (new)' : 'Kept (new)';
     let cat = prompt(isLeft ? 'Nome nuova categoria SCARTATI:' : 'Nome nuova categoria PROMOSSI:', defaultCatName);
     if (cat && cat.trim()) {
       assignCategory(asin, cat.trim()).then(() => renderCurrentProduct());
@@ -934,7 +972,7 @@ function renderSunflower() {
         circle.style.backgroundColor = 'var(--green)';
         circle.style.color = 'white';
         circle.style.border = '4px solid white';
-        circle.title = 'Hai già assegnato questo prodotto a questa categoria!';
+        circle.title = 'Already assigned to this category!';
       }
       holder.onclick = () => {
         const targets = group || [prod];
@@ -1202,9 +1240,9 @@ document.getElementById('view-kanban').insertAdjacentHTML('afterend', `
 <div id="view-scene" style="display: none; max-width: 1000px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:15px;">
     <div>
-      <h2 style="margin-top:0; font-size:1.5rem; color:var(--text);">Ricerca Automatica di Prodotti nelle Scene</h2>
+      <h2 style="margin-top:0; font-size:1.5rem; color:var(--text);">Product-in-scene detection</h2>
       <p style="color:var(--dim); font-size:0.85rem; margin-bottom:0;">
-        L'Intelligenza Artificiale (SIFT+RANSAC) rileva i prodotti inseriti nelle foto ambientali di altri prodotti.
+        SIFT+RANSAC finds products re-photographed inside other products’ lifestyle photos.
       </p>
     </div>
     
@@ -1212,14 +1250,14 @@ document.getElementById('view-kanban').insertAdjacentHTML('afterend', `
     <div style="background:#f8f9fa; border:1px solid var(--border); border-radius:10px; padding:12px 18px; display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
       <!-- Slider Inliers -->
       <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:0.75rem; font-weight:bold; color:var(--sub); white-space:nowrap;">Punti Geometrici (Soglia Inliers):</span>
+        <span style="font-size:0.75rem; font-weight:bold; color:var(--sub); white-space:nowrap;">Geometric points (inlier threshold):</span>
         <input type="range" id="scene-inliers-threshold" min="6" max="30" step="1" value="12" style="width:100px;" oninput="document.getElementById('scene-inliers-val').textContent=this.value; applySceneFilters();">
         <span id="scene-inliers-val" style="font-size:0.75rem; font-weight:bold; color:var(--orange);">12</span>
       </div>
       
       <!-- Selettore Prodotto Singolo -->
       <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:0.75rem; font-weight:bold; color:var(--sub); white-space:nowrap;">Filtra Prodotto:</span>
+        <span style="font-size:0.75rem; font-weight:bold; color:var(--sub); white-space:nowrap;">Filter product:</span>
         <select id="scene-product-filter" style="font-size:0.75rem; padding:4px 8px; border-radius:4px; border:1px solid var(--border); max-width:200px; cursor:pointer;" onchange="applySceneFilters()">
           <option value="all">Tutti i prodotti (Grafo Unico)</option>
         </select>
@@ -1231,10 +1269,10 @@ document.getElementById('view-kanban').insertAdjacentHTML('afterend', `
   
   <div id="scene-duplicate-families" style="margin-top:20px; background:#fff; padding:30px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2 style="margin-top:0; font-size:1.5rem; color:var(--text);">Gruppi Immagini Identiche (pHash)</h2>
-      <button onclick="exportDuplicates()" class="btn btn-orange btn-sm" style="font-weight:bold;">Esporta Su Disco</button>
+      <h2 style="margin-top:0; font-size:1.5rem; color:var(--text);">Identical image groups (pHash)</h2>
+      <button onclick="exportDuplicates()" class="btn btn-orange btn-sm" style="font-weight:bold;">Export to disk</button>
     </div>
-    <p style="color:var(--dim); font-size:0.85rem;">Prodotti con foto principali matematicamente identiche (es. stesso prodotto da venditori diversi). Elaborati all'avvio con Perceptual Hashing.</p>
+    <p style="color:var(--dim); font-size:0.85rem;">Products whose main photos are mathematically identical (e.g. same product from different sellers). Computed at startup with perceptual hashing.</p>
     <div id="scene-phash-container" style="display:flex; flex-direction:column; gap:15px; margin-top:15px;"></div>
   </div>
   
@@ -1270,7 +1308,7 @@ document.getElementById('view-kanban').insertAdjacentHTML('afterend', `
         <div style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:center;">
           <p style="margin:0 0 10px 0; font-size:0.9rem;"><b>Prodotto:</b> <span id="scene-detail-p1"></span></p>
           <p style="margin:0 0 10px 0; font-size:0.9rem;"><b>Trovato nella Scena di:</b> <span id="scene-detail-p2"></span></p>
-          <p style="margin:0; font-size:0.9rem;"><b>Punti Geometrici Corrispondenti:</b> <b id="scene-detail-inliers" style="color:var(--orange);"></b></p>
+          <p style="margin:0; font-size:0.9rem;"><b>Matching geometric points:</b> <b id="scene-detail-inliers" style="color:var(--orange);"></b></p>
         </div>
       </div>
     </div>
@@ -1492,7 +1530,7 @@ async function renderTermsDistribution() {
   
   try {
   if (!window.cachedTermsBubbles || window.lastThreshold !== threshold || window.lastMaxNiche !== maxNiche) {
-    cont.innerHTML = '<div style="text-align:center; padding:40px;"><img src="/static/anim/clustering.svg" width="74" height="74" alt=""><br/><br/><span style="font-weight:bold; color:var(--text);">Elaborazione intersezioni nel browser...</span></div>';
+    cont.innerHTML = '<div style="text-align:center; padding:40px;"><img src="/static/anim/clustering.svg" width="74" height="74" alt=""><br/><br/><span style="font-weight:bold; color:var(--text);">Computing intersections in the browser...</span></div>';
     
     // Calcolo locale istantaneo in Javascript!
     await new Promise(r => setTimeout(r, 10)); // Piccolo yield per il DOM
@@ -1621,9 +1659,9 @@ async function renderTermsDistribution() {
         <!-- Sezione Preview Foto -->
         <div id="terms-preview-${idx}" style="display:none; margin-top:20px; border-top:2px dashed rgba(142, 68, 173, 0.2); padding-top:15px; background:rgba(255,255,255,0.6); border-radius:8px; padding:15px;">
            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-             <span style="font-size:0.85rem; font-weight:bold; color:#2c3e50;">Prodotti con la parola "<span id="terms-preview-word-${idx}" style="color:#e67e22;"></span>":</span>
+             <span style="font-size:0.85rem; font-weight:bold; color:#2c3e50;">Products with the word "<span id="terms-preview-word-${idx}" style="color:#e67e22;"></span>":</span>
              <div>
-               <button onclick="autoAssignTerm('${b.category}', ${idx})" class="btn btn-orange btn-sm" style="font-size:0.65rem; padding:2px 8px; margin-right:5px;">Auto assegna</button>
+               <button onclick="autoAssignTerm('${b.category}', ${idx})" class="btn btn-orange btn-sm" style="font-size:0.65rem; padding:2px 8px; margin-right:5px;">Auto assign</button>
                <button onclick="document.getElementById('terms-preview-${idx}').style.display='none'" class="btn btn-outline btn-sm" style="font-size:0.65rem; padding:2px 8px;">Nascondi</button>
              </div>
            </div>
@@ -1653,14 +1691,14 @@ window.autoAssignTerm = function(cat, blockIdx) {
      alert('Nessun prodotto (non categorizzato) da assegnare trovato per "' + word + '".');
      return;
   }
-  if (confirm(`Assegnare automaticamente ${toAssign.length} prodotti non ancora categorizzati contenenti la parola "${word}" alla categoria "${cat}"?`)) {
+  if (confirm(`Auto-assign ${toAssign.length} uncategorized products containing "${word}" to "${cat}"?`)) {
     const overlay = document.createElement('div');
     overlay.className = 'loading-overlay';
-    overlay.innerHTML = '<div class="loading-ring" style="width:64px;height:64px;"></div><h2 style="color:var(--orange); font-family:var(--font-heading); margin-top:20px;">Assegnazione in corso...</h2>';
+    overlay.innerHTML = '<div class="loading-ring" style="width:64px;height:64px;"></div><h2 style="color:var(--orange); font-family:var(--font-heading); margin-top:20px;">Assigning...</h2>';
     document.body.appendChild(overlay);
     Promise.all(toAssign.map(p => assignCategory(p.asin, cat))).then(() => {
         document.body.removeChild(overlay);
-        alert('Assegnazione completata!');
+        alert('Done!');
         renderTermsDistribution(); // refresh view
     });
   }
@@ -1719,11 +1757,11 @@ function switchView(view) {
   }
   
   const usageTips = {
-    sunflower: "Girasole: Trascina la foto del prodotto verso i cerchi esterni per assegnarlo a una categoria.",
-    kanban: "Kanban: Trascina le schede dei prodotti tra le colonne per aggiornare al volo le loro categorie.",
-    playground: "Clustering: Regola la barra della sensibilità e ricalcola i cluster di affinità del testo e del colore.",
-    scene: "Rete SIFT: Visualizza gli incroci di foto riciclate. Trascina i nodi o clicca sulle linee arancioni per i dettagli.",
-    terms: "Distribuzione parole: Clicca su qualsiasi bolla per visualizzare all'istante le foto dei prodotti abbinati."
+    sunflower: "Sunflower: drag the product photo onto the outer circles to assign a category.",
+    kanban: "Kanban: drag product cards between columns to update their categories on the fly.",
+    playground: "Clustering: tune the sensitivity slider and recalculate text/color affinity clusters.",
+    scene: "SIFT net: shows recycled-photo crossings. Drag nodes or click the orange lines for details.",
+    terms: "Word distribution: click any bubble to instantly see the matching product photos."
   };
   const usageTipEl = document.getElementById('status-usage-tip');
   if (usageTipEl) {
@@ -1801,7 +1839,7 @@ async function runSceneMatch() {
   }
   
   container.style.display = 'block';
-  nodesDiv.innerHTML = '<div style="text-align:center; padding:100px; color:var(--orange); font-weight:bold;"><div class="loading-ring" style="width:50px;height:50px;display:inline-block;border-width:4px;"></div><br/><br/>Caricamento della rete di incroci SIFT...</div>';
+  nodesDiv.innerHTML = '<div style="text-align:center; padding:100px; color:var(--orange); font-weight:bold;"><div class="loading-ring" style="width:50px;height:50px;display:inline-block;border-width:4px;"></div><br/><br/>Loading the SIFT crossing network...</div>';
   detailCard.style.display = 'none';
   if (listWrapper) listWrapper.style.display = 'none';
 
@@ -1825,7 +1863,7 @@ async function runSceneMatch() {
     } else {
       phashContainer.innerHTML = identicalGroups.map((g, idx) => `
         <div style="background:#f8f9fa; border:1px solid var(--border); border-radius:8px; padding:15px;">
-          <h4 style="margin:0 0 10px 0; font-size:1rem; color:var(--text);">Famiglia Identica #${idx+1} (${g.length} prodotti)</h4>
+          <h4 style="margin:0 0 10px 0; font-size:1rem; color:var(--text);">Identical family #${idx+1} (${g.length} products)</h4>
           <div style="display:flex; flex-wrap:wrap; gap:10px;">
             ${g.map(p => {
                // Aggiungiamo un click per visualizzare nel girasole
@@ -1865,7 +1903,7 @@ async function runSceneMatch() {
       progWrap.innerHTML = `
           <div id="sift-progress-container" style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.05); text-align:left;">
             <div style="font-weight:bold; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-              Elaborazione SIFT RANSAC in background
+              SIFT RANSAC running in background
             </div>
             <div style="width:100%; height:12px; background:#f0f2f5; border-radius:6px; overflow:hidden;">
               <div id="sift-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #3498db, #2ecc71); transition:width 0.5s ease-out;"></div>
@@ -1965,7 +2003,7 @@ async function runSceneMatch() {
                       msg = perc + '% (Scaricamento foto ' + pdata.done + ' di ' + pdata.total + ')';
                   } else if (pdata.total > 0) {
                       perc = Math.round((pdata.done / pdata.total) * 100);
-                      msg = perc + '% completato (Elaborate ' + pdata.done + ' di ' + pdata.total + ')';
+                      msg = perc + '% done (' + pdata.done + ' of ' + pdata.total + ' processed)';
                   } else {
                       // Fase di Download e pHash (lenta)
                       fakeProgress += (40 - fakeProgress) * 0.05; // Asintoto a 40%
@@ -2434,9 +2472,9 @@ async function runClustering() {
   
   // Aggiorna spiegazione del metodo
   const methodDescriptions = {
-    birch: "BIRCH: Raggruppamento gerarchico ad albero. Regola la barra della soglia per fondere o dividere i gruppi in base alle parole nei titoli.",
-    kmeans: "K-Means: Divide i prodotti in gruppi bilanciati di pari dimensione analizzando la ricorrenza dei termini chiave nei titoli.",
-    hybrid: "Ibrido: Combina i dati testuali (TF-IDF) e le informazioni visive (colore dominante delle foto) per raggruppare i prodotti simili."
+    birch: "BIRCH: hierarchical tree grouping. Tune the threshold to merge or split groups by title words.",
+    kmeans: "K-Means: splits products into balanced same-size groups by recurring title keywords.",
+    hybrid: "Hybrid: combines text (TF-IDF) and visual data (dominant photo color) to group similar products."
   };
   document.getElementById('method-desc-box').textContent = methodDescriptions[method] || "";
 

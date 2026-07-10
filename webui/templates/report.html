@@ -373,10 +373,11 @@
   </div>
   <style>
   .cat-chipbar { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 20px;
-    position:sticky; top:0; z-index:50; padding:10px 0; background:inherit; }
+    position:sticky; top:0; z-index:50; padding:10px 0;
+    background:var(--bg, #fafafa); box-shadow:0 6px 12px -8px rgba(0,0,0,.14); }
   .cat-chip { display:inline-flex; align-items:center; gap:7px; font-size:0.74rem;
     padding:6px 8px 6px 12px; border:1.5px solid var(--border); border-radius:99px;
-    background:rgba(255,255,255,.06); cursor:default; transition:opacity .45s, transform .45s, filter .45s; }
+    background:#fff; cursor:default; transition:opacity .45s, transform .45s, filter .45s; }
   .cat-chip b { opacity:.65; font-weight:600 }
   .cat-chip-x { border:none; background:none; color:inherit; opacity:.55; font-size:0.95rem;
     cursor:pointer; padding:0 2px; line-height:1 }
