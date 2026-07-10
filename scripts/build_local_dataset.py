@@ -48,6 +48,28 @@ MATERIALS = ("memory foam", "gel", "cotone", "cotton", "poliestere", "polyester"
 FP_RX = re.compile(r"\d+(?:[.,]\d+)?\s*(?:mah|w|gb|kg|g|inch|pollici|ore|hours|h|l|cm|mm|p)\b")
 
 
+# attributi QUALITATIVI (dai prodotti veri: nei titoli non-tech i numeri quasi
+# non esistono - contano rigidita', gonfiabile, regolabile, lavabile, taglia)
+ATTR_RX = {
+    "rigido": r"\brigid[oa]|semirigid[oa]|semi-rigid|\brigid\b|stiff",
+    "morbido": r"\bmorbid[oa]|\bsoft\b|plush",
+    "gonfiabile": r"gonfiabile|inflatable|\bad aria\b",
+    "regolabile": r"regolabile|adjustable",
+    "lavabile": r"lavabile|washable|machine wash",
+    "portatile": r"portatile|da viaggio|portable|travel|foldable|pieghevole",
+    "ricaricabile": r"ricaricabile|rechargeable|usb-?c?\b",
+    "impermeabile": r"impermeabile|waterproof|water resistant",
+    "wireless": r"wireless|senza fili|bluetooth",
+    "taglia": r"\btaglia [smlx]{1,3}\b|\bsize [smlx]{1,3}\b|cod\.art|\d{2}-\d{2} ?cm",
+}
+ATTR_RX = {k: re.compile(v) for k, v in ATTR_RX.items()}
+
+
+def extract_attrs(text):
+    t = (text or "").lower()
+    return [a for a, rx in ATTR_RX.items() if rx.search(t)]
+
+
 def extract_specs(text: str) -> dict:
     t = (text or "").lower()
     out = {}
@@ -165,6 +187,9 @@ def main():
         mats = extract_materials(r.get("title", ""))
         if mats:
             r["materials"] = mats
+        attrs = extract_attrs(r.get("title", ""))
+        if attrs:
+            r["attrs"] = attrs
 
     # same-mold transfer (estimated specs dal gemello)
     fps = {a: fingerprint(r.get("title", "")) for a, r in records.items()}
@@ -191,6 +216,7 @@ def main():
     labeled = sum(1 for r in records.values() if r.get("category"))
     with_specs = sum(1 for r in records.values() if r.get("specs"))
     with_mats = sum(1 for r in records.values() if r.get("materials"))
+    with_attrs = sum(1 for r in records.values() if r.get("attrs"))
     with_est = sum(1 for r in records.values() if r.get("estimated_specs") or r.get("estimated_materials"))
     stats = [
         f"# Unified dataset — {time.strftime('%Y-%m-%d %H:%M')} ({time.time()-t0:.1f}s)",
@@ -200,6 +226,7 @@ def main():
         f"- etichettati (categoria utente): {labeled} ({labeled/max(n,1):.0%})",
         f"- con specs estratte: {with_specs} ({with_specs/max(n,1):.0%})",
         f"- con materiali: {with_mats} ({with_mats/max(n,1):.0%})",
+        f"- con attributi qualitativi: {with_attrs} ({with_attrs/max(n,1):.0%})",
         f"- con specs/materiali STIMATI dal gemello stesso-stampo: {with_est} (trasferimenti: {transferred})",
         f"- output: {out}",
     ]

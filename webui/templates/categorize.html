@@ -2585,7 +2585,7 @@ function renderPlaygroundClusters(clusters) {
         const w = document.createElement('div');
         w.className = 'cluster-prod-card' + (localProd.category ? ' assigned' : '');
         w.title = localProd.title + (localProd.category ? ' [' + localProd.category + ']' : '');
-        w.style.cssText = 'aspect-ratio:1;border-radius:9px;background:#faf8f4;overflow:hidden;border:none;margin:0';
+        w.style.cssText = 'width:100%;height:auto;aspect-ratio:1;border-radius:9px;background:#faf8f4;overflow:hidden;border:none;margin:0;padding:4px;box-sizing:border-box';
         w.innerHTML = '<img loading="lazy" referrerpolicy="no-referrer" src="' + (p.thumbnail || '')
           + '" alt="" style="width:100%;height:100%;object-fit:contain"/>';
         grid.appendChild(w);

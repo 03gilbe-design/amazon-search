@@ -38,7 +38,7 @@
       </div>
 
       {# specs table: real / twin-estimated / niche-typical #}
-      {% if rows or niche_rows or materials %}
+      {% if rows or niche_rows or materials or attrs %}
       <div class="prod-specs glass">
         <div class="prod-specs-title" data-i18n="about">About this item</div>
         <table>
@@ -50,6 +50,12 @@
             </td>
           </tr>
           {% endfor %}
+          {% if attrs %}
+          <tr>
+            <td class="sp-label" data-i18n="features">Features</td>
+            <td class="sp-val">{{ attrs|join(', ') }}</td>
+          </tr>
+          {% endif %}
           {% if materials %}
           <tr>
             <td class="sp-label" data-i18n="materials">Materials</td>
@@ -120,7 +126,7 @@
     about: 'Informazioni su questo articolo', materials: 'Materiali',
     est_twin: '* stimata (prodotto gemello)', est_niche: '* tipico dei prodotti simili',
     niche_head: 'Specs mancanti — range tipico dei prodotti simili', niche_src: 'prodotti analizzati',
-    median: 'mediana', view_amazon: 'Vedi su Amazon', category: 'Categoria',
+    median: 'mediana', features: 'Caratteristiche', view_amazon: 'Vedi su Amazon', category: 'Categoria',
     similar_head: 'Prodotti simili (stessa famiglia — possibili duplicati/rebrand)'};
   const EN = {};
   document.querySelectorAll('[data-i18n]').forEach(el => { EN[el.dataset.i18n] = el.textContent; });

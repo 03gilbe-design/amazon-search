@@ -600,6 +600,7 @@
         best: x != null && x.v === best && best != null})));
     });
     row('Materials', ps.map(p => ({html: p.materials.length ? esc(p.materials.join(', ')) : '—', best: false})));
+    row('Features', ps.map(p => ({html: (p.attrs || []).length ? esc(p.attrs.join(', ')) : '—', best: false})));
     document.getElementById('cmp-table').innerHTML = rows.join('');
     document.querySelectorAll('#cmp-table [data-rm]').forEach(b => b.onclick = () => {
       sel = sel.filter(a => a !== b.dataset.rm); save(); render();
