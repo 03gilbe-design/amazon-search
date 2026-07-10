@@ -353,8 +353,10 @@ def categorize(job_id):
               "family_id": getattr(p, "family_id", None),
               "link": p.link, "category": getattr(p, "category", None)}
              for p in result.products]
-    existing = sorted(({getattr(p, "category", None) for p in result.products}
-                       | set(_load_learned().get("_categories", []))) - {None, ""})
+    # SOLO le categorie presenti in QUESTO job: la lista globale inquinava ogni
+    # nuovo dataset con le categorie di tutte le ricerche precedenti
+    existing = sorted({getattr(p, "category", None) for p in result.products}
+                      - {None, ""})
     return render_template("categorize.html", job_id=job_id,
                            query=result.query, existing_cats=existing,
                            products=items)
