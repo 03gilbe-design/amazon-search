@@ -28,8 +28,9 @@
 
   <div class="pcard-img-wrap">
     {% if p.thumbnail %}
-    <img class="pcard-img" src="{{ p.thumbnail }}" alt="" loading="eager"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <img class="pcard-img" src="{{ p.thumbnail|replace('_AC_UL320_', '_AC_SL500_')|replace('_AC_UY218_', '_AC_SL500_') }}"
+         alt="" loading="eager" data-thumb="{{ p.thumbnail }}"
+         onerror="if(this.src!==this.dataset.thumb){this.src=this.dataset.thumb}else{this.style.display='none';this.nextElementSibling.style.display='flex'}"/>
     <div class="pcard-img-ph" style="display:none">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
         <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>

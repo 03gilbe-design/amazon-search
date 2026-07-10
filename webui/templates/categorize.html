@@ -2541,7 +2541,7 @@ function renderPlaygroundClusters(clusters) {
             subPill.style.fontSize = '0.7rem';
             subPill.style.fontWeight = 'bold';
             subPill.style.color = 'var(--text)';
-            subPill.textContent = `Sub ${sIdx + 1}`;
+            subPill.textContent = (sub.terms && sub.terms.length) ? sub.terms.join(' · ') : `Sub ${sIdx + 1}`;
             container.appendChild(subPill);
         }
         
