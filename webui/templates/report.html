@@ -421,7 +421,8 @@
       Products sharing the same image or visual fingerprint — likely rebrands or the same mold sold under different names.
     </p>
     {% for fam in families %}
-    <div class="family-block" style="margin-bottom:12px">
+    {% set fam_asins = fam.members|map(attribute='1.asin')|sort|join('|') %}
+    <div class="family-block" style="margin-bottom:12px" data-fam-asins="{{ fam_asins }}">
       <div class="family-head">
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
           <rect x="2" y="4" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/>
@@ -432,6 +433,11 @@
         · <span style="color:var(--orange)">identical image</span>
         {% endif %}
         · Hamming Δ {{ fam.get('min_distance', '?') }}
+        <span class="fam-verdict" data-current="{{ (verdicts.get(fam_asins) or {}).get('verdict', '') }}">
+          <button data-v="same" title="Same product — keep the cheapest">Same</button>
+          <button data-v="generations" title="Different generations (e.g. Beam vs Beam 2)">Generations</button>
+          <button data-v="different" title="Actually different products">Different</button>
+        </span>
       </div>
       <div class="family-cards">
         {% for rank, p in fam.members %}
@@ -609,6 +615,29 @@
   document.getElementById('cmp-clear').onclick = () => { sel = []; save(); render(); };
   document.getElementById('cmp-close').onclick = () => { drawer.style.display = 'none'; };
   render();
+})();
+</script>
+<script>
+// ── family verdicts: same / generations / different (persistiti server-side) ──
+(function() {
+  const JOB = location.pathname.split('/').pop();
+  document.querySelectorAll('.family-block').forEach(block => {
+    const wrap = block.querySelector('.fam-verdict');
+    if (!wrap) return;
+    const asins = (block.dataset.famAsins || '').split('|').filter(Boolean);
+    const mark = v => {
+      wrap.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+      block.classList.toggle('fam-same', v === 'same');
+      block.classList.toggle('fam-gen', v === 'generations');
+      block.classList.toggle('fam-diff', v === 'different');
+    };
+    if (wrap.dataset.current) mark(wrap.dataset.current);
+    wrap.querySelectorAll('button').forEach(b => b.onclick = () => {
+      fetch('/api/family_verdict', {method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({job_id: JOB, asins, verdict: b.dataset.v})})
+        .then(r => r.json()).then(() => mark(b.dataset.v));
+    });
+  });
 })();
 </script>
 <script>

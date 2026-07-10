@@ -642,3 +642,13 @@ details[open] > summary .arr { transform: rotate(90deg); }
   border:1px solid var(--border,#e0d9cc); border-radius:8px; background:#fff; cursor:pointer; color:var(--text,#2b2b2b); }
 .btn-compare:hover { border-color:var(--primary,#d97706); color:var(--primary,#d97706); }
 .btn-compare.on { background:var(--primary,#d97706); color:#fff; border-color:var(--primary,#d97706); }
+
+/* family verdicts */
+.fam-verdict { display:inline-flex; gap:4px; margin-left:10px; }
+.fam-verdict button { font-size:.62rem; padding:3px 9px; border-radius:99px; cursor:pointer;
+  border:1px solid var(--border,#e0d9cc); background:#fff; color:var(--text,#2b2b2b); }
+.fam-verdict button:hover { border-color:var(--primary,#d97706); }
+.fam-verdict button.on { background:var(--primary,#d97706); border-color:var(--primary,#d97706); color:#fff; }
+.family-block.fam-same { outline:2px solid #2ecc7160; border-radius:12px; }
+.family-block.fam-gen { outline:2px dashed #d9770660; border-radius:12px; }
+.family-block.fam-diff { opacity:.55; }

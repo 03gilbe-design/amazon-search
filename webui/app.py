@@ -193,7 +193,8 @@ def report(job_id):
     return render_template("report.html", result=result, job_id=job_id,
                            params=job.get("params", {}),
                            cat_list=cat_list, single_cat=len(cat_list) <= 1,
-                           families=families, cmp_data=cmp_data)
+                           families=families, cmp_data=cmp_data,
+                           verdicts=_family_verdicts())
 
 
 # ---- niche knowledge (distilled from 1.2M ESCI products on Colab) ----
@@ -1374,6 +1375,35 @@ def api_image(asin):
     if urls:
         return redirect(urls[0])
     return "Not found", 404
+
+
+VERDICTS_PATH = Path.home() / ".amazon_search_family_verdicts.json"
+
+
+@app.route("/api/family_verdict", methods=["POST"])
+def family_verdict():
+    """User's call on a duplicate family: same product / different / different
+    generations (the JBL Beam vs Beam 2 case). Persisted across restarts."""
+    data = request.get_json() or {}
+    asins = sorted(a for a in (data.get("asins") or []) if isinstance(a, str))
+    verdict = data.get("verdict")
+    if not asins or verdict not in ("same", "different", "generations"):
+        return jsonify({"error": "asins + verdict (same|different|generations) required"}), 400
+    try:
+        store = json.loads(VERDICTS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        store = {}
+    store["|".join(asins)] = {"verdict": verdict, "job": data.get("job_id"),
+                              "at": __import__("time").strftime("%Y-%m-%d %H:%M")}
+    VERDICTS_PATH.write_text(json.dumps(store, ensure_ascii=False, indent=1), encoding="utf-8")
+    return jsonify({"ok": True, "stored": len(store)})
+
+
+def _family_verdicts() -> dict:
+    try:
+        return json.loads(VERDICTS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 @app.route("/api/dataset_info")
