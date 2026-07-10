@@ -1,20 +1,20 @@
 /* ── Reset & tokens ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* tema unico LIGHT greige + arancione Amazon, coerente su TUTTE le pagine */
+/* tema "Scruta" adottato: base quasi-bianca, card bianche, amber primary */
 :root {
-  --bg:      #e9e6e0;
-  --bg2:     #f4f1ec;
-  --surface: rgba(255,255,255,0.72);
-  --border:  #d8d2c8;
-  --border2: #e2ddd4;
-  --muted:   #8d867a;
-  --dim:     #5f594f;
-  --text:    #2b2723;
-  --sub:     #3d3833;
+  --bg:      #fafafa;
+  --bg2:     #f0f0ef;
+  --surface: #ffffff;
+  --border:  #e3e3e1;
+  --border2: #ececea;
+  --muted:   #8a8a86;
+  --dim:     #5c5c58;
+  --text:    #171717;
+  --sub:     #333330;
 
   --red:     #c0392b;
-  --orange:  #e47911;
+  --orange:  #d97706;  /* their amber primary */
   --gold:    #c8a84b;
   --green:   #3dba6a;
   --blue:    #4a9eff;
@@ -65,31 +65,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
 
 /* ── Nav ────────────────────────────────────────────────────────────────── */
-.nav {
-  position: sticky; top: 0; z-index: 100;
-  height: var(--nav-h);
-  display: flex; align-items: center;
-  padding: 0 24px;
-  background: #26221e;
-  border-bottom: 1px solid #3a352f;
-  gap: 24px;
-}
-.nav-brand {
-  font-size: 1rem; font-weight: 700; letter-spacing: -0.04em;
-  color: #fff; text-decoration: none; flex-shrink: 0;
-}
-.nav-brand em { color: var(--orange); font-style: normal; }
-.nav-links { display: flex; gap: 4px; flex: 1; }
-.nav-link {
-  font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: #a8a094; text-decoration: none;
-  padding: 6px 12px; border-radius: var(--r);
-  transition: color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-.nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
-.nav-link.active { color: #fff; }
-.nav-right { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+/* (nav orizzontale sostituito dalla sidebar) */
 .key-pill {
   font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 3px 8px; border-radius: 99px;
@@ -548,3 +524,45 @@ details[open] > summary .arr { transform: rotate(90deg); }
 .sim-ask { position:absolute; top:38px; right:8px; z-index:6; background:#26221e; color:#f2efe9;
   font-size:.66rem; padding:7px 9px; border-radius:8px; display:flex; gap:6px; align-items:center; }
 .sim-ask button { border:none; border-radius:6px; padding:3px 8px; font-size:.64rem; cursor:pointer; }
+
+/* ── App shell con sidebar (pattern Layout.jsx) ─────────────────────────── */
+.app { display:flex; min-height:100vh; --nav-w: 15rem; }
+.app.collapsed { --nav-w: 4rem; }
+.sidebar { width:var(--nav-w); flex-shrink:0; position:sticky; top:0; height:100vh;
+  display:flex; flex-direction:column; border-right:1px solid var(--border);
+  background:rgba(250,250,250,.75); backdrop-filter:blur(14px); z-index:40;
+  transition:width .2s; overflow:hidden; }
+.main { flex:1; min-width:0; }
+.sb-brand { display:flex; align-items:center; gap:10px; padding:14px 12px; height:64px;
+  text-decoration:none; color:var(--text); }
+.sb-logo { width:36px; height:36px; border-radius:12px; background:var(--orange); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sb-brand-txt b { font-size:.92rem; letter-spacing:-.03em; display:block; white-space:nowrap; }
+.sb-brand-txt b em { color:var(--orange); font-style:normal; }
+.sb-brand-txt small { font-size:.58rem; color:var(--muted); white-space:nowrap; }
+.sb-nav { display:flex; flex-direction:column; gap:4px; padding:8px; margin-top:6px; }
+.sb-link { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px;
+  font-size:.76rem; font-weight:600; color:var(--dim); text-decoration:none;
+  transition:background .15s,color .15s; white-space:nowrap; }
+.sb-link:hover { background:var(--bg2); color:var(--text); }
+.sb-link.on { background:rgba(217,119,6,.1); color:var(--orange); }
+.sb-link svg { flex-shrink:0; }
+.sb-foot { margin-top:auto; padding:10px; display:flex; align-items:center; gap:8px; }
+.sb-lang { display:flex; gap:4px; }
+.sb-lang button { border:1.5px solid var(--border); background:#fff; border-radius:6px;
+  padding:4px 6px; cursor:pointer; line-height:0; opacity:.55; }
+.sb-lang button.on { border-color:var(--orange); opacity:1; }
+.sb-collapse { margin-left:auto; border:1px solid var(--border); background:#fff; color:var(--dim);
+  width:28px; height:28px; border-radius:8px; cursor:pointer; display:inline-flex;
+  align-items:center; justify-content:center; transition:transform .2s; }
+.app.collapsed .sb-collapse svg { transform:rotate(180deg); }
+.app.collapsed .sb-brand-txt, .app.collapsed .sb-link span { display:none; }
+.app.collapsed .sb-link { justify-content:center; }
+.app.collapsed .sb-lang { flex-direction:column; }
+@media (max-width: 760px) {
+  .app { flex-direction:column; --nav-w:100%; }
+  .sidebar { width:100%; height:auto; position:static; flex-direction:row; align-items:center; }
+  .sb-nav { flex-direction:row; margin:0; }
+  .sb-link span { display:none; }
+  .sb-foot { margin:0 8px 0 auto; }
+}
