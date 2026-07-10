@@ -201,7 +201,19 @@ def report(job_id):
 # ---- niche knowledge (distilled from 1.2M ESCI products on Colab) ----
 _NICHE_STOP = set("the a an for with and or of to in on new set pack pcs pieces "
                   "mens womens kids de la el para con y los las un una per il lo "
-                  "i gli le di da".split())
+                  "i gli le di da "
+                  # parole generiche che in ESCI risultano nicchie ma sono aggettivi
+                  "anti memory auto design mini plus premium smart pro max ultra "
+                  "super extra multi portable wireless bluetooth digital "
+                  "adjustable universal comfort unisex wonder made play tape".split())
+# titoli italiani -> tipo prodotto inglese della knowledge base
+_NICHE_IT2EN = {"collare": "collar", "cervicale": "cervical", "cuscino": "pillow",
+    "cuscini": "pillow", "lampada": "lamp", "auricolari": "earbuds",
+    "cuffie": "headphones", "cerotti": "strips", "fascia": "strap",
+    "anello": "ring", "mascherina": "mask", "maschera": "mask",
+    "torcia": "flashlight", "sveglia": "clock", "tastiera": "keyboard",
+    "caricatore": "charger", "supporto": "support", "materasso": "mattress",
+    "tutore": "brace", "massaggiatore": "massager", "orologio": "watch"}
 _NICHE_KB: dict | None = None
 
 
@@ -223,7 +235,8 @@ def _niche_info(title: str):
         return None, None
     import re as _re
     fallback = None
-    for w in _re.findall(r"[a-z]{4,}", (title or "").lower()):
+    for w in _re.findall(r"[a-zà-ù]{4,}", (title or "").lower()):
+        w = _NICHE_IT2EN.get(w, w)
         if w in _NICHE_STOP or w not in kb:
             continue
         entry = kb[w]
