@@ -222,6 +222,16 @@ body { background:#e9e6e0; }
             </div>
           </div>
 
+          <!-- noise bin: conservato, nascosto, ispezionabile -->
+          <button class="btn btn-outline btn-sm" id="noise-chip" onclick="toggleNoisePanel()" style="color:#b3564a;border-color:#d9948a">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>
+            noise <b id="noise-count">0</b>
+          </button>
+          <div id="noise-panel" style="display:none;position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid #d9948a;border-radius:12px;padding:12px;z-index:98;max-width:520px;max-height:280px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.15)">
+            <div style="font-size:.68rem;color:#b3564a;margin-bottom:8px">Noise bin — kept as negative examples, hidden from views. Click a photo to restore.</div>
+            <div id="noise-items" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          </div>
+
           <!-- prev / skip / skip assigned -->
           <div style="display:flex;gap:8px">
             <button class="btn btn-outline btn-sm" onclick="prevProduct()" title="Torna al prodotto precedente">
@@ -508,6 +518,29 @@ function opStart(label) {
 }
 
 function _closeOp() { if (window.__opDone) { window.__opDone(); window.__opDone = null; } }
+
+// noise bin: pannello ispezione + contatore
+window.toggleNoisePanel = function() {
+  const p = document.getElementById('noise-panel');
+  const show = p.style.display === 'none';
+  p.style.display = show ? 'block' : 'none';
+  if (!show) return;
+  const box = document.getElementById('noise-items');
+  box.innerHTML = '';
+  ALL_PRODUCTS.filter(x => x.category === 'noise').forEach(x => {
+    const im = document.createElement('img');
+    if (x.thumbnail && /^https?:\/\//.test(x.thumbnail)) im.src = x.thumbnail;
+    im.title = (x.title || '') + ' — click to restore';
+    im.style.cssText = 'width:56px;height:56px;object-fit:contain;background:#fff;border:1px solid #eee;border-radius:8px;cursor:pointer';
+    im.onclick = () => assignCategory(x.asin, null).then(() => { p.style.display='none'; renderCurrentProduct(); });
+    box.appendChild(im);
+  });
+};
+function updateNoiseCount() {
+  const el = document.getElementById('noise-count');
+  if (el) el.textContent = ALL_PRODUCTS.filter(x => x.category === 'noise').length;
+}
+
 function renderAll() {
   renderCatList();
   if (currentView === 'sunflower') renderCurrentProduct();
@@ -525,6 +558,7 @@ async function assignCategory(asin, cat, skipHistory) {
   });
   if (p) p.category = cat;
   if (typeof renderTermsDistribution === 'function' && currentView === 'terms') renderTermsDistribution();
+  if (typeof updateNoiseCount === 'function') updateNoiseCount();
 }
 
 // ── Sunflower ─────────────────────────────────────────────────────────────
@@ -593,12 +627,13 @@ function fitSunflower() {
   const h = Math.max(420, window.innerHeight - wrap.getBoundingClientRect().top - 40);
   wrap.style.height = h + 'px';
   renderSunflower();
+  updateNoiseCount();
 }
 window.addEventListener('resize', fitSunflower);
 fitSunflower();
 
 
-// discard zone: drop = special category '_discarded'
+// discard zone: drop = special category 'noise'
 (function() {
   const z = document.getElementById('discard-zone');
   if (!z) return;
@@ -607,7 +642,7 @@ fitSunflower();
   z.addEventListener('drop', e => {
     e.preventDefault(); z.style.background = ''; z.style.borderColor = '#d9948a';
     const asin = e.dataTransfer.getData('text/plain');
-    if (asin) assignCategory(asin, '_discarded').then(() => renderCurrentProduct());
+    if (asin) assignCategory(asin, 'noise').then(() => renderCurrentProduct());
   });
 })();
 
@@ -814,7 +849,7 @@ function renderSunflower() {
   const sf = document.getElementById('sunflower');
   sf.querySelectorAll('.sf-circle, .sf-circle-holder').forEach(el => el.remove());
 
-  const allCats = [...categories, '+'];
+  const allCats = [...categories.filter(c => c !== 'noise'), '+'];
   const n = allCats.length;
   
   // Calculate background split dynamically based on category names or contents
@@ -1059,7 +1094,7 @@ function renderKanban() {
   const board = document.getElementById('kanban-board');
   board.innerHTML = '';
 
-  const cols = ['Unassigned', ...categories];
+  const cols = ['Unassigned', ...categories.filter(c => c !== 'noise')];
   cols.forEach((col, ci) => {
     const colEl = document.createElement('div');
     colEl.className = 'kanban-col glass';
