@@ -542,6 +542,9 @@
 // ── compare drawer (design gen-2 CompareDrawer): max 4, best cell verde ──
 (function() {
   const DATA = JSON.parse(document.getElementById('cmp-data').textContent || '{}');
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
+    c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const safeUrl = u => /^https?:\/\//.test(u || '') ? esc(u) : '';
   const KEY = 'compare_' + location.pathname;
   let sel = JSON.parse(localStorage.getItem(KEY) || '[]').filter(a => DATA[a]);
   const save = () => localStorage.setItem(KEY, JSON.stringify(sel));
@@ -564,9 +567,9 @@
     // riga foto + titolo + rimuovi
     rows.push('<tr><td style="position:sticky;left:0;background:#fff;min-width:110px"></td>' + ps.map(p =>
       `<td style="padding:8px;text-align:center;min-width:150px;border-left:1px solid #f0eadd">
-        <img src="${p.thumbnail || ''}" style="width:62px;height:62px;object-fit:contain;background:#fff;border-radius:8px"/>
-        <div style="font-size:.62rem;line-height:1.25;margin:4px 0">${p.title}</div>
-        <button data-rm="${p.asin}" style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:.62rem">remove</button>
+        <img src="${safeUrl(p.thumbnail)}" style="width:62px;height:62px;object-fit:contain;background:#fff;border-radius:8px"/>
+        <div style="font-size:.62rem;line-height:1.25;margin:4px 0">${esc(p.title)}</div>
+        <button data-rm="${esc(p.asin)}" style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:.62rem">remove</button>
       </td>`).join('') + '</tr>');
     const row = (label, vals, best) => rows.push(
       `<tr><td style="position:sticky;left:0;background:#fff;padding:6px 12px;color:#8a8378;font-weight:600">${label}</td>` +
@@ -580,17 +583,17 @@
     num('price', 'Price', true);
     num('stars', 'Stars', false);
     num('reviews', 'Reviews', false);
-    row('Brand', ps.map(p => ({html: p.brand || '—', best: false})));
+    row('Brand', ps.map(p => ({html: p.brand ? esc(p.brand) : '—', best: false})));
     specKeys.forEach(k => {
       const vals = ps.map(p => p.specs[k] != null ? {v: p.specs[k], est: false}
                               : p.estimated_specs[k] != null ? {v: p.estimated_specs[k], est: true} : null);
       const nums = vals.filter(Boolean).map(x => x.v);
       const best = nums.length >= 2 ? (k.startsWith('weight') ? Math.min(...nums) : Math.max(...nums)) : null;
-      row(SPEC_LABELS[k] || k, vals.map(x => ({
-        html: x == null ? '—' : (x.v + (x.est ? ' <span style="color:#b08e3f" title="estimated from twin product">*</span>' : '')),
+      row(SPEC_LABELS[k] || esc(k), vals.map(x => ({
+        html: x == null ? '—' : (esc(x.v) + (x.est ? ' <span style="color:#b08e3f" title="estimated from twin product">*</span>' : '')),
         best: x != null && x.v === best && best != null})));
     });
-    row('Materials', ps.map(p => ({html: p.materials.length ? p.materials.join(', ') : '—', best: false})));
+    row('Materials', ps.map(p => ({html: p.materials.length ? esc(p.materials.join(', ')) : '—', best: false})));
     document.getElementById('cmp-table').innerHTML = rows.join('');
     document.querySelectorAll('#cmp-table [data-rm]').forEach(b => b.onclick = () => {
       sel = sel.filter(a => a !== b.dataset.rm); save(); render();
