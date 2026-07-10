@@ -157,8 +157,8 @@ body { background:#e9e6e0; }
       <div class="sunflower-wrap" id="sunflower" style="flex:1;position:relative;min-height:560px;min-width:0; background: linear-gradient(90deg, rgba(231,76,60,0.03) 0%, rgba(231,76,60,0.03) 50%, rgba(46,204,113,0.03) 50%, rgba(46,204,113,0.03) 100%); transition: background 0.3s ease;" ondragover="event.preventDefault()" ondrop="handleSunflowerDrop(event)">
         <!-- Zone Icons Background -->
         <div id="sf-bg-icons" style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; pointer-events:none; z-index:0; opacity:0.1;">
-          <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:15rem; color:#e74c3c; font-weight:bold;">✗</div>
-          <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:15rem; color:#2ecc71; font-weight:bold;">✓</div>
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:15rem; color:#e74c3c; font-weight:bold;">&times;</div>
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:15rem; color:#2ecc71; font-weight:bold;">&#10003;</div>
         </div>
         <!-- center image: position:absolute centrato SUL contenitore reale -->
         <div class="sf-center" id="sf-img-wrap" style="z-index:20;">
@@ -266,80 +266,90 @@ body { background:#e9e6e0; }
   <!-- ── PLAYGROUND VIEW ────────────────────────────────────────────────── -->
   <div id="view-playground" style="display:block">
     <div class="play-layout">
-      <!-- Barra Controlli Orizzontale Compatta -->
-      <!-- Barra Controlli Orizzontale Compatta -->
-      <div class="glass" style="padding:16px; margin-bottom:12px; border-radius:10px;">
-        <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
-          <!-- Controllo Soglia -->
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--sub); white-space:nowrap">Sensibilità:</span>
-            <input type="range" id="threshold-slider" min="0.1" max="1.5" step="0.05" value="0.65" style="width:120px" oninput="document.getElementById('threshold-val').textContent=this.value; runClustering();"/>
-            <span id="threshold-val" style="font-size:0.75rem; font-weight:700; color:var(--orange)">0.65</span>
-          </div>
-
-          <!-- Scelta Metodo -->
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--sub); white-space:nowrap">Metodo:</span>
-            <select id="method-select" style="font-size:0.75rem; padding:4px 8px; border-radius:4px; border:1px solid var(--border); cursor:pointer" onchange="runClustering()">
-              <option value="birch">BIRCH (Testo)</option>
-              <option value="kmeans" selected>K-Means (Testo) 🏆</option>
-              <option value="hybrid">Ibrido (Testo + Foto)</option>
+      <!-- Barra controlli: 3 gruppi etichettati, ordine di lettura = ordine d'uso -->
+      <div class="glass ctl-bar">
+        <!-- 1. Raggruppamento -->
+        <fieldset class="ctl-group">
+          <legend>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Raggruppamento
+          </legend>
+          <div class="ctl-row">
+            <select id="method-select" onchange="runClustering()">
+              <option value="kmeans" selected>K-Means — gruppi bilanciati</option>
+              <option value="birch">BIRCH — gruppi per densità</option>
+              <option value="hybrid">Ibrido — testo + foto</option>
             </select>
-            
-            <!-- Pulsante Auto (IA Ottimizzata) -->
-            <button onclick="applyAutoML()" style="background:var(--primary); color:white; border:none; border-radius:4px; padding:4px 10px; font-size:0.7rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              ✨ Auto (IA Ottimizzata)
-            </button>
-          </div>
-          
-          <div style="display:flex; align-items:center; gap:8px;">
-            <label style="font-size:0.75rem; font-weight:700; color:var(--sub); cursor:pointer; display:flex; align-items:center; gap:4px;">
-                <input type="checkbox" id="subgroups-check" onchange="document.getElementById('sub-slider-container').style.display = this.checked ? 'flex' : 'none'; runClustering();"> 
-                <span>Abilita Sottogruppi (Mostrati nel Girasole)</span>
+            <label class="ctl-slider">
+              <span>Sensibilità</span>
+              <input type="range" id="threshold-slider" min="0.1" max="1.5" step="0.05" value="0.65" oninput="document.getElementById('threshold-val').textContent=this.value; runClustering();"/>
+              <b id="threshold-val">0.65</b>
             </label>
           </div>
-          
-          <div id="sub-slider-container" style="display:none; align-items:center; gap:8px; border-left:2px solid var(--orange); padding-left:10px;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--sub); white-space:nowrap">Sens. Sottogruppi:</span>
-            <input type="range" id="sub-threshold-slider" min="0.1" max="1.5" step="0.05" value="0.40" style="width:100px" oninput="document.getElementById('sub-threshold-val').textContent=this.value; runClustering();"/>
-            <span id="sub-threshold-val" style="font-size:0.75rem; font-weight:700; color:var(--orange)">0.40</span>
-          </div>
-          
-          <script>
-            function applyAutoML() {
-                // KMeans è preferito dall'utente per non avere troppi mini-gruppi.
-                // Usiamo KMeans con threshold 0.65 (che mappa a K=10 circa, i macro-grupponi ideali)
-                document.getElementById('method-select').value = 'kmeans';
-                const slider = document.getElementById('threshold-slider');
-                slider.value = "0.65"; 
-                document.getElementById('threshold-val').textContent = "0.65";
-                
-                const subCheck = document.getElementById('subgroups-check');
-                if (!subCheck.checked) {
-                    subCheck.checked = true;
-                    document.getElementById('sub-slider-container').style.display = 'flex';
-                }
-                
-                runClustering();
-            }
-          </script>
+        </fieldset>
 
-          <!-- Nuova Categoria -->
-          <div style="display:flex; align-items:center; gap:4px;">
-            <input type="text" id="play-new-cat-input" placeholder="Categoria..." style="font-size:0.75rem; padding:4px 8px; border-radius:4px; border:1px solid var(--border); width:100px" onkeydown="if(event.key==='Enter') addPlaygroundCategory()"/>
-            <button class="btn btn-orange btn-sm" onclick="addPlaygroundCategory()" style="padding:4px 8px; font-size:0.75rem" title="Aggiungi">Crea</button>
+        <!-- 2. Sottogruppi -->
+        <fieldset class="ctl-group">
+          <legend>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.5 8.5l7 7"/></svg>
+            Sottogruppi
+          </legend>
+          <div class="ctl-row">
+            <label class="ctl-check">
+              <input type="checkbox" id="subgroups-check" onchange="document.getElementById('sub-slider-container').style.display = this.checked ? 'flex' : 'none'; runClustering();">
+              <span>Attiva (visibili nel girasole)</span>
+            </label>
+            <label class="ctl-slider" id="sub-slider-container" style="display:none">
+              <span>Sensibilità</span>
+              <input type="range" id="sub-threshold-slider" min="0.1" max="1.5" step="0.05" value="0.40" oninput="document.getElementById('sub-threshold-val').textContent=this.value; runClustering();"/>
+              <b id="sub-threshold-val">0.40</b>
+            </label>
           </div>
-          
-          <!-- Upload Foto Compatto -->
-          <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" style="padding:4px 10px; margin:0; cursor:pointer">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text)">Carica Foto</span>
+        </fieldset>
+
+        <!-- 3. Azioni -->
+        <fieldset class="ctl-group ctl-actions">
+          <legend>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
+            Azioni
+          </legend>
+          <div class="ctl-row">
+            <button class="btn btn-orange btn-sm" onclick="runClustering()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.6-6.4M21 3v6h-6"/></svg>
+              Ricalcola
+            </button>
+            <button class="btn btn-sm ctl-ghost" onclick="applyAutoML()" title="Imposta i parametri consigliati e ricalcola">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+              Parametri consigliati
+            </button>
+            <span class="ctl-sep"></span>
+            <input type="text" id="play-new-cat-input" placeholder="Nuova categoria…" onkeydown="if(event.key==='Enter') addPlaygroundCategory()"/>
+            <button class="btn btn-sm ctl-ghost" onclick="addPlaygroundCategory()">Crea</button>
+            <span class="ctl-sep"></span>
+            <button class="btn btn-sm ctl-ghost" id="drop-zone" onclick="document.getElementById('file-input').click()" title="Cerca per foto: carica un'immagine e trova i prodotti visivamente simili">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              Cerca per foto
+            </button>
             <input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadImage(this.files[0])"/>
+            <span id="upload-status" style="font-size:0.62rem; color:var(--dim); display:none"></span>
           </div>
-          <div id="upload-status" style="font-size:0.62rem; color:var(--dim); display:none"></div>
-          
-          <button class="btn btn-orange btn-sm" onclick="runClustering()" style="padding:6px 16px; margin-left:auto; font-weight:700">Ricalcola</button>
-        </div>
+        </fieldset>
       </div>
+      <script>
+        function applyAutoML() {
+            // KMeans è preferito dall'utente per non avere troppi mini-gruppi.
+            document.getElementById('method-select').value = 'kmeans';
+            const slider = document.getElementById('threshold-slider');
+            slider.value = "0.65";
+            document.getElementById('threshold-val').textContent = "0.65";
+            const subCheck = document.getElementById('subgroups-check');
+            if (!subCheck.checked) {
+                subCheck.checked = true;
+                document.getElementById('sub-slider-container').style.display = 'flex';
+            }
+            runClustering();
+        }
+      </script>
 
 
 
@@ -433,7 +443,7 @@ function updateCartUI() {
     const fab = document.createElement('div');
     fab.id = 'global-cart-fab';
     fab.style.cssText = 'position:fixed; bottom:30px; right:30px; width:60px; height:60px; background:var(--orange); border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#fff; box-shadow:0 8px 20px rgba(255,102,0,0.4); cursor:pointer; z-index:10000; transition:transform 0.2s;';
-    fab.innerHTML = '🛒<div id="global-cart-counter" style="position:absolute; top:-5px; right:-5px; background:#fff; color:var(--orange); font-size:0.8rem; font-weight:bold; width:24px; height:24px; border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2);">0</div>';
+    fab.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.6 13.1a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg><div id="global-cart-counter" style="position:absolute; top:-5px; right:-5px; background:#fff; color:var(--orange); font-size:0.8rem; font-weight:bold; width:24px; height:24px; border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2);">0</div>';
     fab.onmouseenter = () => fab.style.transform = 'scale(1.1)';
     fab.onmouseleave = () => fab.style.transform = 'scale(1)';
     fab.onclick = () => alert("Nel carrello hai " + CART.length + " prodotti:\n" + CART.join("\n"));
@@ -513,7 +523,7 @@ function opStart(label) {
   tick();
   _opTimer = setInterval(tick, 100);
   return () => { clearInterval(_opTimer);
-    el.textContent = label + ' ✓ ' + ((performance.now() - t0) / 1000).toFixed(1) + 's';
+    el.textContent = label + ' &#10003; ' + ((performance.now() - t0) / 1000).toFixed(1) + 's';
     setTimeout(() => { el.style.display = 'none'; }, 2500); };
 }
 
@@ -784,7 +794,7 @@ function renderStacks(sf, cat, ccx, ccy, angle, color, CS) {
           cBtn.className = 'inline-cart-btn';
           cBtn.dataset.asin = pObj.asin;
           cBtn.style.cssText = 'position:absolute; top:2px; right:2px; width:22px; height:22px; border-radius:11px; border:none; background:rgba(255,255,255,0.9); color:var(--orange); font-size:0.7rem; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.3);';
-          cBtn.innerHTML = '🛒';
+          cBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.6 13.1a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>';
           cBtn.onclick = (e) => { e.stopPropagation(); toggleCart(pObj.asin); };
           
           pWrap.onmouseenter = () => { pImg.style.transform = 'scale(1.1)'; cBtn.style.display = 'flex'; };
@@ -1044,7 +1054,7 @@ function skipCurrent() {
 function toggleSkipAssigned() {
   skipAssigned = !skipAssigned;
   document.getElementById('skip-assigned-label').textContent =
-    skipAssigned ? '✓ Skip assigned' : 'Skip assigned';
+    skipAssigned ? '&#10003; Skip assigned' : 'Skip assigned';
   renderCurrentProduct();
 }
 
@@ -1613,7 +1623,7 @@ async function renderTermsDistribution() {
            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
              <span style="font-size:0.85rem; font-weight:bold; color:#2c3e50;">Prodotti con la parola "<span id="terms-preview-word-${idx}" style="color:#e67e22;"></span>":</span>
              <div>
-               <button onclick="autoAssignTerm('${b.category}', ${idx})" class="btn btn-orange btn-sm" style="font-size:0.65rem; padding:2px 8px; margin-right:5px;">⚡ Auto Assegna</button>
+               <button onclick="autoAssignTerm('${b.category}', ${idx})" class="btn btn-orange btn-sm" style="font-size:0.65rem; padding:2px 8px; margin-right:5px;">Auto assegna</button>
                <button onclick="document.getElementById('terms-preview-${idx}').style.display='none'" class="btn btn-outline btn-sm" style="font-size:0.65rem; padding:2px 8px;">Nascondi</button>
              </div>
            </div>
@@ -1709,11 +1719,11 @@ function switchView(view) {
   }
   
   const usageTips = {
-    sunflower: "🌻 Sunflower: Trascina la foto del prodotto verso i cerchi esterni per assegnarlo a una categoria.",
-    kanban: "📋 Kanban: Trascina le schede dei prodotti tra le colonne per aggiornare al volo le loro categorie.",
-    playground: "🧪 Clustering: Regola la barra della sensibilità e ricalcola i cluster di affinità del testo e del colore.",
-    scene: "🕸️ Rete SIFT: Visualizza gli incroci di foto riciclate. Trascina i nodi o clicca sulle linee arancioni per i dettagli.",
-    terms: "🧮 Distribuzione Parole: Clicca su qualsiasi bolla per visualizzare all'istante le foto dei prodotti abbinati."
+    sunflower: "Girasole: Trascina la foto del prodotto verso i cerchi esterni per assegnarlo a una categoria.",
+    kanban: "Kanban: Trascina le schede dei prodotti tra le colonne per aggiornare al volo le loro categorie.",
+    playground: "Clustering: Regola la barra della sensibilità e ricalcola i cluster di affinità del testo e del colore.",
+    scene: "Rete SIFT: Visualizza gli incroci di foto riciclate. Trascina i nodi o clicca sulle linee arancioni per i dettagli.",
+    terms: "Distribuzione parole: Clicca su qualsiasi bolla per visualizzare all'istante le foto dei prodotti abbinati."
   };
   const usageTipEl = document.getElementById('status-usage-tip');
   if (usageTipEl) {
@@ -1855,7 +1865,7 @@ async function runSceneMatch() {
       progWrap.innerHTML = `
           <div id="sift-progress-container" style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.05); text-align:left;">
             <div style="font-weight:bold; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-              ⚙️ Elaborazione SIFT RANSAC in background
+              Elaborazione SIFT RANSAC in background
             </div>
             <div style="width:100%; height:12px; background:#f0f2f5; border-radius:6px; overflow:hidden;">
               <div id="sift-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #3498db, #2ecc71); transition:width 0.5s ease-out;"></div>
@@ -2207,8 +2217,8 @@ window.applySceneFilters = function() {
           const asin1 = p1 ? p1.asin : '';
           const asin2 = p2 ? p2.asin : '';
           
-          let cartHtml1 = `<button class="inline-cart-btn" style="position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:13px;border:none;background:rgba(255,255,255,0.9);color:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); toggleCart('${asin1}')">🛒</button>`;
-          let cartHtml2 = `<button class="inline-cart-btn" style="position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:13px;border:none;background:rgba(255,255,255,0.9);color:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); toggleCart('${asin2}')">🛒</button>`;
+          let cartHtml1 = `<button class="inline-cart-btn" style="position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:13px;border:none;background:rgba(255,255,255,0.9);color:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); toggleCart('${asin1}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.6 13.1a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg></button>`;
+          let cartHtml2 = `<button class="inline-cart-btn" style="position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:13px;border:none;background:rgba(255,255,255,0.9);color:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); toggleCart('${asin2}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.6 13.1a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg></button>`;
           
           html += `
           <div style="background:#fff; border:2px solid var(--border); border-radius:16px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.04); transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -2229,7 +2239,7 @@ window.applySceneFilters = function() {
               <!-- Separatore visivo -->
               <div style="flex-shrink:0; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                 <div style="width:40px; height:2px; background:var(--muted); margin-bottom:6px;"></div>
-                <div style="font-size:1.2rem; font-weight:bold; color:var(--orange);">🔗</div>
+                <div style="font-size:1.2rem; font-weight:bold; color:var(--orange);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg></div>
                 <div style="width:40px; height:2px; background:var(--muted); margin-top:6px;"></div>
               </div>
               
@@ -2399,7 +2409,7 @@ window.openSIFTModal = function(src, p1Esc, p2Esc) {
     document.body.appendChild(modal);
   }
   document.getElementById('sift-lightbox-img').src = src;
-  document.getElementById('sift-lightbox-info').textContent = `SIFT: ${p1} ➔ ${p2}`;
+  document.getElementById('sift-lightbox-info').textContent = `SIFT: ${p1} &rarr; ${p2}`;
   modal.style.display = 'flex';
 };
 
@@ -2424,9 +2434,9 @@ async function runClustering() {
   
   // Aggiorna spiegazione del metodo
   const methodDescriptions = {
-    birch: "🌳 BIRCH: Raggruppamento gerarchico ad albero. Regola la barra della soglia per fondere o dividere i gruppi in base alle parole nei titoli.",
-    kmeans: "📊 K-Means: Divide i prodotti in gruppi bilanciati di pari dimensione analizzando la ricorrenza dei termini chiave nei titoli.",
-    hybrid: "🎨 Ibrido: Combina i dati testuali (TF-IDF) e le informazioni visive (colore dominante delle foto) per raggruppare i prodotti simili."
+    birch: "BIRCH: Raggruppamento gerarchico ad albero. Regola la barra della soglia per fondere o dividere i gruppi in base alle parole nei titoli.",
+    kmeans: "K-Means: Divide i prodotti in gruppi bilanciati di pari dimensione analizzando la ricorrenza dei termini chiave nei titoli.",
+    hybrid: "Ibrido: Combina i dati testuali (TF-IDF) e le informazioni visive (colore dominante delle foto) per raggruppare i prodotti simili."
   };
   document.getElementById('method-desc-box').textContent = methodDescriptions[method] || "";
 
@@ -2605,7 +2615,7 @@ async function uploadImage(file) {
       return;
     }
     
-    status.innerHTML = "<span style='color:#2ecc71; font-weight:bold;'>✅ Caricato e analizzato con successo!</span>";
+    status.innerHTML = "<span style='color:#2ecc71; font-weight:bold;'>Caricato e analizzato con successo!</span>";
     preview.src = data.url;
     previewContainer.style.display = 'block';
     
@@ -2744,7 +2754,7 @@ function generateMockVennData() {
 // (rimosso init Venn con dati mock: l'elemento 'playground-venn' non esiste;
 // il Venn reale è disegnato da renderTermsDistribution nella sua vista)
 
-// 📌 Init 📌
+// Init
 
 function fetchSearches() {
   fetch('/api/searches').then(r => r.json()).then(data => {
