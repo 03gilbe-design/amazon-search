@@ -217,6 +217,20 @@ _NICHE_IT2EN = {"collare": "collar", "cervicale": "cervical", "cuscino": "pillow
 _NICHE_KB: dict | None = None
 
 
+_ATTR_KB: dict | None = None
+
+
+def _attr_kb() -> dict:
+    global _ATTR_KB
+    if _ATTR_KB is None:
+        try:
+            pth = Path(__file__).resolve().parent.parent / "private" / "esci_attr_values.json"
+            _ATTR_KB = json.loads(pth.read_text(encoding="utf-8"))
+        except Exception:
+            _ATTR_KB = {}
+    return _ATTR_KB
+
+
 def _niche_kb() -> dict:
     global _NICHE_KB
     if _NICHE_KB is None:
@@ -311,9 +325,14 @@ def product_page(job_id, asin):
         similar = [p for p in result.products
                    if getattr(p, "family_id", None) == fam_id and p.asin != asin][:8]
     attrs = list(getattr(prod, "attrs", []) or [])
+    akb = _attr_kb()
+    entry = akb.get(niche) or akb.get("_global") or {}
+    niche_attrs = [{"label": k, "values": list(v)[:3]}
+                   for k, v in list((entry.get("attrs") or {}).items())[:6]]
     return render_template("product.html", p=prod, job_id=job_id, rows=rows,
                            niche=niche, niche_n=(kb or {}).get("n"),
                            niche_rows=niche_rows, materials=materials,
+                           niche_attrs=niche_attrs,
                            mats_estimated=mats_estimated, similar=similar, attrs=attrs)
 
 
