@@ -1,5 +1,7 @@
 # amazon-search
 
+![Python](https://img.shields.io/badge/python-3670A0?style=flat&logo=python&logoColor=ffdd54) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 **Stop scrolling through 40 tabs of Amazon listings.** One command searches, pulls the real
 technical specs, ranks by fit-for-budget, and hands you back a single report — same query in,
 same shape out, every time. No manual curation, no spreadsheet.
